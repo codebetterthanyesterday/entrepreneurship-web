@@ -18,6 +18,12 @@ interface AccentContextValue {
    * spills outward from that element; without one it cross-fades.
    */
   choose: (next: Accent, origin?: Element | null) => void;
+  /**
+   * True for a few seconds after the welcome is answered: the header switch
+   * points itself out, so the customer learns where the choice can be changed.
+   */
+  hint: boolean;
+  dismissHint: () => void;
 }
 
 const AccentContext = React.createContext<AccentContextValue | null>(null);
@@ -63,6 +69,10 @@ export function AccentRoot({ initialAccent, ask, brandName, className, children 
   const [asking, setAsking] = React.useState(ask);
   const mounted = React.useSyncExternalStore(NEVER_CHANGES, onClient, onServer);
   const channelRef = React.useRef<BroadcastChannel | null>(null);
+  // Mirrors `asking` for `choose`, which is memoised once and must not read a
+  // stale copy of the state to tell an answer to the welcome from a later switch.
+  const askingRef = React.useRef(ask);
+  const [hint, setHint] = React.useState(false);
 
   // A layout effect, not a passive one: inside a view transition the new state
   // has to be on <html> before the browser takes its "after" snapshot.
@@ -82,6 +92,7 @@ export function AccentRoot({ initialAccent, ask, brandName, className, children 
       const next = parseAccent(typeof event.data === "string" ? event.data : null);
       if (!next) return;
       setAccent(next);
+      askingRef.current = false;
       setAsking(false);
     };
     channelRef.current = channel;
@@ -95,10 +106,16 @@ export function AccentRoot({ initialAccent, ask, brandName, className, children 
     document.cookie = accentCookie(next, window.location.protocol === "https:");
     channelRef.current?.postMessage(next);
 
+    // Answering the welcome — skipping included — is the moment to show where
+    // the answer lives from now on. A later change from the switch itself is not.
+    const answeringWelcome = askingRef.current;
+    askingRef.current = false;
+
     const apply = () =>
       flushSync(() => {
         setAccent(next);
         setAsking(false);
+        if (answeringWelcome) setHint(true);
       });
 
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -151,7 +168,11 @@ export function AccentRoot({ initialAccent, ask, brandName, className, children 
     });
   }, []);
 
-  const value = React.useMemo(() => ({ accent, choose }), [accent, choose]);
+  const dismissHint = React.useCallback(() => setHint(false), []);
+  const value = React.useMemo(
+    () => ({ accent, choose, hint, dismissHint }),
+    [accent, choose, hint, dismissHint],
+  );
 
   return (
     <AccentContext value={value}>

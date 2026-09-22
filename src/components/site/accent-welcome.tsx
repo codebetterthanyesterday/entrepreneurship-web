@@ -157,10 +157,10 @@ function Choice({ accent, label, mood, onChoose, onLean }: ChoiceProps) {
     >
       <span
         aria-hidden="true"
-        className="accent-orb-float block"
+        className="mood-orb-float block"
         style={{ "--float-delay": accent === "blue" ? "-2.4s" : "0ms" } as React.CSSProperties}
       >
-        <span className="accent-orb block h-16 w-16 min-[380px]:h-[4.75rem] min-[380px]:w-[4.75rem] tablet:h-24 tablet:w-24" />
+        <span className="mood-orb block h-16 w-16 min-[380px]:h-[4.75rem] min-[380px]:w-[4.75rem] tablet:h-24 tablet:w-24" />
       </span>
 
       <span className="flex flex-col items-center gap-1">
