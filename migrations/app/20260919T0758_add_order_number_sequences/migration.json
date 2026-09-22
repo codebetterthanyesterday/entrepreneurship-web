@@ -1,0 +1,10 @@
+{
+  "from": "1c300f32c854e96a5321a6ed039d07ac7666de481d8a899693df542bc2351a23",
+  "to": "1c300f32c854e96a5321a6ed039d07ac7666de481d8a899693df542bc2351a23",
+  "providedInvariants": [
+    "ngd:order_seq_onsite",
+    "ngd:order_seq_preorder"
+  ],
+  "createdAt": "2026-09-19T07:58:20.159Z",
+  "migrationHash": "f5d871975ad26bb0697d99807e42cbf8a92200165e4c9284a5f63525e6018db5"
+}

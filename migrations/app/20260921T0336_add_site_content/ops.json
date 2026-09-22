@@ -1,0 +1,119 @@
+[
+  {
+    "id": "table.siteListItem",
+    "label": "Create table \"siteListItem\"",
+    "summary": "Creates table \"siteListItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "siteListItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"siteListItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteListItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"siteListItem\"",
+        "sql": "CREATE TABLE \"public\".\"siteListItem\" (\n  \"body\" text,\n  \"icon\" text,\n  \"id\" text NOT NULL,\n  \"imageUrl\" text,\n  \"section\" text NOT NULL,\n  \"sortOrder\" int4 NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"version\" int4 DEFAULT 1 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"siteListItem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteListItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.siteText",
+    "label": "Create table \"siteText\"",
+    "summary": "Creates table \"siteText\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "siteText"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"siteText\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteText\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"siteText\"",
+        "sql": "CREATE TABLE \"public\".\"siteText\" (\n  \"key\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"value\" text NOT NULL,\n  \"version\" int4 DEFAULT 1 NOT NULL,\n  PRIMARY KEY (\"key\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"siteText\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteText\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.siteListItem.siteListItem_section_sortOrder_idx_c9c27fde",
+    "label": "Create index \"siteListItem_section_sortOrder_idx_c9c27fde\" on \"siteListItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "siteListItem_section_sortOrder_idx_c9c27fde",
+        "table": "siteListItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"siteListItem_section_sortOrder_idx_c9c27fde\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteListItem_section_sortOrder_idx_c9c27fde\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"siteListItem_section_sortOrder_idx_c9c27fde\"",
+        "sql": "CREATE INDEX \"siteListItem_section_sortOrder_idx_c9c27fde\" ON \"public\".\"siteListItem\" (\"section\", \"sortOrder\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"siteListItem_section_sortOrder_idx_c9c27fde\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteListItem_section_sortOrder_idx_c9c27fde\""
+        ]
+      }
+    ]
+  }
+]

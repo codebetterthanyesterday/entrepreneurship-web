@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.pickupSlot.booked",
+    "label": "Add column \"booked\" to \"pickupSlot\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "booked",
+        "table": "pickupSlot"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"booked\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "pickupSlot",
+          "booked"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"booked\"",
+        "sql": "ALTER TABLE \"public\".\"pickupSlot\" ADD COLUMN \"booked\" int4 DEFAULT 0 NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"booked\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "pickupSlot",
+          "booked"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.pickupSlot.pickup_slot_booked_non_negative_d907661a",
+    "label": "Add check constraint \"pickup_slot_booked_non_negative_d907661a\" on \"pickupSlot\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "pickup_slot_booked_non_negative_d907661a",
+        "table": "pickupSlot"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"pickup_slot_booked_non_negative_d907661a\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pickup_slot_booked_non_negative_d907661a",
+          "public",
+          "\"public\".\"pickupSlot\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"pickup_slot_booked_non_negative_d907661a\"",
+        "sql": "ALTER TABLE \"public\".\"pickupSlot\" ADD CONSTRAINT \"pickup_slot_booked_non_negative_d907661a\" CHECK (booked >= 0)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"pickup_slot_booked_non_negative_d907661a\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pickup_slot_booked_non_negative_d907661a",
+          "public",
+          "\"public\".\"pickupSlot\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.pickupSlot.pickup_slot_booked_within_quota_8c716e51",
+    "label": "Add check constraint \"pickup_slot_booked_within_quota_8c716e51\" on \"pickupSlot\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "pickup_slot_booked_within_quota_8c716e51",
+        "table": "pickupSlot"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"pickup_slot_booked_within_quota_8c716e51\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pickup_slot_booked_within_quota_8c716e51",
+          "public",
+          "\"public\".\"pickupSlot\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"pickup_slot_booked_within_quota_8c716e51\"",
+        "sql": "ALTER TABLE \"public\".\"pickupSlot\" ADD CONSTRAINT \"pickup_slot_booked_within_quota_8c716e51\" CHECK (booked <= quota)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"pickup_slot_booked_within_quota_8c716e51\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pickup_slot_booked_within_quota_8c716e51",
+          "public",
+          "\"public\".\"pickupSlot\""
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,240 @@
+// use prisma-8
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  @@type("pg/text@1")
+  ADMIN = "ADMIN"
+  KASIR = "KASIR"
+  DAPUR = "DAPUR"
+}
+
+enum ProductPrepType {
+  @@type("pg/text@1")
+  READY_TO_SERVE = "READY_TO_SERVE"
+  NEEDS_PREP = "NEEDS_PREP"
+}
+
+enum OrderChannel {
+  @@type("pg/text@1")
+  PREORDER = "PREORDER"
+  ONSITE = "ONSITE"
+}
+
+enum OrderStatus {
+  @@type("pg/text@1")
+  CONFIRMED = "CONFIRMED"
+  IN_QUEUE = "IN_QUEUE"
+  IN_PROGRESS = "IN_PROGRESS"
+  READY = "READY"
+  DONE = "DONE"
+  CANCELLED = "CANCELLED"
+}
+
+enum PaymentStatus {
+  @@type("pg/text@1")
+  UNPAID = "UNPAID"
+  PAID = "PAID"
+}
+
+enum PaymentMethod {
+  @@type("pg/text@1")
+  CASH = "CASH"
+  QRIS = "QRIS"
+}
+
+enum StockReason {
+  @@type("pg/text@1")
+  INITIAL_STOCK = "INITIAL_STOCK"
+  ORDER_CONFIRMED = "ORDER_CONFIRMED"
+  ORDER_CANCELLED = "ORDER_CANCELLED"
+  MANUAL_ADJUST = "MANUAL_ADJUST"
+  WASTE = "WASTE"
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  password       String
+  role           UserRole
+  // isActive menggantikan penghapusan akun. Pengurus berganti tiap Market Day,
+  // tapi barisnya tidak bisa dihapus begitu namanya menempel di pesanan atau
+  // pergerakan stok — FK-nya menolak, dan riwayat yang kehilangan nama
+  // penanganannya jadi tidak bisa diaudit. Akun yang dimatikan tetap terbaca di
+  // riwayat, tapi ditolak saat login.
+  isActive       Boolean         @default(true)
+  // mustChangePassword menandai akun yang masih memakai password awal buatan
+  // script. Password awalnya sengaja mudah (<nama>123) supaya bisa dibagikan
+  // lisan ke delapan orang, dan itu berarti setiap anggota tim bisa menebak
+  // password anggota lain. Penanda ini yang memunculkan peringatan di panel
+  // sampai orangnya menggantinya sendiri.
+  mustChangePassword Boolean     @default(false)
+  createdAt      DateTime        @default(now())
+  handledOrders  Order[]         @relation("HandledOrders")
+  stockMovements StockMovement[]
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  sortOrder Int       @default(0)
+  products  Product[]
+}
+
+model Product {
+  id             String          @id @default(uuid())
+  name           String
+  description    String?
+  price          Int
+  stock          Int             @default(0)
+  prepType       ProductPrepType
+  imageUrl       String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      temporal.updatedAt()
+  categoryId     String?
+  category       Category?       @relation(fields: [categoryId], references: [id])
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@check(expression: "stock >= 0", name: "product_stock_non_negative")
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  orderNumber     String         @unique
+  channel         OrderChannel
+  status          OrderStatus    @default(CONFIRMED)
+  customerName    String
+  customerPhone   String?
+  pickupSlot      String?
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus  @default(UNPAID)
+  paymentProofUrl String?
+  cashReceived    Int?
+  totalAmount     Int
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       temporal.updatedAt()
+  queuedAt        DateTime?
+  startedAt       DateTime?
+  readyAt         DateTime?
+  completedAt     DateTime?
+  handledById     String?
+  handledBy       User?          @relation("HandledOrders", fields: [handledById], references: [id])
+  items           OrderItem[]
+  stockMovements  StockMovement[]
+
+  @@index([status])
+  @@index([channel])
+  @@index([createdAt])
+  @@index([channel, status])
+}
+
+model OrderItem {
+  id           String  @id @default(uuid())
+  quantity     Int
+  // priceAtOrder sebagai snapshot harga pada saat pesanan dibuat
+  priceAtOrder Int
+  subtotal     Int
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+model StockMovement {
+  id        String      @id @default(uuid())
+  // quantity bisa negatif untuk merepresentasikan pengurangan stok
+  quantity  Int
+  reason    StockReason
+  createdAt DateTime    @default(now())
+  productId String
+  product   Product     @relation(fields: [productId], references: [id])
+  orderId   String?
+  order     Order?      @relation(fields: [orderId], references: [id])
+  actorId   String?
+  actor     User?       @relation(fields: [actorId], references: [id])
+
+  @@index([productId])
+}
+
+model StoreSetting {
+  // @id @default(1) untuk memastikan baris tunggal
+  id                Int      @id @default(1)
+  preorderOpen      Boolean  @default(true)
+  boothOpen         Boolean  @default(true)
+  lowStockThreshold Int      @default(3)
+  qrisImageUrl      String?
+  adminWhatsapp     String?
+  updatedAt         temporal.updatedAt()
+}
+
+model PickupSlot {
+  id        String  @id @default(uuid())
+  // label, contoh "09.00 - 10.00"
+  label     String
+  quota     Int
+  // booked adalah penghitung pesanan aktif di slot ini. Dinaikkan lewat update
+  // bersyarat (booked < quota) supaya database yang mengevaluasi kuota, bukan
+  // aplikasi — menghitung baris lalu membandingkan bisa kebobolan saat dua
+  // pelanggan checkout bersamaan. Diturunkan lagi saat pesanan dibatalkan.
+  booked    Int     @default(0)
+  sortOrder Int
+  isActive  Boolean @default(true)
+
+  @@check(expression: "booked >= 0", name: "pickup_slot_booked_non_negative")
+  @@check(expression: "booked <= quota", name: "pickup_slot_booked_within_quota")
+}
+
+// ==========================================
+// PROFIL USAHA (CMS)
+// ==========================================
+
+model SiteText {
+  // key menamai satu blok teks yang bisa diedit, contoh "hero.title" atau
+  // "story.body". Nilai bawaannya ada di src/lib/site-content.ts, jadi halaman
+  // profil tetap tampil utuh di database yang baru — baris di sini hanya
+  // menimpa bawaan itu.
+  key       String @id
+  value     String
+  // version dinaikkan setiap kali blok disimpan, dan penyimpanan memakai UPDATE
+  // bersyarat pada versi yang dibaca editor. Dua admin yang mengedit blok sama
+  // bersamaan tidak saling menimpa tanpa sadar: yang kalah mengenai nol baris
+  // dan diberi tahu, bukan diam-diam menghapus tulisan orang lain. Versi 0
+  // berarti "belum ada baris", yaitu masih memakai nilai bawaan.
+  version   Int    @default(1)
+  updatedAt temporal.updatedAt()
+}
+
+model SiteListItem {
+  id        String  @id @default(uuid())
+  // section menentukan daftar mana baris ini milik, sekaligus kolom mana yang
+  // dipakai — satu tabel untuk tiga daftar yang bentuknya memang sama (gambar
+  // opsional, judul, satu baris keterangan, urutan):
+  //   "advantage" -> icon, title, body
+  //   "team"      -> title = nama, body = peran, imageUrl = foto
+  //   "gallery"   -> imageUrl, title = keterangan
+  section   String
+  icon      String?
+  imageUrl  String?
+  title     String
+  body      String?
+  // sortOrder ditukar antar dua baris saat item digeser naik/turun.
+  sortOrder Int
+  version   Int     @default(1)
+  updatedAt temporal.updatedAt()
+
+  @@index([section, sortOrder])
+}

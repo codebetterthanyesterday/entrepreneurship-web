@@ -1,0 +1,82 @@
+[
+  {
+    "id": "sequence.public.order_seq_preorder",
+    "invariantId": "ngd:order_seq_preorder",
+    "label": "Create sequence \"order_seq_preorder\"",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "dependency",
+        "name": "order_seq_preorder"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure sequence \"order_seq_preorder\" does not exist",
+        "sql": "SELECT NOT EXISTS (\n  SELECT 1\n  FROM \"pg_class\" AS \"c\"\n  INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\"\n  WHERE \"c\".\"relkind\" = 'S' AND \"c\".\"relname\" = $1 AND \"n\".\"nspname\" = $2\n) AS \"result\"",
+        "params": [
+          "order_seq_preorder",
+          "public"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create sequence \"order_seq_preorder\"",
+        "sql": "CREATE SEQUENCE \"public\".\"order_seq_preorder\" AS integer START WITH 1 INCREMENT BY 1 MINVALUE 1 NO MAXVALUE CACHE 1"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify sequence \"order_seq_preorder\" exists",
+        "sql": "SELECT EXISTS (\n  SELECT 1\n  FROM \"pg_class\" AS \"c\"\n  INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\"\n  WHERE \"c\".\"relkind\" = 'S' AND \"c\".\"relname\" = $1 AND \"n\".\"nspname\" = $2\n) AS \"result\"",
+        "params": [
+          "order_seq_preorder",
+          "public"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sequence.public.order_seq_onsite",
+    "invariantId": "ngd:order_seq_onsite",
+    "label": "Create sequence \"order_seq_onsite\"",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "dependency",
+        "name": "order_seq_onsite"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure sequence \"order_seq_onsite\" does not exist",
+        "sql": "SELECT NOT EXISTS (\n  SELECT 1\n  FROM \"pg_class\" AS \"c\"\n  INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\"\n  WHERE \"c\".\"relkind\" = 'S' AND \"c\".\"relname\" = $1 AND \"n\".\"nspname\" = $2\n) AS \"result\"",
+        "params": [
+          "order_seq_onsite",
+          "public"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create sequence \"order_seq_onsite\"",
+        "sql": "CREATE SEQUENCE \"public\".\"order_seq_onsite\" AS integer START WITH 1 INCREMENT BY 1 MINVALUE 1 NO MAXVALUE CACHE 1"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify sequence \"order_seq_onsite\" exists",
+        "sql": "SELECT EXISTS (\n  SELECT 1\n  FROM \"pg_class\" AS \"c\"\n  INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\"\n  WHERE \"c\".\"relkind\" = 'S' AND \"c\".\"relname\" = $1 AND \"n\".\"nspname\" = $2\n) AS \"result\"",
+        "params": [
+          "order_seq_onsite",
+          "public"
+        ]
+      }
+    ]
+  }
+]

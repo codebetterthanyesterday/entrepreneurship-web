@@ -1,0 +1,487 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+@theme {
+  /* ========================================================================
+     PLACEHOLDER IDENTITY — the whole visual brand is the eleven values below
+     ------------------------------------------------------------------------
+     The business has no name yet, so it has no agreed look either. This is a
+     placeholder that happens to be pleasant, not a decision.
+
+     To rebrand: change these eleven hex values, and the two typefaces named in
+     `src/app/layout.tsx`. Nothing outside those two files spells out a brand
+     colour, and nothing outside `src/lib/brand.ts` spells out a brand name.
+
+     The names are the ones the whole codebase already writes as Tailwind classes
+     (`bg-pink-deep`, `text-ink-soft`, `band-sand`), so they stay — renaming them
+     would touch a couple of hundred class strings for no gain. Read them as
+     roles: pink is the accent, cream is the surface, sand is the quiet field.
+
+     WHY THESE ARE LITERAL HEX, AND NOT ALIASES TO A `--brand-*` LAYER
+     A `--brand-*` indirection reads better and quietly breaks the app. Tailwind
+     v4 bakes an opacity modifier into a literal (`bg-warn-soft/70` compiles to
+     `#fff0d9b3`), but when the token is a `var()` it cannot, and it emits the
+     fully opaque colour with no warning. That silently turned eleven things
+     solid, including the sheet's `bg-ink/40` scrim and the stepper's
+     `text-ink-soft/40` disabled state. `palette-contrast.test.ts` now refuses a
+     `var()` here so the mistake cannot come back.
+
+     Two rules if you replace them:
+       - Keep the roles. `pink` is decorative and never carries text; every
+         interactive surface uses `pink-deep`. Swapping those round is what broke
+         the palette the first time.
+       - Run `src/lib/__tests__/palette-contrast.test.ts`. It reads these values
+         straight out of this file, so a colour retuned for looks that falls under
+         its threshold fails the suite instead of shipping.
+     ======================================================================== */
+
+  /*
+   * The accent fill. Decorative only — bars, dots, chart columns, timeline
+   * markers. Far too light to carry white text (2.59:1), so anything with a
+   * label on it uses --color-pink-deep. The one exception is the dark band,
+   * where it reaches 6.58:1 and becomes the accent *text* colour.
+   */
+  --color-pink: #f875aa;
+  /*
+   * The accent text is allowed near: white on it reads 5.61:1, and it reads
+   * 5.61:1 on white, 5.28:1 on cream and 4.70:1 on pink-soft. Every interactive
+   * accent surface in the app is this one.
+   */
+  --color-pink-deep: #b83370;
+  --color-pink-soft: #ffe4ef;
+
+  /* The page: a white with a trace of the accent in it. */
+  --color-cream: #fff6f6;
+  /*
+   * The quiet field, between cream and the dark band. Three tones rather than
+   * two is what gives a page a rhythm to alternate — light, quiet, dark —
+   * without introducing a colour that fights the accent.
+   */
+  --color-sand: #f5ede6;
+  --color-sand-line: #e4d7cc;
+  /* Hairlines on the light surfaces. */
+  --color-line: #f2dde4;
+
+  /* Body text. */
+  --color-ink: #4a2b38;
+  /* 5.98:1 on cream, 6.36:1 on white — the old #8D7079 was 4.18:1 and failed. */
+  --color-ink-soft: #74585f;
+  /*
+   * The dark field, for a hero and a closing band, so that scrolling a page
+   * moves between rooms instead of down one list. Deliberately warm — the ink
+   * taken further down, not a neutral black.
+   */
+  --color-ink-deep: #2a1620;
+  /* Hairlines and dividers on the dark field. */
+  --color-ink-line: #4a3540;
+
+  /* ===================== end of the identity block ======================= */
+
+  /*
+   * Status colours — functional, not brand.
+   *
+   * Blue carries information and the focus ring, green means done, amber means
+   * being prepared, red means stop. A rebrand leaves these alone; they sit
+   * outside the block above to say so.
+   */
+  --color-sky: #aedefc;
+  --color-sky-deep: #2c6b9e;
+  --color-sky-soft: #e8f4fe;
+  --color-ok: #277459;
+  --color-ok-soft: #e3f5ee;
+  --color-warn: #8a5814;
+  --color-warn-soft: #fff0d9;
+  --color-hot: #b03f26;
+  --color-hot-soft: #ffede8;
+
+  /* Breakpoints */
+  --breakpoint-tablet: 640px;
+  --breakpoint-desktop: 1040px;
+
+  /* Fonts */
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+
+  /* Animations */
+  --animate-slide-up: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-modal-in: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in: fade-in 0.2s ease-out;
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/*
+ * Anything animated with Tailwind's `motion-safe:` variant already sits out
+ * when the reader asks for less motion. This covers the rest — the sheet and
+ * modal transitions, which are written without the variant — so no screen in
+ * the app animates against that preference.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * One focus ring for the whole app.
+ *
+ * Every interactive primitive used to set `focus:outline-none` and put nothing
+ * back, which left the keyboard path invisible on every button, chip and
+ * switch in the app. The ring is declared once here so a component cannot
+ * quietly opt out of it again.
+ *
+ * `:focus-visible`, not `:focus`, so a mouse tap on a button does not leave a
+ * ring behind it. sky-deep rather than the lighter sky: the ring has to reach
+ * 3:1 against what is behind it, and #AEDEFC manages only 1.43:1 on white.
+ * The 2px offset puts the page background between the element and the ring, so
+ * the ring keeps its contrast even on a pink or dark-ink button.
+ *
+ * The colour comes through a variable because the offset cuts both ways: on the
+ * profile's dark band the 2px gap shows ink-deep, against which sky-deep manages
+ * only 3.06:1 — passing, but with nothing to spare. `.band-dark` below swaps in
+ * the lighter sky, which reaches 11.88:1 there.
+ */
+:root {
+  --focus-ring: var(--color-sky-deep);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/*
+ * The navigation's measurements, in one place.
+ *
+ * `NavBar` changes shape at 640px: below it the bar is fixed to the bottom of
+ * the screen, above it the same list becomes a row under the header. Four other
+ * things have to agree with whichever shape is on screen, and none of them can
+ * see the component:
+ *
+ *   - the page's bottom padding, so content does not end underneath the bar;
+ *   - the sticky action bars (the cashier's bill, the cart and checkout totals),
+ *     which share the bottom edge and have to sit on top of the bar rather than
+ *     behind it;
+ *   - the sticky desktop side panels, which stack below the header *and* the
+ *     navigation row;
+ *   - `scroll-padding-top`, because Next skips sticky and fixed elements when it
+ *     picks something to scroll to, so without it a navigation lands with the
+ *     top of the page hidden behind the header.
+ *
+ * Declaring the two heights here is what keeps those four from each carrying
+ * their own guess at the number.
+ */
+:root {
+  /* The sticky identity header: `h-16`. */
+  --header-height: 4rem;
+  /* The navigation row, which only exists once it has joined the header. */
+  --nav-row-height: 0px;
+  /* The fixed bottom bar, home-indicator inset included. */
+  --nav-bar-height: calc(62px + env(safe-area-inset-bottom));
+  /*
+   * The bottom action bars sit directly on top of the fixed bar, which already
+   * holds the home-indicator inset, so theirs collapses to a plain 12px.
+   */
+  --action-bar-inset: 12px;
+  /* Everything sticky at the top of the page stacks below this. */
+  --page-top: calc(var(--header-height) + var(--nav-row-height));
+}
+
+@media (min-width: 640px) {
+  :root {
+    /* `tablet:py-2` around a `tablet:min-h-[44px]` pill, plus its 1.5px border. */
+    --nav-row-height: 62px;
+    /* The bottom edge belongs to the page again. */
+    --nav-bar-height: 0px;
+    --action-bar-inset: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+html {
+  scroll-padding-top: var(--page-top);
+}
+
+/* ==========================================================================
+   The editorial layer
+   --------------------------------------------------------------------------
+   Everything below serves the company profile at "/". It is written as a small
+   set of named classes rather than as Tailwind utilities repeated down the page,
+   because these are type and layout *decisions* — a display size, the rhythm of
+   a band, the way a section arrives — and a decision that appears in eight
+   places should be spelled once.
+
+   Tokens are global on purpose: only "/" uses them today, and the rest of the
+   public side can adopt them later without re-litigating the scale.
+   ========================================================================== */
+
+:root {
+  /*
+   * A display scale with real contrast in it, not three sizes half a step apart.
+   * `clamp` rather than breakpoint jumps, so the type is continuous from a 320px
+   * phone to a wide desktop — the phone is the design target, and the large end
+   * is the variation.
+   */
+  --display-1: clamp(2.5rem, 8.5vw, 4.75rem);
+  --display-2: clamp(1.75rem, 4.2vw, 2.75rem);
+  --display-3: clamp(1.25rem, 2.2vw, 1.5rem);
+  --lede: clamp(1rem, 1.5vw, 1.1875rem);
+
+  /*
+   * The catalogue's sticky category bar: `py-3` around a 44px chip plus its 1px
+   * border. The desktop cart panel sticks below it, so the number has to be
+   * written down rather than guessed — an overlap here covers the panel's own
+   * heading. `Catalog` sets `--filter-bar` to this or to 0px depending on whether
+   * there are any categories to filter by.
+   */
+  --filter-bar-height: 69px;
+
+  /* Band padding. The vertical rhythm of the whole page comes from this pair. */
+  --band-y: clamp(3.5rem, 9vw, 7rem);
+  --band-y-tight: clamp(2.5rem, 5vw, 4rem);
+
+  /*
+   * A film of noise over the dark band. Without it a large flat dark area reads
+   * as a coloured rectangle; with it, it reads as a surface. Generated here
+   * rather than shipped as a file so it costs no request.
+   */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------- typography */
+
+/*
+ * The small line above a heading. Uppercase at this size needs the extra
+ * letter-spacing to stay readable, and the weight keeps it from disappearing.
+ */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.display-1 {
+  font-family: var(--font-display);
+  font-size: var(--display-1);
+  font-weight: 600;
+  /* Under 1 — large display type sets its own leading, and the default 1.6 from
+     `body` would leave the hero looking like a paragraph. */
+  line-height: 0.96;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.display-2 {
+  font-family: var(--font-display);
+  font-size: var(--display-2);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+
+.display-3 {
+  font-family: var(--font-display);
+  font-size: var(--display-3);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  font-size: var(--lede);
+  line-height: 1.65;
+  /* Prose stops at a comfortable measure however wide the screen gets. */
+  max-width: 46ch;
+}
+
+/* A hairline used as punctuation between an eyebrow and its heading. */
+.rule {
+  display: block;
+  width: 2.5rem;
+  height: 2px;
+  border: 0;
+  background-color: currentColor;
+  opacity: 0.55;
+}
+
+/* ---------------------------------------------------------------- the bands */
+
+/*
+ * A band is a full-width field of colour with its own inner measure.
+ *
+ * Full-bleed is why `main` in the public layout carries no width or padding of
+ * its own any more — each page brings its own container. That is what lets one
+ * section's colour run edge to edge while the text inside it still lines up with
+ * every other section.
+ */
+.band {
+  padding-top: var(--band-y);
+  padding-bottom: var(--band-y);
+}
+
+.band-tight {
+  padding-top: var(--band-y-tight);
+  padding-bottom: var(--band-y-tight);
+}
+
+/* The inner measure. Matches the header's container, so nothing shifts. */
+.band-inner {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+/* A narrower measure for reading, used by the story section. */
+.band-inner-narrow {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+.band-dark {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-ink-deep);
+  color: #fff;
+  /* See the focus-ring note above: the 2px offset shows this band's own colour. */
+  --focus-ring: var(--color-sky);
+  overflow: hidden;
+}
+
+/* The grain. Every dark field gets it — a large flat dark area reads as a
+   coloured rectangle without it, and as a surface with it. */
+.band-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--grain);
+  opacity: 0.055;
+  pointer-events: none;
+}
+
+/*
+ * The glow is a separate modifier, and only the hero wears it.
+ *
+ * Put on `.band-dark` itself it appeared three times down one page — the closing
+ * band and the footer are dark too — and a highlight that repeats is not a
+ * highlight. Used once, at the top, it reads as light falling on the page.
+ */
+.band-glow::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -30%;
+  right: -10%;
+  width: min(70vw, 34rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(248, 117, 170, 0.22), transparent 68%);
+  pointer-events: none;
+}
+
+.band-sand {
+  background-color: var(--color-sand);
+}
+
+.band-cream {
+  background-color: var(--color-cream);
+}
+
+/* ------------------------------------------------------------------ reveal */
+
+/*
+ * Sections arrive as they enter the viewport.
+ *
+ * Three fallbacks, because content that never appears is a far worse bug than
+ * content that appears without animating:
+ *   - `prefers-reduced-motion` shows everything outright;
+ *   - a `<noscript>` rule in the page does the same when JS never runs;
+ *   - the observer component itself reveals immediately if
+ *     IntersectionObserver is missing.
+ */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal][data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * The story section's prose.
+ *
+ * Its first paragraph is set larger than the rest — an old editorial habit that
+ * gives a block of text a way in, and the cheapest kind of hierarchy there is.
+ * The paragraphs themselves are the `<span class="block">` elements that
+ * `EditableText` emits for a multi-paragraph block.
+ */
+.story-prose {
+  font-size: var(--lede);
+  line-height: 1.7;
+  max-width: 60ch;
+}
+
+.story-prose > span:first-child {
+  font-size: clamp(1.125rem, 1.9vw, 1.375rem);
+  line-height: 1.55;
+}
