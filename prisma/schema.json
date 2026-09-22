@@ -1152,6 +1152,13 @@
           },
           "StoreSetting": {
             "fields": {
+              "accentChoiceEnabled": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "adminWhatsapp": {
                 "nullable": true,
                 "type": {
@@ -1205,6 +1212,9 @@
             "relations": {},
             "storage": {
               "fields": {
+                "accentChoiceEnabled": {
+                  "column": "accentChoiceEnabled"
+                },
                 "adminWhatsapp": {
                   "column": "adminWhatsapp"
                 },
@@ -2173,6 +2183,15 @@
             },
             "storeSetting": {
               "columns": {
+                "accentChoiceEnabled": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "adminWhatsapp": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -2382,7 +2401,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "40f8bba6ee2a9ff06cfabcc921a2d30fc0f72eb343f74597c53fd668d602c732"
+    "storageHash": "ff967b24ec21753de250bf25465bc1677cffd2fbbc3327859c321abb53cdc575"
   },
   "execution": {
     "executionHash": "b161f9521a5978b916b7c61a1b6310930ffc583198ca50f99589e94ff65ff4da",

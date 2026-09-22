@@ -178,6 +178,10 @@ model StoreSetting {
   lowStockThreshold Int      @default(3)
   qrisImageUrl      String?
   adminWhatsapp     String?
+  // Apakah pengunjung baru ditanya "cewek atau cowok?" dan melihat saklar
+  // warna di header. Mati: pengunjung baru tetap pink; yang sudah memilih
+  // tetap memakai pilihannya (cookie `accent`), hanya tidak bisa menggantinya.
+  accentChoiceEnabled Boolean @default(true)
   updatedAt         temporal.updatedAt()
 }
 

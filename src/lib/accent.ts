@@ -61,5 +61,26 @@ export function isAutomatedAgent(userAgent: string | null | undefined): boolean 
   return !!userAgent && AUTOMATED_AGENT.test(userAgent);
 }
 
+/**
+ * Whether this request should be greeted with the question.
+ *
+ * Only when the admin has the feature on (`StoreSetting.accentChoiceEnabled`),
+ * the visitor has not answered yet, and the visitor is a person. With the
+ * feature off a visitor who already answered keeps their mood — the layout
+ * still passes their cookie through — but nobody new is asked, and the header
+ * switch is not drawn.
+ */
+export function shouldAskAccent({
+  enabled,
+  accent,
+  userAgent,
+}: {
+  enabled: boolean;
+  accent: Accent | null;
+  userAgent: string | null | undefined;
+}): boolean {
+  return enabled && accent === null && !isAutomatedAgent(userAgent);
+}
+
 /** Name for the cross-tab channel, so a choice made in one tab repaints the rest. */
 export const ACCENT_CHANNEL = "accent";

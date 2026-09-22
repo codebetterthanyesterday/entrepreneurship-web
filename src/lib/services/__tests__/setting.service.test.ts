@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { ValidationError } from "@/lib/errors";
-import { upsertPickupSlot } from "@/lib/services/setting.service";
+import { getSettings, updateSettings, upsertPickupSlot } from "@/lib/services/setting.service";
 import { createOrder } from "@/lib/services/order.service";
 import {
   closeDatabase,
@@ -77,5 +77,24 @@ describe("upsertPickupSlot", () => {
     const created = await upsertPickupSlot({ label: "13.00 - 14.00", quota: 8 });
     expect(created.booked).toBe(0);
     expect(created.quota).toBe(8);
+  });
+});
+
+describe("accentChoiceEnabled", () => {
+  it("is on for a fresh store, so the feature behaves as it did before the switch", async () => {
+    expect((await getSettings()).accentChoiceEnabled).toBe(true);
+  });
+
+  it("is turned off and on by the admin without touching the other settings", async () => {
+    const before = await getSettings();
+
+    await updateSettings({ accentChoiceEnabled: false });
+    const off = await getSettings();
+    expect(off.accentChoiceEnabled).toBe(false);
+    expect(off.preorderOpen).toBe(before.preorderOpen);
+    expect(off.boothOpen).toBe(before.boothOpen);
+
+    await updateSettings({ accentChoiceEnabled: true });
+    expect((await getSettings()).accentChoiceEnabled).toBe(true);
   });
 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const updateSettingsSchema = z.object({
   preorderOpen: z.boolean().optional(),
   boothOpen: z.boolean().optional(),
+  accentChoiceEnabled: z.boolean().optional(),
   lowStockThreshold: z
     .number()
     .int("Ambang stoknya harus angka bulat")

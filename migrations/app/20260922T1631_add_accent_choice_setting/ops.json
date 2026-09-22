@@ -1,0 +1,44 @@
+[
+  {
+    "id": "column.public.storeSetting.accentChoiceEnabled",
+    "label": "Add column \"accentChoiceEnabled\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "accentChoiceEnabled",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"accentChoiceEnabled\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "accentChoiceEnabled"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"accentChoiceEnabled\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"accentChoiceEnabled\" bool DEFAULT true NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"accentChoiceEnabled\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "accentChoiceEnabled"
+        ]
+      }
+    ]
+  }
+]

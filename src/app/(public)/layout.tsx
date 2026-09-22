@@ -9,7 +9,7 @@ import { EditModeBar } from "@/components/site/edit-mode";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AccentRoot } from "@/components/site/accent-root";
 import { AccentSwitch } from "@/components/site/accent-switch";
-import { ACCENT_COOKIE, isAutomatedAgent, parseAccent } from "@/lib/accent";
+import { ACCENT_COOKIE, parseAccent, shouldAskAccent } from "@/lib/accent";
 
 export default async function PublicLayout({
   children,
@@ -30,8 +30,15 @@ export default async function PublicLayout({
   // The colour mood is read here, and only here, so the staff screens never
   // take it on — see `src/lib/accent.ts`. No cookie means the visitor has not
   // been asked yet; a crawler is never asked, or it would index the question.
+  // The admin can switch the whole feature off: a visitor who already answered
+  // keeps their mood, but nobody new is asked and the header switch goes away.
+  const accentChoice = settings.accentChoiceEnabled;
   const accent = parseAccent(jar.get(ACCENT_COOKIE)?.value);
-  const ask = accent === null && !isAutomatedAgent(requestHeaders.get("user-agent"));
+  const ask = shouldAskAccent({
+    enabled: accentChoice,
+    accent,
+    userAgent: requestHeaders.get("user-agent"),
+  });
 
   return (
     <AccentRoot
@@ -67,7 +74,7 @@ export default async function PublicLayout({
             </p>
           </div>
 
-          <AccentSwitch />
+          {accentChoice && <AccentSwitch />}
         </div>
       </header>
 

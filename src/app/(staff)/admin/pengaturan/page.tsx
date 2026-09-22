@@ -34,7 +34,11 @@ export default async function AdminSettingsPage() {
         <p className="text-sm text-ink-soft">Atur kanal jualan, slot ambil, dan detail toko</p>
       </div>
 
-      <StoreToggles preorderOpen={settings.preorderOpen} boothOpen={settings.boothOpen} />
+      <StoreToggles
+        preorderOpen={settings.preorderOpen}
+        boothOpen={settings.boothOpen}
+        accentChoiceEnabled={settings.accentChoiceEnabled}
+      />
 
       <PickupSlotManager slots={slotItems} />
 

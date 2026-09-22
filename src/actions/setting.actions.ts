@@ -24,6 +24,9 @@ function revalidateStore() {
   revalidatePath("/");
   revalidatePath("/menu");
   revalidatePath("/checkout");
+  // The colour-mood switch lives in the public layout, so every customer page
+  // has to be re-asked — not only the three above.
+  revalidatePath("/", "layout");
 }
 
 /** Empty strings from an optional text input are stored as NULL. */

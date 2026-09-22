@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accentCookie, isAutomatedAgent, parseAccent } from "@/lib/accent";
+import { accentCookie, isAutomatedAgent, parseAccent, shouldAskAccent } from "@/lib/accent";
 
 describe("parseAccent", () => {
   it("accepts the two moods", () => {
@@ -52,5 +52,22 @@ describe("isAutomatedAgent", () => {
 
   it("asks when there is no user agent at all", () => {
     expect(isAutomatedAgent(null)).toBe(false);
+  });
+});
+
+describe("shouldAskAccent", () => {
+  const person = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1";
+
+  it("asks a new visitor while the admin has the feature on", () => {
+    expect(shouldAskAccent({ enabled: true, accent: null, userAgent: person })).toBe(true);
+  });
+
+  it("asks nobody while the admin has it off", () => {
+    expect(shouldAskAccent({ enabled: false, accent: null, userAgent: person })).toBe(false);
+  });
+
+  it("never asks twice, or asks a crawler", () => {
+    expect(shouldAskAccent({ enabled: true, accent: "blue", userAgent: person })).toBe(false);
+    expect(shouldAskAccent({ enabled: true, accent: null, userAgent: "Googlebot/2.1" })).toBe(false);
   });
 });
