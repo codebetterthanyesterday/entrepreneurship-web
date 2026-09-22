@@ -9,6 +9,8 @@ import { useCart } from "@/hooks/use-cart";
 import { submitPreorderAction } from "@/actions/order.actions";
 import { cn } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
+import { JourneyEmpty, JourneyHero } from "./journey";
+import { CheckoutArt } from "./journey-art";
 import type { PublicPickupSlot } from "@/lib/queries/slot.query";
 import type { PublicProduct } from "@/types/admin";
 import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
@@ -94,15 +96,13 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
   };
 
   const heading = (
-    <section className="band-tight band-dark">
-      <div className="band-inner">
-        <p className="eyebrow text-pink">Checkout &middot; langkah terakhir</p>
-        <h1 className="display-2 mt-3 text-white">Dikit lagi selesai</h1>
-        <p className="lede mt-4 text-white/70">
-          Isi datanya biar kami nggak salah panggil pas kamu ambil.
-        </p>
-      </div>
-    </section>
+    <JourneyHero
+      step="data"
+      eyebrow="Checkout · langkah terakhir"
+      title="Dikit lagi selesai"
+      lede="Isi datanya biar kami nggak salah panggil pas kamu ambil."
+      art={<CheckoutArt />}
+    />
   );
 
   if (!cart.isReady) {
@@ -126,17 +126,15 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
         {heading}
         <section className="band band-cream">
           <div className="band-inner">
-            <div className="max-w-[40ch]">
-              <p className="eyebrow text-pink-deep">Keranjang kosong</p>
-              <p className="display-3 mt-3 text-ink">Nggak ada yang bisa dikirim dulu.</p>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-ink-soft">
-                Pilih menunya dulu, baru isi data di sini.
-              </p>
-
+            <JourneyEmpty
+              eyebrow="Keranjang kosong"
+              title="Nggak ada yang bisa dikirim dulu."
+              body="Pilih menunya dulu, baru isi data di sini."
+            >
               <ButtonLink href="/menu" className="mt-7">
                 Lihat menu
               </ButtonLink>
-            </div>
+            </JourneyEmpty>
           </div>
         </section>
       </>

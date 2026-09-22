@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn, formatRupiah } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { FoodArt, foodKindOf } from "./journey-art";
 import type { PublicProduct } from "@/types/admin";
 
 export interface ProductCardProps {
@@ -40,7 +41,11 @@ export function ProductCard({ product, remaining, onSelect }: ProductCardProps) 
         isOut ? "cursor-default opacity-50" : "cursor-pointer",
       )}
     >
-      <Thumbnail product={product} isOut={isOut} />
+      <ProductVisual
+        product={product}
+        dimmed={isOut}
+        className="h-[84px] w-[84px] rounded-[18px]"
+      />
 
       <span className="flex-1 min-w-0">
         <span className="flex items-baseline gap-3">
@@ -78,30 +83,38 @@ export function ProductCard({ product, remaining, onSelect }: ProductCardProps) 
 }
 
 /**
- * The picture, or a stand-in for it.
+ * The picture, or a stand-in for it — shared by the menu row, the product sheet
+ * and the cart's lines, so a product looks the same wherever it appears.
  *
  * Most products have no `imageUrl` — there is no upload pipeline in this project,
  * only URLs an admin pastes in — so the no-image case is the common one and has
- * to look deliberate. A sand block with the initial set in the display face reads
- * as a choice; a grey box with an icon in it reads as a missing file.
+ * to look deliberate. It is drawn: a cup for a drink, a doughnut for the rest,
+ * on the soft accent (see `foodKindOf`).
  */
-function Thumbnail({ product, isOut }: { product: PublicProduct; isOut: boolean }) {
-  const shared = "w-[84px] h-[84px] flex-none rounded-[16px] overflow-hidden";
-
+export function ProductVisual({
+  product,
+  className,
+  dimmed,
+}: {
+  product: Pick<PublicProduct, "name" | "imageUrl" | "categoryName">;
+  className?: string;
+  /** Sold out: the picture goes quiet with the rest of the row. */
+  dimmed?: boolean;
+}) {
   if (product.imageUrl) {
     return (
       // The frame clips; the image inside it is what scales. Putting
       // `overflow-hidden` and `scale` on the same element clips nothing, because
       // an element's own overflow never contains its own transform.
-      <span className={shared}>
+      <span className={cn("block flex-none overflow-hidden", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.imageUrl}
           alt=""
           loading="lazy"
           className={cn(
-            "w-full h-full object-cover transition-transform duration-500 motion-reduce:transition-none",
-            !isOut && "group-hover:scale-[1.04]",
+            "h-full w-full object-cover transition-transform duration-500 motion-reduce:transition-none",
+            !dimmed && "group-hover:scale-[1.04]",
           )}
         />
       </span>
@@ -112,12 +125,13 @@ function Thumbnail({ product, isOut }: { product: PublicProduct; isOut: boolean 
     <span
       aria-hidden="true"
       className={cn(
-        shared,
-        "bg-sand flex items-center justify-center",
-        "font-[family-name:var(--font-display)] text-3xl font-semibold text-pink-deep",
+        // Padding in fixed units: a percentage resolves against the *parent's*
+        // width, which on a wide row ate the whole tile and left the art 0×0.
+        "food-tile flex flex-none items-center justify-center bg-pink-soft p-3",
+        className,
       )}
     >
-      {product.name.charAt(0).toUpperCase()}
+      <FoodArt kind={foodKindOf(product)} />
     </span>
   );
 }

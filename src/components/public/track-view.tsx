@@ -17,6 +17,7 @@ import { OrderTimeline } from "./order-timeline";
 import { OrderReceipt, SummaryPanel } from "./order-receipt";
 import { OrderStage, StageArt } from "./order-stage";
 import { Confetti } from "./confetti";
+import { JourneyHero } from "./journey";
 import type { OrderStatus } from "@/types/order";
 import type { TrackedOrder } from "@/types/order-view";
 
@@ -174,21 +175,13 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
   return (
     <>
       {/* ------------------------------------------------------- heading ---- */}
-      <section className="band-tight band-dark">
-        <div className="band-inner stage-enter flex items-center justify-between gap-8">
-          <div>
-            <p className="eyebrow text-pink">Lacak</p>
-            <h1 className="display-2 mt-3 text-white">Pesanan kamu sampai mana?</h1>
-            <p className="lede mt-4 text-white/70">
-              Masukin nomor pesanan dan 4 digit terakhir WhatsApp kamu.
-            </p>
-          </div>
-
-          <div className="hidden h-36 w-36 flex-none tablet:block" aria-hidden="true">
-            <StageArt id="masuk" />
-          </div>
-        </div>
-      </section>
+      <JourneyHero
+        step="track"
+        eyebrow="Lacak"
+        title="Pesanan kamu sampai mana?"
+        lede="Masukin nomor pesanan dan 4 digit terakhir WhatsApp kamu."
+        art={<StageArt id="masuk" />}
+      />
 
       {/* The form sits on the light band, not the dark one: the fields are white,
           and their labels are ink — a working surface, not a statement. */}

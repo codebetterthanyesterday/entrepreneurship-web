@@ -5,6 +5,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatRupiah } from "@/lib/utils";
+import { ProductVisual } from "./product-card";
 import type { PublicProduct } from "@/types/admin";
 
 export interface ProductDetailSheetProps {
@@ -12,7 +13,8 @@ export interface ProductDetailSheetProps {
   /** Stock left after what is already in the cart — the cap for this sheet. */
   remaining: number;
   onClose: () => void;
-  onAdd: (productId: string, quantity: number) => void;
+  /** `origin` is the add button's box, for the flight to the cart. */
+  onAdd: (productId: string, quantity: number, origin?: DOMRect) => void;
 }
 
 export function ProductDetailSheet({
@@ -30,15 +32,20 @@ export function ProductDetailSheet({
   return (
     <Sheet open onClose={onClose} title={product.name}>
       <div className="flex flex-col gap-4 pb-2">
-        {product.description && <p className="text-sm text-ink-soft -mt-1">{product.description}</p>}
+        <ProductVisual
+          product={product}
+          className="h-44 w-full rounded-[20px] p-7 tablet:h-52"
+        />
+
+        {product.description && (
+          <p className="text-sm text-ink-soft -mt-1">{product.description}</p>
+        )}
 
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={product.prepType === "NEEDS_PREP" ? "prep" : "info"}>
             {product.prepType === "NEEDS_PREP" ? "Diracik dadakan" : "Siap ambil"}
           </Badge>
-          <span
-            className={cn("text-[11.5px] font-semibold", isLow ? "text-hot" : "text-ink-soft")}
-          >
+          <span className={cn("text-[11.5px] font-semibold", isLow ? "text-hot" : "text-ink-soft")}>
             Sisa {remaining} porsi
           </span>
         </div>
@@ -71,15 +78,15 @@ export function ProductDetailSheet({
         </div>
 
         {quantity >= max && remaining > 0 && (
-          <p className="text-xs text-ink-soft text-center -mt-2">
-            Sisa stoknya tinggal segini, ya
-          </p>
+          <p className="text-xs text-ink-soft text-center -mt-2">Sisa stoknya tinggal segini, ya</p>
         )}
 
         <Button
           variant="primary"
           fullWidth
-          onClick={() => onAdd(product.id, quantity)}
+          onClick={(event) =>
+            onAdd(product.id, quantity, event.currentTarget.getBoundingClientRect())
+          }
           className="flex-col gap-0.5 py-2"
         >
           <span>Masukin keranjang</span>

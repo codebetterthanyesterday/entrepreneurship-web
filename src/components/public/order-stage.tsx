@@ -126,12 +126,25 @@ function RingMark({ step, index, count }: { step: TimelineStep; index: number; c
 // ---------------------------------------------------------- the pictures
 
 /** A four-pointed sparkle, its sides curved in toward the centre. */
-function Sparkle({ x, y, size, delay }: { x: number; y: number; size: number; delay: number }) {
+export function Sparkle({
+  x,
+  y,
+  size,
+  delay,
+  className = "fill-white",
+}: {
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  /** White on the dark band; a light surface passes an accent fill instead. */
+  className?: string;
+}) {
   const s = size;
   return (
     <path
       d={`M${x} ${y - s}Q${x} ${y} ${x + s} ${y}Q${x} ${y} ${x} ${y + s}Q${x} ${y} ${x - s} ${y}Q${x} ${y} ${x} ${y - s}Z`}
-      className="stage-twinkle fill-white"
+      className={cn("stage-twinkle", className)}
       style={{ "--delay": `${delay}ms` } as React.CSSProperties}
     />
   );

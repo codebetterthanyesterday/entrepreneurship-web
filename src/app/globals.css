@@ -976,3 +976,86 @@ html:has(.accent-welcome) {
     transform: translate(calc(-50% + var(--x)), var(--fall)) rotate(var(--spin)) scale(0.9);
   }
 }
+
+/* ==========================================================================
+   The ordering journey
+   --------------------------------------------------------------------------
+   The menu, cart and checkout, brought into the tracker's language: the art in
+   `journey-art.tsx`, the rail in `journey.tsx`, and the dot that flies to the
+   cart (`src/lib/fly-to-cart.ts`).
+   ========================================================================== */
+
+/* The checkout ticket's lines write themselves out, pause, and start again. */
+.art-write {
+  stroke-dasharray: 1;
+  animation: art-write 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite both;
+}
+
+@keyframes art-write {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  30%,
+  85% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.art-scribble {
+  transform-origin: 20% 90% !important;
+  animation: art-scribble 0.9s ease-in-out infinite;
+}
+
+@keyframes art-scribble {
+  50% {
+    transform: rotate(-7deg) translateX(-3px);
+  }
+}
+
+.art-sway {
+  transform-origin: 50% 0% !important;
+  animation: art-sway 3.4s ease-in-out infinite;
+}
+
+@keyframes art-sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+/* A product's picture tilts when the pointer finds it. */
+.food-tile svg {
+  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .food-tile svg {
+  transform: rotate(-6deg) scale(1.06);
+}
+
+/* The navigation's count pops each time it changes. */
+.nav-count-pop {
+  animation: stage-pop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* The item on its way to the cart. Positioned by `flyToCart`. */
+.fly-dot {
+  position: fixed;
+  z-index: 70;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 9999px;
+  background-color: var(--color-pink-deep);
+  box-shadow:
+    0 0 0 3px #fff,
+    0 8px 18px -4px color-mix(in srgb, var(--color-pink-deep) 60%, transparent);
+  pointer-events: none;
+}

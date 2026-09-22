@@ -6,6 +6,9 @@ import { Stepper } from "@/components/ui/stepper";
 import { useCart } from "@/hooks/use-cart";
 import { formatRupiah } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
+import { JourneyEmpty, JourneyHero } from "./journey";
+import { CartArt } from "./journey-art";
+import { ProductVisual } from "./product-card";
 import type { PublicProduct } from "@/types/admin";
 
 export interface CartViewProps {
@@ -19,14 +22,14 @@ export function CartView({ products, preorderOpen }: CartViewProps) {
   return (
     <>
       {/* ------------------------------------------------------- heading ---- */}
-      <section className="band-tight band-dark">
-        <div className="band-inner">
-          <p className="eyebrow text-pink">Keranjang</p>
-          <h1 className="display-2 mt-3 text-white">Cek dulu sebelum lanjut</h1>
-        </div>
-      </section>
+      <JourneyHero
+        step="cart"
+        eyebrow="Keranjang"
+        title="Cek dulu sebelum lanjut"
+        art={<CartArt count={cart.isReady ? cart.itemCount : 0} />}
+      />
 
-      <CartBody cart={cart} preorderOpen={preorderOpen} />
+      <CartBody cart={cart} products={products} preorderOpen={preorderOpen} />
     </>
   );
 }
@@ -38,9 +41,12 @@ export function CartView({ products, preorderOpen }: CartViewProps) {
  */
 function CartBody({
   cart,
+  products,
   preorderOpen,
 }: {
   cart: ReturnType<typeof useCart>;
+  /** The full rows, for each line's picture — the cart itself keeps only ids. */
+  products: PublicProduct[];
   preorderOpen: boolean;
 }) {
   // Before the browser's cart has been read there is nothing to show yet, and
@@ -65,26 +71,24 @@ function CartBody({
           {/*
             Written for this page rather than taken from the shared "no data"
             component. An empty cart is not a missing record — it is a moment to
-            point somebody at the menu, and it deserves the page's own voice
-            instead of a large centred emoji.
+            point somebody at the menu, and it deserves the page's own voice.
           */}
-          <div className="max-w-[40ch]">
-            <p className="eyebrow text-pink-deep">Masih kosong</p>
-            <p className="display-3 mt-3 text-ink">Belum ada apa-apa di keranjang kamu.</p>
-            <p className="mt-3 text-[14.5px] leading-relaxed text-ink-soft">
-              Pilih jajanannya dulu, nanti jumlah dan totalnya muncul di sini.
-            </p>
-
+          <JourneyEmpty
+            eyebrow="Masih kosong"
+            title="Belum ada apa-apa di keranjang kamu."
+            body="Pilih jajanannya dulu, nanti jumlah dan totalnya muncul di sini."
+          >
             <ButtonLink href="/menu" className="mt-7">
               Lihat menu
             </ButtonLink>
-          </div>
+          </JourneyEmpty>
         </div>
       </section>
     );
   }
 
   const lines = cartLines(cart.entries);
+  const productsById = new Map(products.map((product) => [product.id, product]));
 
   return (
     <>
@@ -112,50 +116,69 @@ function CartBody({
                 {cart.entries.map((entry) => (
                   <li
                     key={entry.productId}
-                    className="flex flex-col gap-3 border-t border-line py-4 tablet:flex-row tablet:items-center tablet:gap-4 last:border-b"
+                    className="flex items-start gap-3.5 border-t border-line py-4 last:border-b tablet:items-center"
                   >
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline gap-3">
-                        <span className="min-w-0 flex-1 truncate text-[15.5px] font-semibold text-ink">
-                          {entry.product.name}
+                    <ProductVisual
+                      product={
+                        productsById.get(entry.productId) ?? {
+                          ...entry.product,
+                          imageUrl: null,
+                          categoryName: null,
+                        }
+                      }
+                      className="h-14 w-14 rounded-[14px] p-2 tablet:h-16 tablet:w-16"
+                    />
+
+                    <span className="flex min-w-0 flex-1 flex-col gap-3 tablet:flex-row tablet:items-center tablet:gap-4">
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-baseline gap-3">
+                          <span className="min-w-0 flex-1 truncate text-[15.5px] font-semibold text-ink">
+                            {entry.product.name}
+                          </span>
+                          <span className="flex-none text-[15px] font-semibold text-ink tabular-nums">
+                            {formatRupiah(entry.subtotal)}
+                          </span>
                         </span>
-                        <span className="flex-none text-[15px] font-semibold text-ink tabular-nums">
-                          {formatRupiah(entry.subtotal)}
+                        <span className="eyebrow mt-1 block text-ink-soft">
+                          {formatRupiah(entry.product.price)} per porsi
                         </span>
                       </span>
-                      <span className="eyebrow mt-1 block text-ink-soft">
-                        {formatRupiah(entry.product.price)} per porsi
-                      </span>
-                    </span>
 
-                    <span className="flex flex-none items-center gap-1">
-                      <Stepper
-                        value={entry.quantity}
-                        min={1}
-                        max={entry.product.stock}
-                        label={`Jumlah ${entry.product.name}`}
-                        onChange={(next) => cart.updateQuantity(entry.productId, next)}
-                      />
+                      <span className="flex flex-none items-center gap-1">
+                        <Stepper
+                          value={entry.quantity}
+                          min={1}
+                          max={entry.product.stock}
+                          label={`Jumlah ${entry.product.name}`}
+                          onChange={(next) => cart.updateQuantity(entry.productId, next)}
+                        />
 
-                      {/* Borderless: removing a line is a quiet action, and giving
+                        {/* Borderless: removing a line is a quiet action, and giving
                           it the same outline as the stepper made two controls of
                           equal weight out of one control and one escape hatch. */}
-                      <button
-                        type="button"
-                        aria-label={`Hapus ${entry.product.name}`}
-                        onClick={() => cart.removeItem(entry.productId)}
-                        className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-[12px] text-ink-soft transition-colors hover:bg-hot-soft hover:text-hot"
-                      >
-                        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <path
-                            d="M3 4h10M6.5 4V2.8h3V4M4.2 4l.6 8.4c0 .5.4.8.9.8h4.6c.5 0 .9-.3.9-.8L11.8 4"
-                            stroke="currentColor"
-                            strokeWidth="1.4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
+                        <button
+                          type="button"
+                          aria-label={`Hapus ${entry.product.name}`}
+                          onClick={() => cart.removeItem(entry.productId)}
+                          className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-[12px] text-ink-soft transition-colors hover:bg-hot-soft hover:text-hot"
+                        >
+                          <svg
+                            width="17"
+                            height="17"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M3 4h10M6.5 4V2.8h3V4M4.2 4l.6 8.4c0 .5.4.8.9.8h4.6c.5 0 .9-.3.9-.8L11.8 4"
+                              stroke="currentColor"
+                              strokeWidth="1.4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </button>
+                      </span>
                     </span>
                   </li>
                 ))}

@@ -90,6 +90,8 @@ export function NavBar({ items, label, counts, contentClassName }: NavBarProps) 
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
+                // Where `flyToCart` aims, and what it nudges on landing.
+                data-nav-badge={item.badge}
                 className={cn(
                   // Phone: icon over label, every item the same width. min-h 48
                   // plus the bar's own padding clears the project's 44px touch
@@ -133,8 +135,10 @@ export function NavBar({ items, label, counts, contentClassName }: NavBarProps) 
 
                 {count > 0 && (
                   <span
+                    // Keyed on the count, so each change remounts it and pops.
+                    key={count}
                     className={cn(
-                      "rounded-full px-1.5 text-[10px] font-bold leading-[1.5] tabular-nums",
+                      "nav-count-pop rounded-full px-1.5 text-[10px] font-bold leading-[1.5] tabular-nums",
                       // On a phone the count rides on the icon's shoulder rather
                       // than taking a third line, so an arriving preorder never
                       // changes the height of the bar under the page.

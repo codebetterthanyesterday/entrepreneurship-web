@@ -6,6 +6,9 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { Reveal } from "@/components/site/reveal";
+import { flyToCart } from "@/lib/fly-to-cart";
+import { JourneyEmpty, JourneyHero } from "./journey";
+import { MenuArt } from "./journey-art";
 import { ProductCard } from "./product-card";
 import { ProductDetailSheet } from "./product-detail-sheet";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
@@ -45,10 +48,13 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
       ? products
       : products.filter((product) => product.categoryName === filter);
 
-  const handleAdd = (productId: string, quantity: number) => {
+  const handleAdd = (productId: string, quantity: number, origin?: DOMRect) => {
     const product = products.find((candidate) => candidate.id === productId);
 
     cart.addItem(productId, quantity);
+    // Measured by the sheet before it closes, so the dot leaves from the button
+    // that was pressed rather than from where the sheet used to be.
+    flyToCart(origin);
     setSelected(null);
     toast(`${product?.name ?? "Menunya"} masuk keranjang!`);
   };
@@ -56,20 +62,13 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
   return (
     <>
       {/* ------------------------------------------------------- heading ---- */}
-      {/* `band-tight`, not `band`: this is a working page, and a full-height dark
-          header would push the first item off a phone screen. */}
-      <section className="band-tight band-dark">
-        <div className="band-inner">
-          <Reveal className="max-w-[46rem]">
-            <p className="eyebrow text-pink">Menu &middot; Market Day</p>
-            <h1 className="display-2 mt-3 text-white">Mau ngemil apa hari ini?</h1>
-            <p className="lede mt-4 text-white/70">
-              Stok terbatas dan kepotong tiap ada yang pesan, jadi angka sisanya di bawah itu yang
-              paling baru.
-            </p>
-          </Reveal>
-        </div>
-      </section>
+      <JourneyHero
+        step="menu"
+        eyebrow="Menu · Market Day"
+        title="Mau ngemil apa hari ini?"
+        lede="Stok terbatas dan kepotong tiap ada yang pesan, jadi angka sisanya di bawah itu yang paling baru."
+        art={<MenuArt />}
+      />
 
       {/* -------------------------------------------------------- filter ---- */}
       {hasFilterBar && (
@@ -119,7 +118,9 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
         // What the sticky cart panel has to clear. Declared here because only
         // this component knows whether the category bar was rendered at all.
         style={
-          { "--filter-bar": hasFilterBar ? "var(--filter-bar-height)" : "0px" } as React.CSSProperties
+          {
+            "--filter-bar": hasFilterBar ? "var(--filter-bar-height)" : "0px",
+          } as React.CSSProperties
         }
       >
         <div className="band-inner">
@@ -136,16 +137,11 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
           <div className="flex items-start gap-8">
             <div className="flex-1 min-w-0">
               {visible.length === 0 ? (
-                // Written for this page, like the cart's and the tracker's. A
-                // large centred emoji is the one thing every template does, and
-                // it says less than a sentence would.
-                <div className="max-w-[38ch] py-4">
-                  <p className="eyebrow text-pink-deep">Kosong</p>
-                  <p className="display-3 mt-3 text-ink">Belum ada menu di kategori ini.</p>
-                  <p className="mt-3 text-[14.5px] leading-relaxed text-ink-soft">
-                    Coba kategori lain, atau lihat semuanya sekaligus.
-                  </p>
-
+                <JourneyEmpty
+                  eyebrow="Kosong"
+                  title="Belum ada menu di kategori ini."
+                  body="Coba kategori lain, atau lihat semuanya sekaligus."
+                >
                   <button
                     type="button"
                     onClick={() => setFilter(ALL_FILTER)}
@@ -153,7 +149,7 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
                   >
                     Lihat semua menu
                   </button>
-                </div>
+                </JourneyEmpty>
               ) : (
                 <Reveal>
                   {/* One reveal for the whole list, not one per row: the rows are
