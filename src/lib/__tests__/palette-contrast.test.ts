@@ -16,6 +16,27 @@ import { describe, expect, it } from "vitest";
 const CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf-8");
 
 /**
+ * The two moods a customer can be in — see `src/lib/accent.ts`. Pink is the
+ * `@theme` block; blue is the `[data-accent="blue"]` block that redefines its
+ * identity roles. Every screen a customer sees is drawn in one or the other, so
+ * every pair below has to hold in both.
+ */
+type Palette = "pink" | "blue";
+const PALETTES: readonly Palette[] = ["pink", "blue"];
+
+const BLUE_BLOCK = CSS.match(/\[data-accent="blue"\]\s*\{([^}]*)\}/)?.[1] ?? "";
+
+/** The identity block's text: the roles a mood has to redefine. */
+const IDENTITY_BLOCK = CSS.slice(
+  CSS.indexOf("PLACEHOLDER IDENTITY"),
+  CSS.indexOf("end of the identity block"),
+);
+
+function colourNames(block: string): string[] {
+  return [...block.matchAll(/--color-([a-z0-9-]+):/g)].map((match) => match[1]!).sort();
+}
+
+/**
  * A token's value, which must be a literal hex.
  *
  * Not a `var()` alias, however much tidier a `--brand-*` layer would read.
@@ -25,8 +46,11 @@ const CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf-8");
  * turned the sheet's scrim and the stepper's disabled state solid. The check
  * below is what keeps the indirection out.
  */
-function token(name: string): string {
-  const declared = CSS.match(new RegExp(`--color-${name}:\\s*([^;]+);`));
+function token(name: string, palette: Palette = "pink"): string {
+  // The blue mood only redefines the identity roles; the status colours it
+  // leaves alone are read from the theme like the pink mood's.
+  const pattern = new RegExp(`--color-${name}:\\s*([^;]+);`);
+  const declared = (palette === "blue" && BLUE_BLOCK.match(pattern)) || CSS.match(pattern);
   if (!declared) throw new Error(`--color-${name} is not defined in globals.css`);
 
   const value = declared[1]!.trim();
@@ -116,19 +140,19 @@ const PAIRS: readonly [string, string, number, string][] = [
  * `white` is Tailwind's own colour, not one of this project's tokens, so it has
  * no `--color-white` to read; everything else comes out of the stylesheet.
  */
-function resolvePair(name: string): string {
+function resolvePair(name: string, palette: Palette): string {
   if (name.startsWith("#")) return name.slice(1).toUpperCase();
   if (name === "white") return WHITE;
-  return token(name);
+  return token(name, palette);
 }
 
-describe("palette contrast", () => {
+describe.each(PALETTES)("palette contrast — %s mood", (palette) => {
   it.each(PAIRS)("%s on %s reaches %s:1 — %s", (fg, bg, minimum, where) => {
-    const ratio = contrastRatio(resolvePair(fg), resolvePair(bg));
+    const ratio = contrastRatio(resolvePair(fg, palette), resolvePair(bg, palette));
 
     expect(
       ratio,
-      `${fg} on ${bg} is ${ratio.toFixed(2)}:1, below the ${minimum}:1 needed for ${where}`,
+      `${palette}: ${fg} on ${bg} is ${ratio.toFixed(2)}:1, below the ${minimum}:1 needed for ${where}`,
     ).toBeGreaterThanOrEqual(minimum);
   });
 
@@ -137,7 +161,7 @@ describe("palette contrast", () => {
     // specified — but white on it is 2.59:1 and ink on it is 4.79:1, so it is
     // for bars, dots and chart columns only. Anything with a label uses
     // pink-deep. This test records why, so nobody "fixes" the button back.
-    expect(contrastRatio(WHITE, token("pink"))).toBeLessThan(4.5);
+    expect(contrastRatio(WHITE, token("pink", palette))).toBeLessThan(4.5);
   });
 
   it("keeps the primary button readable while the pointer is on it", () => {
@@ -149,7 +173,9 @@ describe("palette contrast", () => {
         .join("")
         .toUpperCase();
 
-    expect(contrastRatio(WHITE, lighten(token("pink-deep"), 1.1))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(WHITE, lighten(token("pink-deep", palette), 1.1))).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 });
 
@@ -177,9 +203,9 @@ function blendOver(hex: string, over: string, alpha: number): string {
     .toUpperCase();
 }
 
-describe("faded white text on the dark band", () => {
+describe.each(PALETTES)("faded white text on the dark band — %s mood", (palette) => {
   it.each(WHITE_ALPHAS_ON_DARK)("white at %s over ink-deep still reads", (alpha) => {
-    const ink = token("ink-deep");
+    const ink = token("ink-deep", palette);
     const ratio = contrastRatio(blendOver(WHITE, ink, alpha), ink);
 
     expect(ratio, `white/${alpha * 100} on ink-deep is ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(
@@ -188,7 +214,7 @@ describe("faded white text on the dark band", () => {
   });
 
   it("records why 45% is not on that list", () => {
-    const ink = token("ink-deep");
+    const ink = token("ink-deep", palette);
 
     expect(contrastRatio(blendOver(WHITE, ink, 0.45), ink)).toBeLessThan(4.5);
   });
@@ -196,7 +222,7 @@ describe("faded white text on the dark band", () => {
   it("keeps the hero's outlined button visible as a control", () => {
     // Its border is the only thing delimiting it, so WCAG 1.4.11 wants 3:1.
     // white/25 managed 2.26:1; the button uses white/40.
-    const ink = token("ink-deep");
+    const ink = token("ink-deep", palette);
 
     expect(contrastRatio(blendOver(WHITE, ink, 0.4), ink)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(blendOver(WHITE, ink, 0.25), ink)).toBeLessThan(3);
@@ -234,5 +260,17 @@ describe("colour tokens stay resolvable", () => {
         `--color-${name} must be a literal hex so opacity modifiers survive`,
       ).toMatch(/^#[0-9A-Fa-f]{6}$/);
     }
+  });
+});
+
+describe("the blue mood", () => {
+  it("redefines every identity role, so blue mode is never half pink", () => {
+    expect(colourNames(IDENTITY_BLOCK).length).toBe(11);
+    expect(colourNames(BLUE_BLOCK)).toEqual(colourNames(IDENTITY_BLOCK));
+  });
+
+  it("keeps the header switch's pinned swatches equal to each mood's accent", () => {
+    expect(token("mood-pink")).toBe(token("pink", "pink"));
+    expect(token("mood-blue")).toBe(token("pink", "blue"));
   });
 });

@@ -194,7 +194,7 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
                     {order.notes && <Note text={order.notes} />}
                   </div>
                 ) : (
-                  <div className="mt-8 rounded-[22px] bg-white p-5 shadow-[0_18px_40px_-24px_rgba(74,43,56,0.28)]">
+                  <div className="mt-8 rounded-[22px] bg-white p-5 shadow-[0_18px_40px_-24px_color-mix(in_srgb,var(--color-ink)_28%,transparent)]">
                     <h2 className="eyebrow mb-4 text-pink-deep">Perjalanan pesanan</h2>
 
                     <OrderTimeline status={order.status} needsPrep={order.needsPrep} />

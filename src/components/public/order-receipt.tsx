@@ -94,7 +94,7 @@ export function SummaryPanel({
         className,
       )}
     >
-      <div className="rounded-[22px] bg-white p-5 shadow-[0_18px_40px_-24px_rgba(74,43,56,0.28)]">
+      <div className="rounded-[22px] bg-white p-5 shadow-[0_18px_40px_-24px_color-mix(in_srgb,var(--color-ink)_28%,transparent)]">
         {children}
       </div>
     </aside>

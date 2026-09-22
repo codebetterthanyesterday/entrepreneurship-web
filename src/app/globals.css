@@ -81,6 +81,16 @@
   /* ===================== end of the identity block ======================= */
 
   /*
+   * Each mood's accent, pinned. Everything above is redefined under
+   * `[data-accent="blue"]`; these two are not, so the header's mood switch can
+   * show both colours side by side whichever one the page is in. They must stay
+   * equal to `--color-pink` here and in the blue block — the palette test
+   * checks that, so a rebrand cannot leave the switch showing the old colours.
+   */
+  --color-mood-pink: #f875aa;
+  --color-mood-blue: #6b8cff;
+
+  /*
    * Status colours — functional, not brand.
    *
    * Blue carries information and the focus ring, green means done, amber means
@@ -136,6 +146,40 @@
       opacity: 1;
     }
   }
+}
+
+/* ==========================================================================
+   The blue mood
+   --------------------------------------------------------------------------
+   The same eleven roles as the identity block, retuned cool. A customer who
+   answers "Laki-laki" on their first visit gets this instead of the pink — and
+   the whole mood moves with it, surfaces, ink and dark band included, not only
+   the accent. See `src/lib/accent.ts`.
+
+   It works because every colour utility compiles to `var(--color-…)`, and
+   opacity modifiers to `color-mix(… var(--color-…) …)`: redefining the variable
+   on an element repaints everything under it, with no class in any component
+   aware that a second palette exists. `AccentRoot` puts the attribute on the
+   public layout's wrapper (so the first paint is already right) and on <html>
+   (so the body and anything portalled into it — sheets, the toast — follow).
+
+   The values stay literal hex for the same reason as the block above, and
+   `palette-contrast.test.ts` runs every pair it checks against both palettes.
+   It also fails if a role is added up there and not here, which would leave
+   blue mode quietly half pink.
+   ========================================================================== */
+[data-accent="blue"] {
+  --color-pink: #6b8cff;
+  --color-pink-deep: #3551c4;
+  --color-pink-soft: #e4eaff;
+  --color-cream: #f6f8ff;
+  --color-sand: #eceff7;
+  --color-sand-line: #d3dae9;
+  --color-line: #dde3f2;
+  --color-ink: #25304a;
+  --color-ink-soft: #56607a;
+  --color-ink-deep: #141b2e;
+  --color-ink-line: #2f3a56;
 }
 
 /*
@@ -422,7 +466,12 @@ html {
   width: min(70vw, 34rem);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(248, 117, 170, 0.22), transparent 68%);
+  /* Through the token, so the light takes on the visitor's mood. */
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-pink) 22%, transparent),
+    transparent 68%
+  );
   pointer-events: none;
 }
 
@@ -484,4 +533,200 @@ html {
 .story-prose > span:first-child {
   font-size: clamp(1.125rem, 1.9vw, 1.375rem);
   line-height: 1.55;
+}
+
+/* ==========================================================================
+   The first-visit welcome
+   --------------------------------------------------------------------------
+   `AccentWelcome`, asked once. It is server-rendered, so it is on screen in the
+   first paint rather than popping in over a page the customer has started
+   reading — which is also why its motion lives here in CSS and not in an effect.
+   ========================================================================== */
+
+/* The page underneath stays put while the question is open. Plain CSS so it
+   holds before hydration too. */
+html:has(.accent-welcome) {
+  overflow: hidden;
+}
+
+.accent-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: color-mix(in srgb, var(--color-ink-deep) 62%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
+  animation: welcome-fade 420ms ease-out both;
+}
+
+.accent-welcome-panel {
+  position: relative;
+  border-radius: 30px;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--color-ink-deep);
+  color: #fff;
+  --focus-ring: var(--color-sky);
+  box-shadow: 0 40px 80px -32px rgb(0 0 0 / 0.55);
+  animation: welcome-rise 680ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+/* The panel is focused on arrival only so a screen reader announces the
+   question. The global `:focus-visible` ring sits outside Tailwind's layers and
+   would outrank a `focus:outline-none` utility, so it is turned off here — a
+   ring round the whole panel would say "this panel is the control". */
+.accent-welcome-panel:focus-visible {
+  outline: none;
+  /* The same global rule also squares corners off to 2px. */
+  border-radius: 30px;
+}
+
+/* The same grain as the dark bands, so the panel reads as part of the site. */
+.accent-welcome-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--grain);
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+/*
+ * Two lights, one per mood, in opposite corners. Whichever choice the pointer
+ * or focus is resting on turns its own light up and the other down, so the
+ * panel leans toward the answer before it is given.
+ */
+.accent-welcome-light {
+  position: absolute;
+  z-index: -1;
+  width: 22rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-pink) 38%, transparent),
+    transparent 66%
+  );
+  opacity: 0.55;
+  transition:
+    opacity 520ms ease,
+    transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.accent-welcome-light[data-side="pink"] {
+  top: -9rem;
+  left: -8rem;
+}
+
+.accent-welcome-light[data-side="blue"] {
+  bottom: -10rem;
+  right: -8rem;
+}
+
+.accent-welcome-panel[data-lean="pink"] .accent-welcome-light[data-side="pink"],
+.accent-welcome-panel[data-lean="blue"] .accent-welcome-light[data-side="blue"] {
+  opacity: 1;
+  transform: scale(1.18);
+}
+
+.accent-welcome-panel[data-lean="pink"] .accent-welcome-light[data-side="blue"],
+.accent-welcome-panel[data-lean="blue"] .accent-welcome-light[data-side="pink"] {
+  opacity: 0.18;
+}
+
+/* Everything inside arrives a beat after the panel, one line after another. */
+.accent-welcome-stagger {
+  animation: welcome-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(260ms + var(--i, 0) * 70ms);
+}
+
+.accent-choice {
+  transition:
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+
+.accent-choice:hover,
+.accent-choice:focus-visible {
+  transform: translateY(-3px);
+  background-color: rgb(255 255 255 / 0.08);
+  border-color: color-mix(in srgb, var(--color-pink) 70%, transparent);
+}
+
+.accent-choice:active {
+  transform: scale(0.97);
+}
+
+/*
+ * The mood itself, as an object: a glossy sphere in the choice's accent. It
+ * reads its colours from the tokens, so the blue one is only a pink one inside
+ * `data-accent="blue"` — the welcome carries no hex of its own.
+ */
+.accent-orb {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.75), transparent 30%),
+    radial-gradient(circle at 50% 55%, var(--color-pink), var(--color-pink-deep) 92%);
+  box-shadow:
+    0 22px 38px -14px color-mix(in srgb, var(--color-pink) 70%, transparent),
+    inset 0 -8px 18px color-mix(in srgb, var(--color-ink-deep) 35%, transparent);
+  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.accent-choice:hover .accent-orb,
+.accent-choice:focus-visible .accent-orb {
+  transform: scale(1.1) rotate(-6deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .accent-orb-float {
+    animation: orb-float 4.8s ease-in-out infinite;
+    animation-delay: var(--float-delay, 0ms);
+  }
+}
+
+@keyframes welcome-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.985);
+  }
+}
+
+@keyframes orb-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/*
+ * The mood change. `AccentRoot` wraps it in a view transition and grows the new
+ * page out of the point that was tapped, so the colour spills across the screen
+ * from the customer's own finger. The default cross-fade is switched off only
+ * for that reveal; skipping keeps the browser's plain fade.
+ */
+:root[data-accent-reveal]::view-transition-old(root),
+:root[data-accent-reveal]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The global reduced-motion rule shortens durations but leaves delays alone;
+   the welcome should simply be there. */
+@media (prefers-reduced-motion: reduce) {
+  .accent-welcome,
+  .accent-welcome-panel,
+  .accent-welcome-stagger {
+    animation-delay: 0ms !important;
+  }
 }

@@ -1,11 +1,15 @@
 import * as React from "react";
 import Link from "next/link";
+import { cookies, headers } from "next/headers";
 import { getSiteTexts } from "@/lib/queries/site.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { getSiteEditContext } from "@/lib/site-edit";
 import { PublicNav } from "@/components/nav/public-nav";
 import { EditModeBar } from "@/components/site/edit-mode";
 import { SiteFooter } from "@/components/site/site-footer";
+import { AccentRoot } from "@/components/site/accent-root";
+import { AccentSwitch } from "@/components/site/accent-switch";
+import { ACCENT_COOKIE, isAutomatedAgent, parseAccent } from "@/lib/accent";
 
 export default async function PublicLayout({
   children,
@@ -15,22 +19,35 @@ export default async function PublicLayout({
   // The footer carries the business's identity on every customer page, so the
   // layout needs the profile text and the store's number. Both are small reads
   // and the session check below is a cookie decode, not a query.
-  const [{ isAdmin, editing, name }, texts, settings] = await Promise.all([
+  const [{ isAdmin, editing, name }, texts, settings, jar, requestHeaders] = await Promise.all([
     getSiteEditContext(),
     getSiteTexts(),
     getSettings(),
+    cookies(),
+    headers(),
   ]);
 
+  // The colour mood is read here, and only here, so the staff screens never
+  // take it on — see `src/lib/accent.ts`. No cookie means the visitor has not
+  // been asked yet; a crawler is never asked, or it would index the question.
+  const accent = parseAccent(jar.get(ACCENT_COOKIE)?.value);
+  const ask = accent === null && !isAutomatedAgent(requestHeaders.get("user-agent"));
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <AccentRoot
+      initialAccent={accent}
+      ask={ask}
+      brandName={texts["hero.title"].value}
+      className="min-h-screen flex flex-col bg-cream"
+    >
       {/* Only ever rendered for a signed-in ADMIN. The switch it holds is a
           cookie, which decides nothing on its own — see `site-edit.ts`. */}
       {isAdmin && <EditModeBar editing={editing} name={name} />}
 
       {/* Header */}
       <header className="bg-white border-b-[1.5px] border-line sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center">
-          <div className="flex flex-col justify-center">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+          <div className="flex flex-col justify-center min-w-0">
             <Link href="/" className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 bg-pink rounded-full" aria-hidden="true" />
               {/*
@@ -49,6 +66,8 @@ export default async function PublicLayout({
               {texts["footer.tagline"].value}
             </p>
           </div>
+
+          <AccentSwitch />
         </div>
       </header>
 
@@ -69,7 +88,6 @@ export default async function PublicLayout({
       <main className="flex-1 w-full">{children}</main>
 
       <SiteFooter texts={texts} whatsapp={settings.adminWhatsapp} editing={editing} />
-
-    </div>
+    </AccentRoot>
   );
 }
