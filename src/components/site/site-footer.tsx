@@ -60,12 +60,12 @@ export function SiteFooter({ texts, whatsapp, editing }: SiteFooterProps) {
 
         <nav aria-label="Navigasi footer" className="flex flex-col gap-2">
           <h2 className="eyebrow text-white/55">Jelajahi</h2>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col">
             {LINKS.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-[13.5px] text-white/75 hover:text-pink"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center text-[13.5px] text-white/75 hover:text-pink"
                 >
                   {link.label}
                 </Link>
@@ -77,14 +77,14 @@ export function SiteFooter({ texts, whatsapp, editing }: SiteFooterProps) {
         <div className="flex flex-col gap-2">
           <h2 className="eyebrow text-white/55">Kontak</h2>
 
-          <ul className="flex flex-col gap-1.5 text-[13.5px] text-white/75">
+          <ul className="flex flex-col text-[13.5px] text-white/75">
             {whatsappUrl ? (
               <li>
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-pink"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center hover:text-pink"
                 >
                   WhatsApp: {whatsapp}
                 </a>
@@ -103,7 +103,7 @@ export function SiteFooter({ texts, whatsapp, editing }: SiteFooterProps) {
                   href={`https://instagram.com/${instagram.replace(/^@/, "")}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-pink"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center hover:text-pink"
                 >
                   Instagram: @{instagram.replace(/^@/, "")}
                 </a>

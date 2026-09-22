@@ -98,7 +98,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
   const heading = (
     <JourneyHero
       step="data"
-      eyebrow="Checkout · langkah terakhir"
+      eyebrow="Checkout"
       title="Dikit lagi selesai"
       lede="Isi datanya biar kami nggak salah panggil pas kamu ambil."
       art={<CheckoutArt />}

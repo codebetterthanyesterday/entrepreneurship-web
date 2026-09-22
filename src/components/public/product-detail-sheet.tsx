@@ -34,7 +34,7 @@ export function ProductDetailSheet({
       <div className="flex flex-col gap-4 pb-2">
         <ProductVisual
           product={product}
-          className="h-44 w-full rounded-[20px] p-7 tablet:h-52"
+          className="h-32 w-full rounded-[20px] p-5 min-[380px]:h-40 tablet:h-52 tablet:p-7"
         />
 
         {product.description && (

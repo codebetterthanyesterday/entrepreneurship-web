@@ -58,7 +58,7 @@ export function StageRing({ status, needsPrep, className }: StageRingProps) {
   return (
     <div
       className={cn(
-        "relative mx-auto aspect-square w-[13.5rem] tablet:w-[15.5rem]",
+        "relative mx-auto aspect-square w-[11.5rem] min-[380px]:w-[13.5rem] tablet:w-[15.5rem]",
         className,
       )}
     >
@@ -351,7 +351,7 @@ export function OrderStage({
           {current ? current.title : "Pesanan ini dibatalkan"}
         </Title>
 
-        <p className="lede mx-auto mt-3 text-white/70">
+        <p className="journey-lede mx-auto mt-2.5 text-white/70 tablet:mt-3">
           {current
             ? current.detail
             : "Kalau menurut kamu ini keliru, hubungi kami lewat WhatsApp ya."}

@@ -57,7 +57,7 @@ export function JourneyRail({ current, className }: { current: JourneyStep; clas
               </span>
               <span
                 className={cn(
-                  "mt-2 block text-[11px] font-semibold leading-tight",
+                  "mt-1.5 block text-[10.5px] font-semibold leading-tight tablet:mt-2 tablet:text-[11px]",
                   state === "current"
                     ? "text-white"
                     : state === "done"
@@ -90,12 +90,12 @@ export function JourneyRail({ current, className }: { current: JourneyStep; clas
               {state === "done" ? (
                 <Link
                   href={stop.href}
-                  className="group flex min-h-[44px] flex-col items-center rounded-lg px-1"
+                  className="group flex min-h-[44px] min-w-[44px] flex-col items-center rounded-lg px-1"
                 >
                   {label}
                 </Link>
               ) : (
-                <span className="flex min-h-[44px] flex-col items-center px-1">
+                <span className="flex min-h-[44px] min-w-[44px] flex-col items-center px-1">
                   {label}
                 </span>
               )}
@@ -126,7 +126,9 @@ export interface JourneyHeroProps {
  */
 export function JourneyHero({ step, eyebrow, title, lede, art }: JourneyHeroProps) {
   return (
-    <section className="band-tight band-dark">
+    // Tighter than `band-tight` on a phone, where every row of hero is a row of
+    // menu or form pushed below the fold; the shared rhythm returns from 640px.
+    <section className="band-dark pt-6 pb-4 tablet:py-[var(--band-y-tight)]">
       {/* `relative` so that from a tablet up the picture can leave the title's
           row and sit beside the whole block — kept in the row, its height
           pushed a gap between the title and the lede on a wide screen. */}
@@ -137,14 +139,14 @@ export function JourneyHero({ step, eyebrow, title, lede, art }: JourneyHeroProp
             <h1 className="display-2 mt-3 text-white">{title}</h1>
           </div>
 
-          <div className="-mt-1 h-20 w-20 flex-none tablet:absolute tablet:right-4 tablet:top-1/2 tablet:mt-0 tablet:h-36 tablet:w-36 tablet:-translate-y-1/2">
+          <div className="-mt-1 h-[4.5rem] w-[4.5rem] flex-none tablet:absolute tablet:right-4 tablet:top-1/2 tablet:mt-0 tablet:h-36 tablet:w-36 tablet:-translate-y-1/2">
             {art}
           </div>
         </div>
 
-        {lede && <p className="lede mt-4 text-white/70">{lede}</p>}
+        {lede && <p className="journey-lede mt-3 text-white/70 tablet:mt-4">{lede}</p>}
 
-        <JourneyRail current={step} className="mt-6 max-w-[28rem] tablet:mt-8" />
+        <JourneyRail current={step} className="mt-4 max-w-[28rem] tablet:mt-8" />
       </div>
     </section>
   );

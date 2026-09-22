@@ -48,7 +48,7 @@ export default async function PublicLayout({
       <header className="bg-white border-b-[1.5px] border-line sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex flex-col justify-center min-w-0">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex min-h-[44px] items-center gap-2">
               <span className="w-2.5 h-2.5 bg-pink rounded-full" aria-hidden="true" />
               {/*
                 A span, not a heading. This is the site's banner logo on every

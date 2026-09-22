@@ -1059,3 +1059,21 @@ html:has(.accent-welcome) {
     0 8px 18px -4px color-mix(in srgb, var(--color-pink-deep) 60%, transparent);
   pointer-events: none;
 }
+
+/*
+ * The lede, one step smaller on a phone. The hero bands of the working pages
+ * and the tracker's stage use it: at the shared `.lede` size a two-line lede
+ * became three lines at 320px and pushed the content under it off the screen.
+ */
+.journey-lede {
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 46ch;
+}
+
+@media (min-width: 640px) {
+  .journey-lede {
+    font-size: var(--lede);
+    line-height: 1.65;
+  }
+}

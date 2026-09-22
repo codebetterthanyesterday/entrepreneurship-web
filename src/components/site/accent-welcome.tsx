@@ -46,7 +46,7 @@ export function AccentWelcome({ brandName, onChoose }: AccentWelcomeProps) {
         <style>{`.accent-welcome{display:none}html:has(.accent-welcome){overflow:visible}`}</style>
       </noscript>
 
-      <div className="flex min-h-full flex-col items-center justify-end px-3 pt-20 pb-[max(12px,env(safe-area-inset-bottom))] tablet:justify-center tablet:p-8">
+      <div className="flex min-h-full flex-col items-center justify-end px-3 pt-10 pb-[max(12px,env(safe-area-inset-bottom))] tablet:justify-center tablet:p-8">
         <div
           ref={panelRef}
           role="dialog"
@@ -81,7 +81,7 @@ export function AccentWelcome({ brandName, onChoose }: AccentWelcomeProps) {
             <span className="whitespace-nowrap">mana-mana.</span>
           </p>
 
-          <div className="accent-welcome-stagger relative mt-7 grid grid-cols-2 gap-3" style={stagger(3)}>
+          <div className="accent-welcome-stagger relative mt-5 grid grid-cols-2 gap-3 min-[380px]:mt-7" style={stagger(3)}>
             <Choice
               accent="pink"
               label="Perempuan"
@@ -153,14 +153,14 @@ function Choice({ accent, label, mood, onChoose, onLean }: ChoiceProps) {
       onPointerLeave={() => onLean(null)}
       onFocus={() => onLean(accent)}
       onBlur={() => onLean(null)}
-      className="accent-choice flex min-h-[13rem] flex-col items-center justify-between gap-5 rounded-[22px] border border-white/12 bg-white/[0.04] px-3 pt-6 pb-4 text-center tablet:min-h-[14.5rem]"
+      className="accent-choice flex min-h-[11rem] flex-col items-center justify-between gap-4 rounded-[22px] border border-white/12 bg-white/[0.04] px-3 pt-5 pb-4 text-center min-[380px]:min-h-[13rem] tablet:min-h-[14.5rem]"
     >
       <span
         aria-hidden="true"
         className="accent-orb-float block"
         style={{ "--float-delay": accent === "blue" ? "-2.4s" : "0ms" } as React.CSSProperties}
       >
-        <span className="accent-orb block h-[4.75rem] w-[4.75rem] tablet:h-24 tablet:w-24" />
+        <span className="accent-orb block h-16 w-16 min-[380px]:h-[4.75rem] min-[380px]:w-[4.75rem] tablet:h-24 tablet:w-24" />
       </span>
 
       <span className="flex flex-col items-center gap-1">

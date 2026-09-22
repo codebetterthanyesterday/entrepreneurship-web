@@ -45,7 +45,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         the party emoji that used to sit on top of it, which said nothing the
         heading does not already say.
       */}
-      <section className="band band-dark band-glow !pt-8">
+      <section className="band band-dark band-glow !pt-5 !pb-10 tablet:!pt-8 tablet:!pb-[var(--band-y)]">
         <div className="band-inner text-center">
           {/*
             The stage the order is on, the same picture and ring the tracker
@@ -55,7 +55,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
           <StageRing
             status={order.status}
             needsPrep={order.needsPrep}
-            className="!w-[11rem] tablet:!w-[13rem]"
+            className="!w-[9.5rem] min-[380px]:!w-[11rem] tablet:!w-[13rem]"
           />
 
           <p className="eyebrow -mt-2 text-pink">Pesanan diterima</p>
@@ -69,7 +69,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
           */}
           <p
             aria-hidden="true"
-            className="mt-7 text-[12px] font-semibold uppercase tracking-[0.2em] text-white/55"
+            className="mt-5 text-[12px] font-semibold uppercase tracking-[0.2em] text-white/55 tablet:mt-7"
           >
             Nomor pesanan
           </p>
@@ -78,7 +78,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             {order.orderNumber}
           </h1>
 
-          <p className="mt-7 text-[14px] text-white/70">
+          <p className="mt-5 text-[14px] text-white/70 tablet:mt-7">
             Atas nama <span className="font-semibold text-white">{order.customerName}</span>
             {order.pickupSlot && (
               <>

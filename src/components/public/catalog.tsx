@@ -199,17 +199,22 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
         padding — a few dozen pixels before the list actually ends. Out here its
         parent is the page, and the bill stays put until the footer.
       */}
-      <ActionBar itemCount={cart.itemCount} total={cart.total}>
-        {cart.itemCount === 0 || !preorderOpen ? (
-          <Button variant="primary" fullWidth disabled>
-            {!preorderOpen ? "Preorder lagi ditutup" : "Keranjang masih kosong"}
-          </Button>
-        ) : (
-          <ButtonLink href="/keranjang" variant="primary" fullWidth>
-            Lanjut isi data
-          </ButtonLink>
-        )}
-      </ActionBar>
+      {/* Only once there is something in it. An empty bill with a disabled
+          button took ~110px of a phone screen on the one page whose job is to
+          show the menu — at 320px it left no item above the fold. */}
+      {cart.itemCount > 0 && (
+        <ActionBar itemCount={cart.itemCount} total={cart.total}>
+          {cart.itemCount === 0 || !preorderOpen ? (
+            <Button variant="primary" fullWidth disabled>
+              {!preorderOpen ? "Preorder lagi ditutup" : "Keranjang masih kosong"}
+            </Button>
+          ) : (
+            <ButtonLink href="/keranjang" variant="primary" fullWidth>
+              Lanjut isi data
+            </ButtonLink>
+          )}
+        </ActionBar>
+      )}
 
       {selected && (
         <ProductDetailSheet

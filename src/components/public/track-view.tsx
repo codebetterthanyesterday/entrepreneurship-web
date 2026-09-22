@@ -292,7 +292,7 @@ function FoundOrder({
   return (
     <>
       {/* -------------------------------------------------------- stage ---- */}
-      <section className="band band-dark band-glow !pt-6 tablet:!pt-8">
+      <section className="band band-dark band-glow !pt-4 !pb-10 tablet:!pt-8 tablet:!pb-[var(--band-y)]">
         <Confetti fire={burst} />
 
         <div className="band-inner">
@@ -313,10 +313,10 @@ function FoundOrder({
             </button>
           </div>
 
-          <div className="mt-6 tablet:mt-4">
+          <div className="mt-3 tablet:mt-4">
             <OrderStage status={order.status} needsPrep={order.needsPrep} titleAs="h1">
               {order.status === "READY" && (
-                <p className="mx-auto mt-6 inline-flex flex-col items-center rounded-[20px] bg-white/[0.06] px-6 py-4">
+                <p className="mx-auto mt-4 inline-flex flex-col items-center rounded-[20px] bg-white/[0.06] px-6 py-3 tablet:mt-6 tablet:py-4">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/60">
                     Tunjukin ke kasir
                   </span>
@@ -332,7 +332,7 @@ function FoundOrder({
           {live && (
             <p
               aria-live="polite"
-              className="mt-8 flex items-center justify-center gap-2 text-[12px] text-white/60"
+              className="mt-6 flex items-center justify-center gap-2 text-[12px] text-white/60 tablet:mt-8"
             >
               <span
                 aria-hidden="true"
@@ -408,12 +408,12 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 export function StagePlaceholder({ label }: { label?: string }) {
   return (
     <section
-      className="band band-dark band-glow !pt-6 tablet:!pt-8"
+      className="band band-dark band-glow !pt-4 !pb-10 tablet:!pt-8 tablet:!pb-[var(--band-y)]"
       aria-busy="true"
     >
       <div className="band-inner text-center">
         <div className="h-11" />
-        <div className="relative mx-auto mt-6 aspect-square w-[13.5rem] tablet:mt-4 tablet:w-[15.5rem]">
+        <div className="relative mx-auto mt-3 aspect-square w-[11.5rem] min-[380px]:w-[13.5rem] tablet:mt-4 tablet:w-[15.5rem]">
           <div className="stage-halo absolute inset-[8%] animate-pulse rounded-full" />
         </div>
         <p role="status" className="-mt-4 min-h-[1.5em] text-[14px] text-white/60 tablet:-mt-6">
