@@ -84,3 +84,29 @@ export function buildTimeline(status: OrderStatus, needsPrep: boolean): Timeline
 export function isFinalStatus(status: OrderStatus): boolean {
   return status === "DONE" || status === "CANCELLED";
 }
+
+export interface StageSummary {
+  steps: TimelineStep[];
+  /** The stage the order is on, or `null` for a cancelled order. */
+  current: TimelineStep | null;
+  /** How far along the journey the order is, from 0 (just placed) to 1 (done). */
+  progress: number;
+}
+
+/**
+ * The one line the tracker's stage is built around: where the order is now, and
+ * how much of the way it has come. Derived from `buildTimeline` so the stage and
+ * the full timeline under it can never disagree about the current step.
+ */
+export function summariseStage(status: OrderStatus, needsPrep: boolean): StageSummary {
+  const steps = buildTimeline(status, needsPrep);
+  const currentIndex = steps.findIndex((step) => step.state === "current");
+
+  if (currentIndex === -1) return { steps, current: null, progress: 0 };
+
+  return {
+    steps,
+    current: steps[currentIndex]!,
+    progress: steps.length > 1 ? currentIndex / (steps.length - 1) : 1,
+  };
+}

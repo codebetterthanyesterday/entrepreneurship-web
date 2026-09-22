@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
 import { findByNumber, toTrackedOrder } from "@/lib/queries/order.query";
 import { OrderReceipt } from "@/components/public/order-receipt";
+import { StageRing } from "@/components/public/order-stage";
 import { cn } from "@/lib/utils";
 import { pageTitle } from "@/lib/brand";
 
@@ -44,9 +45,20 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         the party emoji that used to sit on top of it, which said nothing the
         heading does not already say.
       */}
-      <section className="band band-dark band-glow">
+      <section className="band band-dark band-glow !pt-8">
         <div className="band-inner text-center">
-          <p className="eyebrow text-pink">Pesanan diterima</p>
+          {/*
+            The stage the order is on, the same picture and ring the tracker
+            opens with — so moving from here to "Lacak pesanan" continues one
+            story rather than starting a new screen.
+          */}
+          <StageRing
+            status={order.status}
+            needsPrep={order.needsPrep}
+            className="!w-[11rem] tablet:!w-[13rem]"
+          />
+
+          <p className="eyebrow -mt-2 text-pink">Pesanan diterima</p>
 
           {/*
             The number is the page's subject, so it is the page's <h1> — the
@@ -57,7 +69,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
           */}
           <p
             aria-hidden="true"
-            className="mt-8 text-[12px] font-semibold uppercase tracking-[0.2em] text-white/55"
+            className="mt-7 text-[12px] font-semibold uppercase tracking-[0.2em] text-white/55"
           >
             Nomor pesanan
           </p>
@@ -66,7 +78,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             {order.orderNumber}
           </h1>
 
-          <p className="mt-8 text-[14px] text-white/70">
+          <p className="mt-7 text-[14px] text-white/70">
             Atas nama <span className="font-semibold text-white">{order.customerName}</span>
             {order.pickupSlot && (
               <>
@@ -75,6 +87,10 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 <span className="font-semibold tabular-nums text-white">{order.pickupSlot}</span>
               </>
             )}
+          </p>
+
+          <p className="mx-auto mt-3 max-w-[36ch] text-[13px] leading-relaxed text-white/55">
+            Simpen nomornya, atau screenshot halaman ini — nanti ditanya pas ambil.
           </p>
         </div>
       </section>
@@ -119,7 +135,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               variant="primary"
               className="tablet:flex-1"
             >
-              Lacak pesanan
+              Pantau pesanan live
             </ButtonLink>
 
             <ButtonLink href="/menu" variant="ghost" className="tablet:flex-1">

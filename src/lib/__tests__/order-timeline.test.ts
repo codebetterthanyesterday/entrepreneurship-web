@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTimeline, isFinalStatus } from "@/lib/order-timeline";
+import { buildTimeline, isFinalStatus, summariseStage } from "@/lib/order-timeline";
 
 const titles = (status: Parameters<typeof buildTimeline>[0], needsPrep: boolean) =>
   buildTimeline(status, needsPrep).map((step) => step.title);
@@ -74,5 +74,30 @@ describe("isFinalStatus", () => {
     for (const status of ["CONFIRMED", "IN_QUEUE", "IN_PROGRESS", "READY"] as const) {
       expect(isFinalStatus(status)).toBe(false);
     }
+  });
+});
+
+describe("summariseStage", () => {
+  it("puts a fresh order at the start of the ring", () => {
+    const stage = summariseStage("CONFIRMED", true);
+    expect(stage.current?.id).toBe("confirmed");
+    expect(stage.progress).toBeCloseTo(1 / 4);
+  });
+
+  it("fills the ring once the order is done", () => {
+    expect(summariseStage("DONE", true).progress).toBe(1);
+  });
+
+  it("measures progress against the stages this order actually has", () => {
+    // No prep stage: ready is the third of four, not the fourth of five.
+    const stage = summariseStage("READY", false);
+    expect(stage.steps).toHaveLength(4);
+    expect(stage.progress).toBeCloseTo(2 / 3);
+  });
+
+  it("has no current stage for a cancelled order", () => {
+    const stage = summariseStage("CANCELLED", true);
+    expect(stage.current).toBeNull();
+    expect(stage.progress).toBe(0);
   });
 });

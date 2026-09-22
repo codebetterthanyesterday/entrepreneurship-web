@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
 import type { PublicPickupSlot } from "@/lib/queries/slot.query";
 import type { PublicProduct } from "@/types/admin";
+import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
 
 type PaymentMethod = "CASH" | "QRIS";
 
@@ -83,6 +84,12 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
     // The flag is deliberately left set through the navigation — the order
     // exists now, and re-enabling the button would invite a second one.
     cart.clearCart();
+
+    // So /lacak opens straight onto this order, without the customer typing
+    // back what they have just typed here. Only the last four digits are kept.
+    const phoneLast4 = lastFourDigits(customerPhone);
+    if (phoneLast4) rememberOrder({ orderNumber: result.data.orderNumber, phoneLast4 });
+
     router.push(`/pesanan/${result.data.orderNumber}`);
   };
 

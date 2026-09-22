@@ -1,11 +1,6 @@
-import { LoadingScreen, Skeleton } from "@/components/ui/skeleton";
+import { StagePlaceholder } from "@/components/public/track-view";
 
+/** The same empty stage the tracker shows while it looks, so arriving is one motion. */
 export default function Loading() {
-  return (
-    <LoadingScreen label="Lagi nyiapin halaman lacak...">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-[74px]" />
-      <Skeleton className="h-[74px]" />
-    </LoadingScreen>
-  );
+  return <StagePlaceholder />;
 }

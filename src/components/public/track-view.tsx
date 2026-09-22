@@ -4,11 +4,20 @@ import * as React from "react";
 import useSWR from "swr";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { isFinalStatus } from "@/lib/order-timeline";
+import {
+  forgetRememberedOrder,
+  parseRememberedOrder,
+  readRememberedOrderRaw,
+  rememberOrder,
+  subscribeRememberedOrder,
+} from "@/lib/remembered-order";
 import { OrderTimeline } from "./order-timeline";
 import { OrderReceipt, SummaryPanel } from "./order-receipt";
+import { OrderStage, StageArt } from "./order-stage";
+import { Confetti } from "./confetti";
+import type { OrderStatus } from "@/types/order";
 import type { TrackedOrder } from "@/types/order-view";
 
 /**
@@ -17,9 +26,6 @@ import type { TrackedOrder } from "@/types/order-view";
  * interval spends its entire budget waiting before the request is even sent.
  */
 const POLL_INTERVAL_MS = 8_000;
-
-/** Derived, not typed out: the note on screen used to claim ten seconds. */
-const POLL_SECONDS = Math.round(POLL_INTERVAL_MS / 1000);
 
 interface TrackingResponse {
   order: TrackedOrder | null;
@@ -52,51 +58,142 @@ const PAYMENT_LABEL = {
   QRIS: "Transfer / QRIS",
 } as const;
 
+/**
+ * What the server snapshot of the remembered order reads as: "not known yet",
+ * which is different from "nothing remembered". Rendering the form on the server
+ * and swapping it for the stage on hydration would flash a form at the very
+ * customer the memory exists to spare it.
+ */
+const NOT_READ_YET = "\u0000server";
+const onServer = () => NOT_READ_YET;
+
 export interface TrackViewProps {
   /** Prefilled from the confirmation page's "Lacak pesanan" link. */
   initialOrderNumber?: string;
 }
 
 export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
+  const rememberedRaw = React.useSyncExternalStore(
+    subscribeRememberedOrder,
+    readRememberedOrderRaw,
+    onServer,
+  );
+  const hydrated = rememberedRaw !== NOT_READ_YET;
+  // Memoised on the raw text so it keeps its identity between renders: the
+  // automatic search below is compared by reference.
+  const remembered = React.useMemo(
+    () => (hydrated ? parseRememberedOrder(rememberedRaw) : null),
+    [hydrated, rememberedRaw],
+  );
+
   const [orderNumber, setOrderNumber] = React.useState(initialOrderNumber);
   const [phoneLast4, setPhoneLast4] = React.useState("");
-  const [search, setSearch] = React.useState<Search | null>(null);
+  const [submitted, setSubmitted] = React.useState<Search | null>(null);
 
-  const { data, isLoading } = useSWR<TrackingResponse>(searchKey(search), fetchOrder, {
+  // A remembered order is opened on its own — unless the link names a different
+  // one, in which case the link wins and the customer types the digits.
+  const automatic: Search | null =
+    remembered && (initialOrderNumber === "" || initialOrderNumber === remembered.orderNumber)
+      ? remembered
+      : null;
+  const search = submitted ?? automatic;
+
+  const { data, error, isLoading } = useSWR<TrackingResponse>(searchKey(search), fetchOrder, {
     // Stop polling once the order can no longer move, and never poll a miss.
     refreshInterval: (latest) =>
       latest?.order && !isFinalStatus(latest.order.status) ? POLL_INTERVAL_MS : 0,
-    // Keep the last order on screen while the next poll is in flight, so the
-    // page does not blink every few seconds.
-    keepPreviousData: true,
     revalidateOnFocus: true,
   });
 
+  const order = data?.order ?? null;
+  const missed = search !== null && data !== undefined && order === null;
+
+  // Keep what worked, forget what no longer does. Writes to localStorage, not to
+  // React state, so these are effects in the proper sense.
+  React.useEffect(() => {
+    if (!search || !data) return;
+    if (data.order) {
+      if (
+        remembered?.orderNumber !== data.order.orderNumber ||
+        remembered.phoneLast4 !== search.phoneLast4
+      ) {
+        rememberOrder({
+          orderNumber: data.order.orderNumber,
+          phoneLast4: search.phoneLast4,
+        });
+      }
+    } else if (search === automatic) {
+      forgetRememberedOrder();
+    }
+  }, [data, search, automatic, remembered]);
+
+  // The moment worth celebrating: the order turning ready while the customer is
+  // watching. Tracked during render — React's pattern for reacting to a changed
+  // value — so the confetti starts in the same paint as the new stage.
+  const [seen, setSeen] = React.useState<{
+    orderNumber: string;
+    status: OrderStatus;
+  } | null>(null);
+  const [burst, setBurst] = React.useState(0);
+  if (order && (seen?.orderNumber !== order.orderNumber || seen.status !== order.status)) {
+    if (seen?.orderNumber === order.orderNumber && order.status === "READY") {
+      setBurst((count) => count + 1);
+    }
+    setSeen({ orderNumber: order.orderNumber, status: order.status });
+  }
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    setSearch({ orderNumber: orderNumber.trim(), phoneLast4: phoneLast4.trim() });
+    setSubmitted({
+      orderNumber: orderNumber.trim(),
+      phoneLast4: phoneLast4.trim(),
+    });
   };
 
-  const order = data?.order ?? null;
-  const searched = search !== null;
+  const switchOrder = () => {
+    forgetRememberedOrder();
+    setSubmitted(null);
+    setOrderNumber("");
+    setPhoneLast4("");
+  };
+
+  if (!hydrated) return <StagePlaceholder />;
+  if (search && isLoading) return <StagePlaceholder label="Lagi nyari pesanan kamu…" />;
+
+  if (order) {
+    return (
+      <FoundOrder
+        order={order}
+        burst={burst}
+        offline={error !== undefined}
+        onSwitch={switchOrder}
+      />
+    );
+  }
 
   return (
     <>
       {/* ------------------------------------------------------- heading ---- */}
       <section className="band-tight band-dark">
-        <div className="band-inner">
-          <p className="eyebrow text-pink">Lacak</p>
-          <h1 className="display-2 mt-3 text-white">Pesanan kamu sampai mana?</h1>
-          <p className="lede mt-4 text-white/70">
-            Masukin nomor pesanan dan 4 digit terakhir WhatsApp kamu.
-          </p>
+        <div className="band-inner stage-enter flex items-center justify-between gap-8">
+          <div>
+            <p className="eyebrow text-pink">Lacak</p>
+            <h1 className="display-2 mt-3 text-white">Pesanan kamu sampai mana?</h1>
+            <p className="lede mt-4 text-white/70">
+              Masukin nomor pesanan dan 4 digit terakhir WhatsApp kamu.
+            </p>
+          </div>
+
+          <div className="hidden h-36 w-36 flex-none tablet:block" aria-hidden="true">
+            <StageArt id="masuk" />
+          </div>
         </div>
       </section>
 
       {/* The form sits on the light band, not the dark one: the fields are white,
           and their labels are ink — a working surface, not a statement. */}
       <section className="band-tight band-cream">
-        <div className="band-inner">
+        <div className="band-inner stage-enter">
           <form
             onSubmit={handleSubmit}
             className="flex max-w-[640px] flex-col gap-3 tablet:flex-row tablet:items-end"
@@ -110,21 +207,26 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
               className="tabular-nums"
             />
 
-            <Input
-              label="4 digit terakhir WhatsApp"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="7890"
-              autoComplete="off"
-              value={phoneLast4}
-              onChange={(event) => setPhoneLast4(event.target.value.replace(/\D/g, "").slice(0, 4))}
-              className="tabular-nums tablet:w-[190px]"
-            />
+            {/* The width goes on a wrapper: `Input` stretches its own box to fill
+                the row, so a width on the field left a gap before the button. */}
+            <div className="tablet:w-[190px] tablet:flex-none">
+              <Input
+                label="4 digit terakhir WhatsApp"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="7890"
+                autoComplete="off"
+                value={phoneLast4}
+                onChange={(event) =>
+                  setPhoneLast4(event.target.value.replace(/\D/g, "").slice(0, 4))
+                }
+                className="tabular-nums"
+              />
+            </div>
 
             <Button
               type="submit"
               variant="primary"
-              isLoading={isLoading && !data}
               disabled={orderNumber.trim() === "" || phoneLast4.length < 4}
               className="flex-none px-7"
             >
@@ -132,15 +234,26 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
             </Button>
           </form>
 
-          {searched && !order && !isLoading && (
-            <div className="mt-12 max-w-[42ch]">
+          <p className="mt-4 max-w-[52ch] text-[12.5px] leading-relaxed text-ink-soft">
+            Nomor pesanannya ada di halaman konfirmasi dan di chat WhatsApp kami. Sekali ketemu, HP
+            ini bakal inget — nanti tinggal buka halaman ini lagi.
+          </p>
+
+          {error && !data && (
+            <p role="alert" className="mt-10 max-w-[42ch] text-[14px] leading-relaxed text-hot">
+              Koneksinya lagi putus, jadi pesanannya belum bisa dicek. Coba sebentar lagi ya.
+            </p>
+          )}
+
+          {missed && (
+            <div role="status" className="stage-enter mt-12 max-w-[42ch]">
               <p className="eyebrow text-hot">Nggak ketemu</p>
               <p className="display-3 mt-3 text-ink">
                 Nggak ada pesanan yang cocok dengan dua itu.
               </p>
               <p className="mt-3 text-[14.5px] leading-relaxed text-ink-soft">
-                Nomor pesanannya ada di halaman konfirmasi dan di chat WhatsApp kami. Empat digitnya
-                diambil dari nomor yang kamu isi waktu pesan.
+                Cek lagi nomornya, dan pastiin empat digitnya dari nomor WhatsApp yang kamu isi
+                waktu pesan.
               </p>
 
               <ButtonLink href="/menu" variant="ghost" size="sm" className="mt-6">
@@ -148,101 +261,137 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
               </ButtonLink>
             </div>
           )}
+        </div>
+      </section>
+    </>
+  );
+}
 
-          {order && (
-            <div className="mt-10 flex items-start gap-8">
-              <div className="min-w-0 flex-1">
-                {/* The order's identity, on hairlines rather than in a card. The
-                    number is set large because it is read out at the booth. */}
-                <div className="flex flex-wrap items-end justify-between gap-4 border-t border-ink/15 pt-5">
-                  <div>
-                    <p className="eyebrow text-ink-soft">Nomor pesanan</p>
-                    <p className="display-2 mt-1.5 text-pink-deep tabular-nums">
-                      {order.orderNumber}
-                    </p>
-                  </div>
+// ------------------------------------------------------------------ found
 
-                  <Badge variant={order.needsPrep ? "prep" : "info"}>
-                    {order.needsPrep ? "Perlu diracik" : "Siap ambil"}
-                  </Badge>
-                </div>
+function FoundOrder({
+  order,
+  burst,
+  offline,
+  onSwitch,
+}: {
+  order: TrackedOrder;
+  burst: number;
+  offline: boolean;
+  onSwitch: () => void;
+}) {
+  const cancelled = order.status === "CANCELLED";
+  const live = !isFinalStatus(order.status);
 
-                <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 tablet:grid-cols-3">
-                  <Fact label="Atas nama">{order.customerName}</Fact>
-                  {order.pickupSlot && (
-                    <Fact label="Jam ambil">
-                      <span className="tabular-nums">{order.pickupSlot}</span>
-                    </Fact>
-                  )}
-                  <Fact label="Pembayaran">{PAYMENT_LABEL[order.paymentMethod]}</Fact>
-                  <Fact label="Status bayar">
-                    <span className={order.paymentStatus === "PAID" ? "text-ok" : "text-warn"}>
-                      {order.paymentStatus === "PAID" ? "Udah lunas" : "Belum dibayar"}
-                    </span>
-                  </Fact>
-                </dl>
+  const receipt = (
+    <OrderReceipt
+      lines={order.items.map((item, index) => ({
+        key: `${item.name}-${index}`,
+        name: item.name,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+      }))}
+      total={order.totalAmount}
+      title="Rincian"
+    />
+  );
 
-                {order.status === "CANCELLED" ? (
-                  <div className="mt-8">
-                    <p
-                      role="status"
-                      className="border-l-2 border-hot bg-hot-soft/70 py-3 pl-4 pr-3 text-[13.5px] leading-relaxed text-hot"
-                    >
-                      Pesanan ini dibatalkan. Kalau menurut kamu ini keliru, hubungi kami lewat
-                      WhatsApp ya.
-                    </p>
-                    {order.notes && <Note text={order.notes} />}
-                  </div>
-                ) : (
-                  <div className="mt-8 rounded-[22px] bg-white p-5 shadow-[0_18px_40px_-24px_color-mix(in_srgb,var(--color-ink)_28%,transparent)]">
-                    <h2 className="eyebrow mb-4 text-pink-deep">Perjalanan pesanan</h2>
+  return (
+    <>
+      {/* -------------------------------------------------------- stage ---- */}
+      <section className="band band-dark band-glow !pt-6 tablet:!pt-8">
+        <Confetti fire={burst} />
 
-                    <OrderTimeline status={order.status} needsPrep={order.needsPrep} />
+        <div className="band-inner">
+          <div className="stage-enter flex items-center justify-between gap-3">
+            <p className="min-w-0 truncate text-[13px] text-white/70">
+              <span className="font-semibold text-white tabular-nums">{order.orderNumber}</span>
+              <span aria-hidden="true"> &middot; </span>
+              <span className="sr-only">, atas nama </span>
+              {order.customerName}
+            </p>
 
-                    {!isFinalStatus(order.status) && (
-                      <p
-                        className="mt-5 border-t border-line pt-3 text-[11.5px] text-ink-soft"
-                        aria-live="polite"
-                      >
-                        Halaman ini nyegerin sendiri tiap {POLL_SECONDS} detik.
-                      </p>
-                    )}
-                  </div>
+            <button
+              type="button"
+              onClick={onSwitch}
+              className="min-h-[44px] flex-none rounded-full border border-white/40 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              Ganti pesanan
+            </button>
+          </div>
+
+          <div className="mt-6 tablet:mt-4">
+            <OrderStage status={order.status} needsPrep={order.needsPrep} titleAs="h1">
+              {order.status === "READY" && (
+                <p className="mx-auto mt-6 inline-flex flex-col items-center rounded-[20px] bg-white/[0.06] px-6 py-4">
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                    Tunjukin ke kasir
+                  </span>
+                  <span className="display-2 mt-1 text-white tabular-nums">
+                    {order.orderNumber}
+                  </span>
+                </p>
+              )}
+            </OrderStage>
+          </div>
+
+          {/* Says the page is alive without a sentence about seconds. */}
+          {live && (
+            <p
+              aria-live="polite"
+              className="mt-8 flex items-center justify-center gap-2 text-[12px] text-white/60"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "h-2 w-2 flex-none rounded-full",
+                  offline ? "bg-hot-soft" : "live-dot bg-ok-soft",
                 )}
-
-                {order.notes && order.status !== "CANCELLED" && <Note text={order.notes} />}
-              </div>
-
-              <SummaryPanel>
-                <OrderReceipt
-                  lines={order.items.map((item, index) => ({
-                    key: `${item.name}-${index}`,
-                    name: item.name,
-                    quantity: item.quantity,
-                    subtotal: item.subtotal,
-                  }))}
-                  total={order.totalAmount}
-                  title="Rincian"
-                />
-              </SummaryPanel>
-            </div>
-          )}
-
-          {/* The receipt for the one column a phone has. */}
-          {order && (
-            <div className="mt-10 desktop:hidden">
-              <OrderReceipt
-                lines={order.items.map((item, index) => ({
-                  key: `${item.name}-${index}`,
-                  name: item.name,
-                  quantity: item.quantity,
-                  subtotal: item.subtotal,
-                }))}
-                total={order.totalAmount}
-                title="Rincian"
               />
-            </div>
+              {offline
+                ? "Koneksi putus — nyoba nyambung lagi…"
+                : "Live · berubah sendiri begitu dapur gerak"}
+            </p>
           )}
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------ details ---- */}
+      <section className="band-tight band-cream">
+        <div className="band-inner flex items-start gap-10">
+          <div className="min-w-0 flex-1">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 tablet:grid-cols-3">
+              {order.pickupSlot && (
+                <Fact label="Jam ambil">
+                  <span className="tabular-nums">{order.pickupSlot}</span>
+                </Fact>
+              )}
+              <Fact label="Pembayaran">{PAYMENT_LABEL[order.paymentMethod]}</Fact>
+              <Fact label="Status bayar">
+                <span className={order.paymentStatus === "PAID" ? "text-ok" : "text-warn"}>
+                  {order.paymentStatus === "PAID" ? "Udah lunas" : "Belum dibayar"}
+                </span>
+              </Fact>
+            </dl>
+
+            {!cancelled && (
+              <div className="mt-9">
+                <h2 className="eyebrow mb-5 text-pink-deep">Perjalanan pesanan</h2>
+                <OrderTimeline status={order.status} needsPrep={order.needsPrep} />
+              </div>
+            )}
+
+            {order.notes && (
+              <p className="mt-8 border-l-2 border-line pl-4 text-[13px] italic leading-relaxed text-ink-soft">
+                {order.notes}
+              </p>
+            )}
+
+            {/* The receipt for the one column a phone has. */}
+            <div className="mt-10 desktop:hidden">{receipt}</div>
+          </div>
+
+          <SummaryPanel>{receipt}</SummaryPanel>
         </div>
       </section>
     </>
@@ -254,15 +403,30 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   return (
     <div className="min-w-0">
       <dt className="eyebrow text-ink-soft">{label}</dt>
-      <dd className={cn("mt-1 text-[14.5px] font-semibold leading-snug text-ink")}>{children}</dd>
+      <dd className="mt-1 text-[14.5px] font-semibold leading-snug text-ink">{children}</dd>
     </div>
   );
 }
 
-function Note({ text }: { text: string }) {
+/**
+ * The dark band while the answer is not in yet: an empty ring, breathing. Same
+ * shape as the stage it becomes, so nothing jumps when the order arrives.
+ */
+export function StagePlaceholder({ label }: { label?: string }) {
   return (
-    <p className="mt-5 border-l-2 border-line pl-4 text-[13px] italic leading-relaxed text-ink-soft">
-      {text}
-    </p>
+    <section
+      className="band band-dark band-glow !pt-6 tablet:!pt-8"
+      aria-busy="true"
+    >
+      <div className="band-inner text-center">
+        <div className="h-11" />
+        <div className="relative mx-auto mt-6 aspect-square w-[13.5rem] tablet:mt-4 tablet:w-[15.5rem]">
+          <div className="stage-halo absolute inset-[8%] animate-pulse rounded-full" />
+        </div>
+        <p role="status" className="-mt-4 min-h-[1.5em] text-[14px] text-white/60 tablet:-mt-6">
+          {label}
+        </p>
+      </div>
+    </section>
   );
 }

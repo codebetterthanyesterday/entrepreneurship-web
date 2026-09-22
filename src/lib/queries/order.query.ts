@@ -2,18 +2,13 @@ import { or } from "@prisma/orm-postgres/orm-client";
 import { prisma as db } from "@/lib/prisma";
 import type { OrderWithItems } from "@/lib/services/order.service";
 import type { OrderStatus } from "@/types/order";
+import { lastFourDigits } from "@/lib/remembered-order";
 import type {
   CashierPreorder,
   KitchenStatus,
   KitchenTicket,
   TrackedOrder,
 } from "@/types/order-view";
-
-/** Last four digits of a phone number, ignoring spaces, dashes and a leading +. */
-function lastFourDigits(phone: string | null | undefined): string | null {
-  const digits = (phone ?? "").replace(/\D/g, "");
-  return digits.length >= 4 ? digits.slice(-4) : null;
-}
 
 /**
  * The order behind a confirmation page, looked up by its number alone.
