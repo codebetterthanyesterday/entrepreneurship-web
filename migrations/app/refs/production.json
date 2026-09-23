@@ -1,0 +1,7 @@
+{
+  "hash": "ff967b24ec21753de250bf25465bc1677cffd2fbbc3327859c321abb53cdc575",
+  "invariants": [
+    "ngd:order_seq_onsite",
+    "ngd:order_seq_preorder"
+  ]
+}

@@ -53,3 +53,5 @@ next-env.d.ts
 # third-party HTML templates used only as design reference (~26 MB, own licenses)
 /food-bar-gh-pages/
 /vegefoods-1.0.0/
+
+DEPLOY.md
