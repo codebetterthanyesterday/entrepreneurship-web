@@ -7,6 +7,7 @@ import { getSiteEditContext } from "@/lib/site-edit";
 import { PublicNav } from "@/components/nav/public-nav";
 import { EditModeBar } from "@/components/site/edit-mode";
 import { SiteFooter } from "@/components/site/site-footer";
+import { BrandMark } from "@/components/site/brand-mark";
 import { AccentRoot } from "@/components/site/accent-root";
 import { AccentSwitch } from "@/components/site/accent-switch";
 import { ACCENT_COOKIE, parseAccent, shouldAskAccent } from "@/lib/accent";
@@ -56,7 +57,7 @@ export default async function PublicLayout({
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <div className="flex flex-col justify-center min-w-0">
             <Link href="/" className="flex min-h-[44px] items-center gap-2">
-              <span className="w-2.5 h-2.5 bg-pink rounded-full" aria-hidden="true" />
+              <BrandMark className="w-10" />
               {/*
                 A span, not a heading. This is the site's banner logo on every
                 customer page, and every one of those pages already has its own

@@ -1,6 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { BRAND_NAME } from "@/lib/brand";
+import { BrandMark } from "@/components/site/brand-mark";
 
 export interface NoticePageProps {
   eyebrow: string;
@@ -27,8 +28,8 @@ export function NoticePage({ eyebrow, title, description, children }: NoticePage
   return (
     <div className="band-dark flex min-h-[100dvh] items-center">
       <div className="band-inner-narrow py-16">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-pink" aria-hidden="true" />
+        <Link href="/" className="inline-flex items-center gap-3">
+          <BrandMark className="w-14 text-pink" />
           <span className="font-[family-name:var(--font-display)] text-lg font-semibold text-white">
             {BRAND_NAME}
           </span>

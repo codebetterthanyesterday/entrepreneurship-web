@@ -85,7 +85,7 @@ export function AccentWelcome({ brandName, onChoose }: AccentWelcomeProps) {
             <Choice
               accent="pink"
               label="Perempuan"
-              mood="Nuansa pink"
+              mood="Nuansa merah"
               onChoose={onChoose}
               onLean={setLean}
             />

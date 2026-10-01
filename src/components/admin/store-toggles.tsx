@@ -37,7 +37,7 @@ const COPY: Record<
   accentChoiceEnabled: {
     title: "Warna cewek/cowok",
     on: "Pengunjung baru ditanya, dan bisa ganti warna di header",
-    off: "Pengunjung baru pakai pink. Yang udah milih tetap pakai pilihannya",
+    off: "Pengunjung baru pakai merah. Yang udah milih tetap pakai pilihannya",
     toastOn: "Pilihan warna dinyalakan",
     toastOff: "Pilihan warna dimatikan",
     ariaLabel: "Nyalakan atau matikan pilihan warna cewek/cowok",

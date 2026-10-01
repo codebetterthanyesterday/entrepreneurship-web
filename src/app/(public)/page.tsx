@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/site/brand-mark";
 import * as React from "react";
 import { getActiveProducts } from "@/lib/queries/product.query";
 import { getSiteLists, getSiteTexts } from "@/lib/queries/site.query";
@@ -63,7 +64,13 @@ export default async function ProfilePage() {
 
       {/* ---------------------------------------------------------- hero ---- */}
       <section className="band band-dark band-glow">
-        <div className="band-inner">
+        <div className="band-inner relative">
+          {/*
+            The logo at full size, in the glow. Only where there is a column
+            free beside the copy: on a phone the header already carries the mark
+            and the hero's height belongs to the heading and the button.
+          */}
+          <BrandMark className="pointer-events-none absolute right-4 top-1/2 hidden w-[clamp(15rem,24vw,21rem)] -translate-y-1/2 text-pink min-[1180px]:block" />
           <Reveal className="max-w-[52rem]">
             <p className="eyebrow text-pink">
               Market Day &middot; buatan sendiri

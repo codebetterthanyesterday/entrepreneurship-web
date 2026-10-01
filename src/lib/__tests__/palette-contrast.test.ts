@@ -16,8 +16,9 @@ import { describe, expect, it } from "vitest";
 const CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf-8");
 
 /**
- * The two moods a customer can be in — see `src/lib/accent.ts`. Pink is the
- * `@theme` block; blue is the `[data-accent="blue"]` block that redefines its
+ * The two moods a customer can be in — see `src/lib/accent.ts`. "pink" is the
+ * `@theme` block (the name is the mood's id and the tokens' role name; the
+ * colour behind it is now the brand red); blue is the `[data-accent="blue"]` block that redefines its
  * identity roles. Every screen a customer sees is drawn in one or the other, so
  * every pair below has to hold in both.
  */
@@ -111,9 +112,9 @@ const PAIRS: readonly [string, string, number, string][] = [
   ["#" + WHITE, "sky-deep", 4.5, "pintasan lintas-area yang sedang aktif"],
 
   // The profile's dark band. This is where the brand fill finally gets to carry
-  // text: #F875AA is barred from it on every light surface, and reaches 6.58:1
-  // here — so on a dark band pink is the accent text colour and pink-deep is not
-  // needed at all.
+  // text: it is barred from that on every light surface, and reaches 4.5:1
+  // here — so on a dark band pink is the accent text colour. pink-deep is not
+  // used there at all: the brand red #CA3232 is only 3.3:1 on ink-deep.
   ["#" + WHITE, "ink-deep", 4.5, "teks utama di band gelap"],
   ["pink", "ink-deep", 4.5, "eyebrow dan aksen di band gelap"],
   ["pink-soft", "ink-deep", 4.5, "hover tombol putih di band gelap"],
@@ -156,16 +157,17 @@ describe.each(PALETTES)("palette contrast — %s mood", (palette) => {
     ).toBeGreaterThanOrEqual(minimum);
   });
 
-  it("keeps the brand pink off text, because it cannot carry any", () => {
-    // #F875AA is the brand fill from conventions.md and stays exactly as
-    // specified — but white on it is 2.59:1 and ink on it is 4.79:1, so it is
-    // for bars, dots and chart columns only. Anything with a label uses
-    // pink-deep. This test records why, so nobody "fixes" the button back.
+  it("keeps the accent fill off text, because it cannot carry any", () => {
+    // `pink` is the lighter cut of each mood's accent — white on it is 3.70:1
+    // in the red mood — so it is for bars, dots and chart columns only.
+    // Anything with a label uses pink-deep. This test records why, so nobody
+    // "fixes" the button back.
     expect(contrastRatio(WHITE, token("pink", palette))).toBeLessThan(4.5);
   });
 
   it("keeps the primary button readable while the pointer is on it", () => {
-    // The hover is `brightness-110`, which lightens the fill.
+    // The hover is `brightness-95`, which darkens the fill. It used to lighten
+    // it (`brightness-110`), and on the brand red that left white at 4.46:1.
     const lighten = (hex: string, factor: number) =>
       [0, 2, 4]
         .map((i) => Math.min(255, Math.round(Number.parseInt(hex.slice(i, i + 2), 16) * factor)))
@@ -173,7 +175,7 @@ describe.each(PALETTES)("palette contrast — %s mood", (palette) => {
         .join("")
         .toUpperCase();
 
-    expect(contrastRatio(WHITE, lighten(token("pink-deep", palette), 1.1))).toBeGreaterThanOrEqual(
+    expect(contrastRatio(WHITE, lighten(token("pink-deep", palette), 0.95))).toBeGreaterThanOrEqual(
       4.5,
     );
   });
@@ -272,5 +274,13 @@ describe("the blue mood", () => {
   it("keeps the header switch's pinned swatches equal to each mood's accent", () => {
     expect(token("mood-pink")).toBe(token("pink", "pink"));
     expect(token("mood-blue")).toBe(token("pink", "blue"));
+  });
+});
+
+describe("the brand palette", () => {
+  it("uses the team's three colours as given, not approximations of them", () => {
+    expect(token("pink-deep")).toBe("CA3232");
+    expect(token("sand")).toBe("F5F5DC");
+    expect(token("cream")).toBe("FBFBFB");
   });
 });

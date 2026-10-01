@@ -39,44 +39,64 @@
      ======================================================================== */
 
   /*
-   * The accent fill. Decorative only — bars, dots, chart columns, timeline
-   * markers. Far too light to carry white text (2.59:1), so anything with a
-   * label on it uses --color-pink-deep. The one exception is the dark band,
-   * where it reaches 6.58:1 and becomes the accent *text* colour.
+   * The default mood: red on off-white, with beige as the quiet field. The
+   * token names still say `pink`, `cream` and `sand` — they are roles (see
+   * above), and the colours behind them are the team's three:
+   *
+   *   #fbfbfb  the page          — most of every screen
+   *   #f5f5dc  the quiet field   — bands and highlights, the second voice
+   *   #ca3232  the accent        — buttons, links, prices; a little goes far
+   *
+   * The proportion is the point. Red this saturated reads as premium only while
+   * it stays scarce, so the surfaces, hairlines and ink below are all neutral
+   * or beige-leaning, and nothing but the accent roles is red.
    */
-  --color-pink: #f875aa;
-  /*
-   * The accent text is allowed near: white on it reads 5.61:1, and it reads
-   * 5.61:1 on white, 5.28:1 on cream and 4.70:1 on pink-soft. Every interactive
-   * accent surface in the app is this one.
-   */
-  --color-pink-deep: #b83370;
-  --color-pink-soft: #ffe4ef;
 
-  /* The page: a white with a trace of the accent in it. */
-  --color-cream: #fff6f6;
+  /*
+   * The accent fill. Decorative only — bars, dots, chart columns, timeline
+   * markers. A lighter cut of the brand red: white on it is 3.70:1, so anything
+   * with a label on it uses --color-pink-deep. The one exception is the dark
+   * band, where #ca3232 itself would sink (3.3:1) and this one reaches 4.77:1 —
+   * there it is the accent *text* colour.
+   */
+  --color-pink: #e5534f;
+  /*
+   * The brand red, exactly as specified, and the accent text is allowed near:
+   * white on it reads 5.23:1, and it reads 5.23:1 on white, 5.06:1 on cream,
+   * 4.73:1 on sand and 4.67:1 on pink-soft. Every interactive accent surface in
+   * the app is this one.
+   */
+  --color-pink-deep: #ca3232;
+  /*
+   * The highlight behind a selected or featured thing. An ivory with the red
+   * barely in it, not a pink: a rosier tint would bring a fourth colour in.
+   */
+  --color-pink-soft: #fbf0e9;
+
+  /* The page. */
+  --color-cream: #fbfbfb;
   /*
    * The quiet field, between cream and the dark band. Three tones rather than
    * two is what gives a page a rhythm to alternate — light, quiet, dark —
    * without introducing a colour that fights the accent.
    */
-  --color-sand: #f5ede6;
-  --color-sand-line: #e4d7cc;
-  /* Hairlines on the light surfaces. */
-  --color-line: #f2dde4;
+  --color-sand: #f5f5dc;
+  --color-sand-line: #dedcb9;
+  /* Hairlines on the light surfaces: the beige, taken down a step. */
+  --color-line: #ebe9da;
 
-  /* Body text. */
-  --color-ink: #4a2b38;
-  /* 5.98:1 on cream, 6.36:1 on white — the old #8D7079 was 4.18:1 and failed. */
-  --color-ink-soft: #74585f;
+  /* Body text. A warm charcoal — the red is the only red on the page. */
+  --color-ink: #2e2120;
+  /* 6.19:1 on cream, 6.41:1 on white, 5.79:1 on sand. */
+  --color-ink-soft: #6a5c56;
   /*
    * The dark field, for a hero and a closing band, so that scrolling a page
    * moves between rooms instead of down one list. Deliberately warm — the ink
    * taken further down, not a neutral black.
    */
-  --color-ink-deep: #2a1620;
+  --color-ink-deep: #241514;
   /* Hairlines and dividers on the dark field. */
-  --color-ink-line: #4a3540;
+  --color-ink-line: #3f2b29;
 
   /* ===================== end of the identity block ======================= */
 
@@ -87,7 +107,7 @@
    * equal to `--color-pink` here and in the blue block — the palette test
    * checks that, so a rebrand cannot leave the switch showing the old colours.
    */
-  --color-mood-pink: #f875aa;
+  --color-mood-pink: #e5534f;
   --color-mood-blue: #6b8cff;
 
   /*
@@ -152,7 +172,7 @@
    The blue mood
    --------------------------------------------------------------------------
    The same eleven roles as the identity block, retuned cool. A customer who
-   answers "Laki-laki" on their first visit gets this instead of the pink — and
+   answers "Laki-laki" on their first visit gets this instead of the red — and
    the whole mood moves with it, surfaces, ink and dark band included, not only
    the accent. See `src/lib/accent.ts`.
 
@@ -166,7 +186,7 @@
    The values stay literal hex for the same reason as the block above, and
    `palette-contrast.test.ts` runs every pair it checks against both palettes.
    It also fails if a role is added up there and not here, which would leave
-   blue mode quietly half pink.
+   blue mode quietly half red.
    ========================================================================== */
 [data-accent="blue"] {
   --color-pink: #6b8cff;
@@ -477,6 +497,25 @@ html {
 
 .band-sand {
   background-color: var(--color-sand);
+}
+
+/*
+ * The logo, as a mask — see `BrandMark`. 720×688 is the file's own size; the
+ * element takes a width from its class and the ratio does the rest.
+ *
+ * In the components layer, not bare like the rules around it: unlayered CSS
+ * outranks every Tailwind utility, so a bare `display` here made `hidden` on
+ * the mark do nothing and put the hero's desktop logo over the copy on a phone.
+ */
+@layer components {
+  .brand-mark {
+    display: inline-block;
+    flex: none;
+    aspect-ratio: 720 / 688;
+    background-color: currentColor;
+    -webkit-mask: url("/brand/bunnye-mark.png") center / contain no-repeat;
+    mask: url("/brand/bunnye-mark.png") center / contain no-repeat;
+  }
 }
 
 .band-cream {

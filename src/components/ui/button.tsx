@@ -22,9 +22,10 @@ export function buttonClasses({ variant = "primary", size = "md", fullWidth }: B
     size === "sm" && "min-h-[44px] px-4 text-sm",
     size === "md" && "min-h-[52px] px-6 text-base",
     fullWidth && "w-full",
-    // Variants. pink-deep, not pink: white on #F875AA is 2.59:1 and fails even
-    // the large-text threshold. The brand fill stays for decoration.
-    variant === "primary" && "bg-pink-deep text-white hover:brightness-110",
+    // Variants. pink-deep, not pink: white on the lighter accent fill is under
+    // 4.5:1 in both moods. The hover darkens rather than lightens for the same
+    // reason — the brand red at brightness-110 drops white text to 4.46:1.
+    variant === "primary" && "bg-pink-deep text-white hover:brightness-95",
     variant === "ghost" && "bg-white border-2 border-pink-soft text-pink-deep hover:bg-pink-soft",
     variant === "flat" && "bg-white border-[1.5px] border-line text-ink-soft hover:bg-cream",
     variant === "go" && "bg-warn text-white hover:brightness-95",

@@ -36,7 +36,7 @@ export default function GlobalError({
           alignItems: "center",
           justifyContent: "center",
           padding: "16px",
-          background: "#2A1620",
+          background: "#241514",
           color: "#FFFFFF",
           fontFamily: "system-ui, -apple-system, sans-serif",
           textAlign: "center",
@@ -50,7 +50,7 @@ export default function GlobalError({
               letterSpacing: "0.16em",
               textTransform: "uppercase",
               margin: "0 0 14px",
-              color: "#F875AA",
+              color: "#E5534F",
             }}
           >
             {BRAND_NAME}
@@ -71,7 +71,7 @@ export default function GlobalError({
               borderRadius: "12px",
               border: "none",
               background: "#FFFFFF",
-              color: "#2A1620",
+              color: "#241514",
               fontSize: "15px",
               fontWeight: 600,
               cursor: "pointer",

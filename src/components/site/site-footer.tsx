@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/site/brand-mark";
 import * as React from "react";
 import Link from "next/link";
 import { EditableText } from "@/components/site/editable-text";
@@ -42,8 +43,8 @@ export function SiteFooter({ texts, whatsapp, editing }: SiteFooterProps) {
     <footer className="band-dark text-white">
       <div className="band-inner py-12 grid gap-9 tablet:grid-cols-3">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-pink rounded-full" aria-hidden="true" />
+          <div className="flex items-center gap-3">
+            <BrandMark className="w-14 text-pink" />
             <span className="font-[family-name:var(--font-display)] font-semibold text-lg text-white">
               {texts["hero.title"].value}
             </span>

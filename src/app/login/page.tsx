@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { BRAND_NAME, pageTitle } from "@/lib/brand";
+import { BrandMark } from "@/components/site/brand-mark";
 
 export const metadata = {
   title: pageTitle("Masuk"),
@@ -22,13 +23,10 @@ export default async function LoginPage() {
   return (
     <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-[400px]">
-        {/* Brand */}
-        <div className="flex items-center gap-2 mb-8 justify-center">
-          <span className="w-2.5 h-2.5 bg-pink rounded-full" aria-hidden="true" />
-          <h1 className="font-display font-semibold text-xl text-pink-deep">
-            {BRAND_NAME}
-          </h1>
-        </div>
+        {/* Brand. The logo carries the name, so the heading is the logo. */}
+        <h1 className="mb-7 flex justify-center">
+          <BrandMark label={BRAND_NAME} className="w-36" />
+        </h1>
 
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border-[1.5px] border-line p-6 sm:p-8">

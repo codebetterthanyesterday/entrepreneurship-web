@@ -17,7 +17,7 @@ afterEach(() => {
 
 function renderRoot(props: Partial<React.ComponentProps<typeof AccentRoot>> = {}) {
   return render(
-    <AccentRoot initialAccent={null} ask brandName="Nama Usaha" {...props}>
+    <AccentRoot initialAccent={null} ask brandName="Bunnyè" {...props}>
       <AccentSwitch />
       <p>Isi halaman</p>
     </AccentRoot>,
