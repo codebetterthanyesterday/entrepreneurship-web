@@ -15,6 +15,7 @@ import {
 } from "@/lib/remembered-order";
 import { OrderTimeline } from "./order-timeline";
 import { OrderReceipt, SummaryPanel } from "./order-receipt";
+import { PhotoboothQr } from "./photobooth-qr";
 import { OrderStage, StageArt } from "./order-stage";
 import { Confetti } from "./confetti";
 import { JourneyHero } from "./journey";
@@ -30,6 +31,7 @@ const POLL_INTERVAL_MS = 8_000;
 
 interface TrackingResponse {
   order: TrackedOrder | null;
+  photoLink?: string | null;
 }
 
 interface Search {
@@ -165,6 +167,7 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
     return (
       <FoundOrder
         order={order}
+        photoLink={data?.photoLink ?? null}
         burst={burst}
         offline={error !== undefined}
         onSwitch={switchOrder}
@@ -264,11 +267,13 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
 
 function FoundOrder({
   order,
+  photoLink,
   burst,
   offline,
   onSwitch,
 }: {
   order: TrackedOrder;
+  photoLink: string | null;
   burst: number;
   offline: boolean;
   onSwitch: () => void;
@@ -378,6 +383,15 @@ function FoundOrder({
               <p className="mt-8 border-l-2 border-line pl-4 text-[13px] italic leading-relaxed text-ink-soft">
                 {order.notes}
               </p>
+            )}
+
+            {photoLink && (
+              <PhotoboothQr
+                link={photoLink}
+                orderNumber={order.orderNumber}
+                direct={photoLink.includes("t=")}
+                className="mt-9"
+              />
             )}
 
             {/* The receipt for the one column a phone has. */}

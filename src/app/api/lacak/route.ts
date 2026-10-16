@@ -1,8 +1,14 @@
 import { findForTracking, toTrackedOrder } from "@/lib/queries/order.query";
 import type { TrackedOrder } from "@/types/order-view";
+import { photoboothLink } from "@/lib/photobooth-link";
 
 export interface TrackingResponse {
   order: TrackedOrder | null;
+  /**
+   * The photobooth link, with the token that skips typing the digits again:
+   * this caller has just proven them. Absent when there is no order.
+   */
+  photoLink?: string | null;
 }
 
 /**
@@ -25,7 +31,9 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const order = await findForTracking(orderNumber, phoneLast4);
-  const body: TrackingResponse = { order: order ? toTrackedOrder(order) : null };
+  const body: TrackingResponse = order
+    ? { order: toTrackedOrder(order), photoLink: photoboothLink(order, { withToken: true }) }
+    : { order: null };
 
   return Response.json(body, { headers });
 }

@@ -5,6 +5,8 @@ import { OrderReceipt } from "@/components/public/order-receipt";
 import { StageRing } from "@/components/public/order-stage";
 import { cn } from "@/lib/utils";
 import { pageTitle } from "@/lib/brand";
+import { photoboothLink } from "@/lib/photobooth-link";
+import { PhotoboothQr } from "@/components/public/photobooth-qr";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,8 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
   if (!found) notFound();
 
   const order = toTrackedOrder(found);
+  // No token here: this page opens with the order number alone.
+  const photoLink = photoboothLink(found, { withToken: false });
 
   const instruction = order.needsPrep
     ? {
@@ -127,6 +131,15 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             <p className="mt-6 border-l-2 border-line pl-4 text-[13px] italic leading-relaxed text-ink-soft">
               {order.notes}
             </p>
+          )}
+
+          {photoLink && (
+            <PhotoboothQr
+              link={photoLink}
+              orderNumber={order.orderNumber}
+              direct={false}
+              className="mt-9"
+            />
           )}
 
           <div className="mt-10 flex flex-col gap-2.5 tablet:flex-row">
