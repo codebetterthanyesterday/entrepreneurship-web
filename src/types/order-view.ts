@@ -10,6 +10,18 @@ export interface TrackedOrderItem {
 }
 
 /**
+ * A charge another service put on the order's note, paid there already: the
+ * photobooth's prints and HD photos (BPB-098). Separate from the food lines;
+ * `totalAmount` never includes it.
+ */
+export interface ExtraChargeLine {
+  key: string;
+  /** "Cetak 4R ×2 · Buka semua foto HD". */
+  description: string;
+  amount: number;
+}
+
+/**
  * An order flattened to plain values for the tracking and confirmation pages.
  *
  * Prisma rows carry Temporal instants, which cannot cross the server/client
@@ -27,6 +39,8 @@ export interface TrackedOrder {
   /** True when any item still has to be made to order. */
   needsPrep: boolean;
   items: TrackedOrderItem[];
+  /** Photobooth charges on the note, already paid at the booth. */
+  photobooth: ExtraChargeLine[];
 }
 
 /** What the till needs to show once an on-the-spot sale has been saved. */
@@ -78,6 +92,11 @@ export interface CashierPreorder {
   /** True when any line still has to be made to order. */
   needsPrep: boolean;
   items: CashierPreorderItem[];
+  /**
+   * Photobooth charges on the note. Already paid at the booth, so never part
+   * of what the cashier collects.
+   */
+  photobooth: ExtraChargeLine[];
 }
 
 /** One line on a kitchen ticket. */

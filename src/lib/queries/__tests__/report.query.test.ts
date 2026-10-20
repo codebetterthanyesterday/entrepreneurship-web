@@ -194,6 +194,7 @@ describe("getSalesSummary", () => {
       activeProductCount: 0,
       averageOrderValue: 0,
       lowStockCount: 0,
+      photoboothRevenue: 0,
     });
   });
 

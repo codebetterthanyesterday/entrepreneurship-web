@@ -23,9 +23,22 @@ export interface ReceiptLine {
   subtotal: number;
 }
 
+/** A line another service added to the note, already paid there. */
+export interface ExtraLine {
+  key: string;
+  description: string;
+  amount: number;
+}
+
 export interface OrderReceiptProps {
   lines: readonly ReceiptLine[];
   total: number;
+  /**
+   * Photobooth charges (BPB-098), paid at the booth. Shown in their own
+   * section after the food, which then gets its own subtotal; the bottom line
+   * becomes the combined total. Food and photobooth never mix in one list.
+   */
+  photobooth?: readonly ExtraLine[];
   /** Small label above the lines. Omitted where the heading already says it. */
   title?: string;
   /** Shown in place of the lines when there are none. */
@@ -33,7 +46,17 @@ export interface OrderReceiptProps {
   className?: string;
 }
 
-export function OrderReceipt({ lines, total, title, emptyNote, className }: OrderReceiptProps) {
+export function OrderReceipt({
+  lines,
+  total,
+  photobooth = [],
+  title,
+  emptyNote,
+  className,
+}: OrderReceiptProps) {
+  const extra = photobooth.reduce((sum, line) => sum + line.amount, 0);
+  const withPhotobooth = photobooth.length > 0;
+
   return (
     <div className={className}>
       {title && <h2 className="eyebrow text-pink-deep">{title}</h2>}
@@ -61,10 +84,37 @@ export function OrderReceipt({ lines, total, title, emptyNote, className }: Orde
         </ul>
       )}
 
+      {withPhotobooth && (
+        <>
+          <div className="flex justify-between gap-3 border-t border-line py-2.5 text-[13.5px] text-ink">
+            <span>Subtotal makanan</span>
+            <span className="tabular-nums">{formatRupiah(total)}</span>
+          </div>
+
+          <section aria-labelledby="receipt-photobooth" className="mt-4">
+            <h3 id="receipt-photobooth" className="eyebrow text-pink-deep">
+              Photobooth
+            </h3>
+            <ul className="mt-2 flex flex-col">
+              {photobooth.map((line) => (
+                <li
+                  key={line.key}
+                  className="flex justify-between gap-3 border-t border-line py-2.5 text-[13.5px] text-ink-soft"
+                >
+                  <span className="min-w-0">{line.description}</span>
+                  <span className="flex-none tabular-nums">{formatRupiah(line.amount)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1 text-[12px] text-ink-soft">Sudah dibayar di booth photobooth.</p>
+          </section>
+        </>
+      )}
+
       <div className="mt-4 flex items-baseline justify-between border-t border-ink/15 pt-4">
-        <span className="eyebrow text-ink-soft">Total</span>
+        <span className="eyebrow text-ink-soft">{withPhotobooth ? "Total gabungan" : "Total"}</span>
         <span className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink tabular-nums">
-          {formatRupiah(total)}
+          {formatRupiah(total + extra)}
         </span>
       </div>
     </div>

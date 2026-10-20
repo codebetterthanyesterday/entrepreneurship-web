@@ -252,6 +252,43 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
               </li>
             </ul>
 
+            {selected.photobooth.length > 0 && (
+              // Paid to the photobooth crew already (BPB-098, K-13): on the note
+              // for the record, never part of what is collected here.
+              <section
+                aria-labelledby="preorder-photobooth"
+                className="rounded-[14px] border border-line p-3 flex flex-col gap-2"
+              >
+                <h3
+                  id="preorder-photobooth"
+                  className="flex justify-between gap-3 text-sm font-bold text-ink"
+                >
+                  <span>Photobooth</span>
+                  <span className="text-[12px] font-semibold text-sky-deep">lunas di booth</span>
+                </h3>
+                <ul className="flex flex-col gap-2">
+                  {selected.photobooth.map((line) => (
+                    <li key={line.key} className="flex justify-between gap-3 text-sm">
+                      <span className="text-ink">{line.description}</span>
+                      <span className="flex-none text-ink-soft tabular-nums">
+                        {formatRupiah(line.amount)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[12px] leading-snug text-ink-soft">
+                  Jangan ditagih lagi. Total gabungan nota{" "}
+                  <span className="tabular-nums">
+                    {formatRupiah(
+                      selected.totalAmount +
+                        selected.photobooth.reduce((sum, line) => sum + line.amount, 0),
+                    )}
+                  </span>
+                  .
+                </p>
+              </section>
+            )}
+
             {selected.notes && (
               // Warn, not muted: a note the cashier skims past is a customer
               // handed the wrong thing.

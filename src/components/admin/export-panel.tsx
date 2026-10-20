@@ -22,10 +22,16 @@ const EXPORT_OPTIONS: readonly ExportOption[] = [
     label: "Rekap per menu",
     description: "Berapa porsi tiap menu terjual, sisa stoknya, dan pemasukannya",
   },
+  {
+    type: "photobooth",
+    label: "Tagihan photobooth",
+    description:
+      "Cetak foto dan HD yang dibayar di booth photobooth, terpisah dari makanan; yang dibatalkan tetap tercatat",
+  },
 ];
 
 /**
- * The three report attachments, as plain download links.
+ * The four report attachments, as plain download links.
  *
  * Anchors rather than buttons with a fetch: a CSV download is exactly what an
  * `<a download>` is for, the browser handles the save dialog and the filename

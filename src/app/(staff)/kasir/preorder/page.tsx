@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/session";
+import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { findPreordersForCashier, toCashierPreorder } from "@/lib/queries/order.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { PreorderScreen } from "@/components/kasir/preorder-screen";
@@ -20,7 +21,11 @@ export default async function CashierPreorderPage() {
 
   // Plain values only — Prisma rows carry Temporal instants that cannot cross
   // the server/client boundary.
-  const preorders = orders.map(toCashierPreorder);
+  // Photobooth charges (BPB-098) show beside each preorder, already paid.
+  const charges = await findActiveCharges(orders.map((order) => order.id));
+  const preorders = orders.map((order) =>
+    toCashierPreorder(order, charges.get(order.id)),
+  );
 
   return (
     <div className="flex flex-col gap-4">
