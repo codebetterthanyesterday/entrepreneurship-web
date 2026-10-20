@@ -290,6 +290,7 @@ function FoundOrder({
         subtotal: item.subtotal,
       }))}
       total={order.totalAmount}
+      photobooth={order.photobooth}
       title="Rincian"
     />
   );

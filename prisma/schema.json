@@ -8,6 +8,10 @@
       "model": "Category",
       "namespace": "public"
     },
+    "externalCharge": {
+      "model": "ExternalCharge",
+      "namespace": "public"
+    },
     "order": {
       "model": "Order",
       "namespace": "public"
@@ -49,6 +53,15 @@
     "namespaces": {
       "public": {
         "enum": {
+          "ChargeSource": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "PHOTOBOOTH",
+                "value": "PHOTOBOOTH"
+              }
+            ]
+          },
           "OrderChannel": {
             "codecId": "pg/text@1",
             "members": [
@@ -231,6 +244,130 @@
               "table": "category"
             }
           },
+          "ExternalCharge": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "externalId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "orderId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "paidAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "source": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ChargeSource",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "voidedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "order": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "orderId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Order",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "externalId": {
+                  "column": "externalId"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "orderId": {
+                  "column": "orderId"
+                },
+                "paidAt": {
+                  "column": "paidAt"
+                },
+                "source": {
+                  "column": "source"
+                },
+                "voidedAt": {
+                  "column": "voidedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "externalCharge"
+            }
+          },
           "Order": {
             "fields": {
               "cashReceived": {
@@ -399,6 +536,21 @@
               }
             },
             "relations": {
+              "externalCharges": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "orderId"
+                  ]
+                },
+                "to": {
+                  "model": "ExternalCharge",
+                  "namespace": "public"
+                }
+              },
               "handledBy": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -1415,6 +1567,112 @@
                 }
               ]
             },
+            "externalCharge": {
+              "checks": [
+                {
+                  "expression": "\"source\" IN ('PHOTOBOOTH')",
+                  "name": "externalCharge_source_check_2aad0134",
+                  "prefix": "externalCharge_source_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "externalId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "orderId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "paidAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "source": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ChargeSource",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "voidedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "orderId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "externalCharge"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "order"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "orderId"
+                  ],
+                  "name": "externalCharge_orderId_idx_d284871b",
+                  "prefix": "externalCharge_orderId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "externalId"
+                  ]
+                }
+              ]
+            },
             "order": {
               "checks": [
                 {
@@ -2338,6 +2596,12 @@
             }
           },
           "valueSet": {
+            "ChargeSource": {
+              "kind": "valueSet",
+              "values": [
+                "PHOTOBOOTH"
+              ]
+            },
             "OrderChannel": {
               "kind": "valueSet",
               "values": [
@@ -2401,10 +2665,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "ff967b24ec21753de250bf25465bc1677cffd2fbbc3327859c321abb53cdc575"
+    "storageHash": "fda68e9b77942f2d636305e0efcfc8f0ddbeaad862d45febab3e6e625dac6e1b"
   },
   "execution": {
-    "executionHash": "b161f9521a5978b916b7c61a1b6310930ffc583198ca50f99589e94ff65ff4da",
+    "executionHash": "d920af95d02e507e6e3b82bfeead9b378633a7af8416c8a8c849d69990474208",
     "mutations": {
       "defaults": [
         {
@@ -2416,6 +2680,17 @@
             "column": "id",
             "namespace": "public",
             "table": "category"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "externalCharge"
           }
         },
         {

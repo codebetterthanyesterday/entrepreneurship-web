@@ -1,0 +1,164 @@
+[
+  {
+    "id": "table.externalCharge",
+    "label": "Create table \"externalCharge\"",
+    "summary": "Creates table \"externalCharge\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "externalCharge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"externalCharge\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"externalCharge\"",
+        "sql": "CREATE TABLE \"public\".\"externalCharge\" (\n  \"amount\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text NOT NULL,\n  \"externalId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"orderId\" text NOT NULL,\n  \"paidAt\" timestamptz NOT NULL,\n  \"source\" text NOT NULL,\n  \"voidedAt\" timestamptz,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"externalCharge_source_check_2aad0134\" CHECK (\"source\" IN ('PHOTOBOOTH'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"externalCharge\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.externalCharge.externalCharge_externalId_key",
+    "label": "Add unique constraint on \"externalCharge\" (externalId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "externalCharge_externalId_key",
+        "table": "externalCharge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"externalCharge_externalId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "externalCharge_externalId_key",
+          "public",
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"externalCharge_externalId_key\"",
+        "sql": "ALTER TABLE \"public\".\"externalCharge\" ADD CONSTRAINT \"externalCharge_externalId_key\" UNIQUE (\"externalId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"externalCharge_externalId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "externalCharge_externalId_key",
+          "public",
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.externalCharge.externalCharge_orderId_idx_d284871b",
+    "label": "Create index \"externalCharge_orderId_idx_d284871b\" on \"externalCharge\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "externalCharge_orderId_idx_d284871b",
+        "table": "externalCharge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"externalCharge_orderId_idx_d284871b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"externalCharge_orderId_idx_d284871b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"externalCharge_orderId_idx_d284871b\"",
+        "sql": "CREATE INDEX \"externalCharge_orderId_idx_d284871b\" ON \"public\".\"externalCharge\" (\"orderId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"externalCharge_orderId_idx_d284871b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"externalCharge_orderId_idx_d284871b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.externalCharge.externalCharge_orderId_fkey",
+    "label": "Add foreign key \"externalCharge_orderId_fkey\" on \"externalCharge\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "externalCharge_orderId_fkey",
+        "table": "externalCharge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"externalCharge_orderId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "externalCharge_orderId_fkey",
+          "public",
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"externalCharge_orderId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"externalCharge\"\nADD CONSTRAINT \"externalCharge_orderId_fkey\"\nFOREIGN KEY (\"orderId\")\nREFERENCES \"public\".\"order\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"externalCharge_orderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "externalCharge_orderId_fkey",
+          "public",
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ]
+  }
+]

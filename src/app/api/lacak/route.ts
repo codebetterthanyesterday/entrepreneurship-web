@@ -1,3 +1,4 @@
+import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { findForTracking, toTrackedOrder } from "@/lib/queries/order.query";
 import type { TrackedOrder } from "@/types/order-view";
 import { photoboothLink } from "@/lib/photobooth-link";
@@ -31,8 +32,12 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const order = await findForTracking(orderNumber, phoneLast4);
+  const charges = order ? await findActiveCharges([order.id]) : null;
   const body: TrackingResponse = order
-    ? { order: toTrackedOrder(order), photoLink: photoboothLink(order, { withToken: true }) }
+    ? {
+        order: toTrackedOrder(order, charges?.get(order.id)),
+        photoLink: photoboothLink(order, { withToken: true }),
+      }
     : { order: null };
 
   return Response.json(body, { headers });
