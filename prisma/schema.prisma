@@ -45,6 +45,12 @@ enum PaymentMethod {
   QRIS = "QRIS"
 }
 
+// Layanan lain yang boleh menagih ke nota pesanan (BPB-098, keputusan K-05).
+enum ChargeSource {
+  @@type("pg/text@1")
+  PHOTOBOOTH = "PHOTOBOOTH"
+}
+
 enum StockReason {
   @@type("pg/text@1")
   INITIAL_STOCK = "INITIAL_STOCK"
@@ -133,6 +139,7 @@ model Order {
   handledBy       User?          @relation("HandledOrders", fields: [handledById], references: [id])
   items           OrderItem[]
   stockMovements  StockMovement[]
+  externalCharges ExternalCharge[]
 
   @@index([status])
   @@index([channel])
@@ -150,6 +157,28 @@ model OrderItem {
   order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId    String
   product      Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+}
+
+// Tagihan dari layanan lain, misalnya cetak foto photobooth (BPB-098,
+// keputusan K-05 dan K-13). Sudah lunas saat dicatat: uangnya diterima kru
+// layanan itu. Tampil di nota terpisah dari makanan; totalAmount dan item
+// makanan tidak pernah diubah. Dibatalkan dengan voidedAt, tidak dihapus,
+// supaya tetap ada untuk audit.
+model ExternalCharge {
+  id          String       @id @default(uuid())
+  source      ChargeSource
+  // ID dari layanan pengirim (untuk photobooth: ID pesanan cetaknya). Unik,
+  // jadi kiriman ulang tidak pernah membuat baris kedua.
+  externalId  String       @unique
+  description String
+  amount      Int
+  paidAt      DateTime
+  voidedAt    DateTime?
+  createdAt   DateTime     @default(now())
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
 }

@@ -8,9 +8,11 @@ interface StatCardProps {
   sub: string;
   /** The takings card is the one an admin looks for first, so it is lifted. */
   highlight?: boolean;
+  /** A second line under `sub`, e.g. revenue that is reported separately. */
+  extra?: string;
 }
 
-function StatCard({ label, value, sub, highlight }: StatCardProps) {
+function StatCard({ label, value, sub, highlight, extra }: StatCardProps) {
   return (
     <div
       className={cn(
@@ -28,6 +30,7 @@ function StatCard({ label, value, sub, highlight }: StatCardProps) {
         {value}
       </div>
       <div className="text-[11.5px] font-semibold text-ink-soft">{sub}</div>
+      {extra && <div className="text-[11.5px] font-semibold text-sky-deep">{extra}</div>}
     </div>
   );
 }
@@ -49,6 +52,12 @@ export function DashboardStats({ summary, channels }: DashboardStatsProps) {
           summary.orderCount === 0
             ? "belum ada transaksi"
             : `rata-rata ${formatRupiah(summary.averageOrderValue)} per pesanan`
+        }
+        // The photobooth's takings, kept apart from food (BPB-098).
+        extra={
+          summary.photoboothRevenue > 0
+            ? `+ ${formatRupiah(summary.photoboothRevenue)} photobooth, terpisah`
+            : undefined
         }
       />
 

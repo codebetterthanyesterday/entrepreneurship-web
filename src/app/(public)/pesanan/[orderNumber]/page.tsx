@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
+import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { findByNumber, toTrackedOrder } from "@/lib/queries/order.query";
 import { OrderReceipt } from "@/components/public/order-receipt";
 import { StageRing } from "@/components/public/order-stage";
@@ -26,7 +27,8 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
   const found = await findByNumber(decodeURIComponent(orderNumber));
   if (!found) notFound();
 
-  const order = toTrackedOrder(found);
+  const charges = await findActiveCharges([found.id]);
+  const order = toTrackedOrder(found, charges.get(found.id));
   // No token here: this page opens with the order number alone.
   const photoLink = photoboothLink(found, { withToken: false });
 
@@ -123,6 +125,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
                 subtotal: item.subtotal,
               }))}
               total={order.totalAmount}
+              photobooth={order.photobooth}
               title="Yang kamu pesan"
             />
           </div>

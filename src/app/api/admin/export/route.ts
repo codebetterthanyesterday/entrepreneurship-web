@@ -4,8 +4,10 @@ import { csvAttachmentHeader, toCsv, type CsvColumn } from "@/lib/csv";
 import {
   getOrderItemsForExport,
   getOrdersForExport,
+  getPhotoboothChargesForExport,
   getProductRecapForExport,
   type OrderExportRow,
+  type PhotoboothChargeExportRow,
   type OrderItemExportRow,
   type ProductExportRow,
 } from "@/lib/queries/report.query";
@@ -61,7 +63,18 @@ const ORDER_COLUMNS: readonly CsvColumn<OrderExportRow>[] = [
   { header: "Metode Bayar", value: (row) => row.paymentMethod },
   { header: "Status Bayar", value: (row) => label(PAYMENT_STATUS_LABEL, row.paymentStatus) },
   { header: "Total", value: (row) => row.totalAmount },
+  // Separate from Total (food): paid to the photobooth crew (BPB-098).
+  { header: "Tagihan Photobooth", value: (row) => row.photoboothAmount },
   { header: "Waktu Dibuat", value: (row) => row.createdAt },
+];
+
+const PHOTOBOOTH_COLUMNS: readonly CsvColumn<PhotoboothChargeExportRow>[] = [
+  { header: "Nomor Pesanan", value: (row) => row.orderNumber },
+  { header: "Nama Pelanggan", value: (row) => row.customerName },
+  { header: "Keterangan", value: (row) => row.description },
+  { header: "Jumlah", value: (row) => row.amount },
+  { header: "Waktu Lunas", value: (row) => row.paidAt },
+  { header: "Waktu Dibatalkan", value: (row) => row.voidedAt },
 ];
 
 const ITEM_COLUMNS: readonly CsvColumn<OrderItemExportRow>[] = [
@@ -82,7 +95,7 @@ const PRODUCT_COLUMNS: readonly CsvColumn<ProductExportRow>[] = [
   { header: "Total Pemasukan", value: (row) => row.revenue },
 ];
 
-/** The three things an admin can pull, keyed by the `type` query parameter. */
+/** The four things an admin can pull, keyed by the `type` query parameter. */
 const EXPORTS = {
   orders: {
     filePrefix: "pesanan",
@@ -96,6 +109,10 @@ const EXPORTS = {
     filePrefix: "rekap-menu",
     build: async () => toCsv(PRODUCT_COLUMNS, await getProductRecapForExport()),
   },
+  photobooth: {
+    filePrefix: "tagihan-photobooth",
+    build: async () => toCsv(PHOTOBOOTH_COLUMNS, await getPhotoboothChargesForExport()),
+  },
 } as const;
 
 export type ExportType = keyof typeof EXPORTS;
@@ -107,7 +124,7 @@ function isExportType(value: string | null): value is ExportType {
 }
 
 /**
- * Serves one of the three report attachments as a CSV download.
+ * Serves one of the four report attachments as a CSV download.
  *
  * The proxy's matcher skips `/api/*` entirely, so `requireRole` here is the
  * only thing standing between an anonymous request and every customer's name,

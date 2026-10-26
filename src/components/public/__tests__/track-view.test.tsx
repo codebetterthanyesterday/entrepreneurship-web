@@ -18,6 +18,7 @@ const ORDER: TrackedOrder = {
   totalAmount: 36000,
   needsPrep: true,
   items: [{ name: "Es Kopi", quantity: 2, priceAtOrder: 18000, subtotal: 36000 }],
+  photobooth: [],
 };
 
 /** Answers the order only for the right pair, like the real endpoint. */

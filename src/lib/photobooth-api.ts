@@ -1,5 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { Temporal } from "@js-temporal/polyfill";
+import { z } from "zod";
+import type { ChargeRecord } from "@/lib/services/external-charge.service";
 import type { OrderWithItems } from "@/lib/services/order.service";
 import { lastFourDigits } from "@/lib/remembered-order";
 import type { OrderStatus, PaymentStatus } from "@/types/order";
@@ -15,7 +17,12 @@ import type { OrderStatus, PaymentStatus } from "@/types/order";
 // Response shape
 // ---------------------------------------------------------------------------
 
-export type ErrorCode = "unauthorized" | "invalid_request" | "not_found" | "internal";
+export type ErrorCode =
+  | "unauthorized"
+  | "invalid_request"
+  | "not_found"
+  | "conflict"
+  | "internal";
 
 /** What the photobooth is told about one preorder, and nothing more. */
 export interface PreorderV1 {
@@ -135,4 +142,52 @@ export function decodeCursor(raw: string): FeedCursor | null {
   } catch {
     return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Photobooth charges (ADR-003, section 6)
+// ---------------------------------------------------------------------------
+
+/** The longest description a charge may carry. */
+export const CHARGE_DESCRIPTION_MAX = 200;
+
+const isoTime = z.iso.datetime({ offset: true });
+
+/** POST /api/internal/v1/photobooth-charges */
+export const chargeRequestV1Schema = z.object({
+  externalId: z.uuid(),
+  orderNumber: z.string().regex(ORDER_NUMBER_PATTERN),
+  description: z.string().trim().min(1).max(CHARGE_DESCRIPTION_MAX),
+  amount: z.number().int().positive(),
+  paidAt: isoTime,
+});
+
+/** POST /api/internal/v1/photobooth-charges/{externalId}/void */
+export const voidRequestV1Schema = z.object({ voidedAt: isoTime });
+
+/** A charge as the photobooth is told about it. */
+export interface ChargeV1 {
+  externalId: string;
+  orderNumber: string;
+  description: string;
+  amount: number;
+  paidAt: string;
+  voidedAt: string | null;
+}
+
+export function toChargeV1(charge: ChargeRecord): ChargeV1 {
+  return {
+    externalId: charge.externalId,
+    orderNumber: charge.orderNumber,
+    description: charge.description,
+    amount: charge.amount,
+    paidAt: charge.paidAt.toString(),
+    voidedAt: charge.voidedAt?.toString() ?? null,
+  };
+}
+
+/** The first problem with a request body, as `invalid_request` and its field. */
+export function invalidRequest(error: z.ZodError): Response {
+  const field = error.issues[0]?.path[0];
+  return fail(422, "invalid_request", typeof field === "string" ? field : undefined);
 }
