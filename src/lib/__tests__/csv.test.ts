@@ -41,6 +41,23 @@ describe("escapeCsvCell", () => {
   it("writes zero as a digit rather than an empty cell", () => {
     expect(escapeCsvCell(0)).toBe("0");
   });
+
+  it.each(["=1+1", "+62812", "-cmd", "@SUM(A1)", "\tisi", "\risi"])(
+    "neutralises text that a spreadsheet would run as a formula: %j",
+    (value) => {
+      expect(escapeCsvCell(value).replace(/^"/, "").startsWith("'")).toBe(true);
+    },
+  );
+
+  it("keeps a formula-looking customer name as text, quoted where needed", () => {
+    expect(escapeCsvCell('=HYPERLINK("http://x","Klik")')).toBe(
+      '"\'=HYPERLINK(""http://x"",""Klik"")"',
+    );
+  });
+
+  it("leaves numbers alone, negative ones included, so they still sum", () => {
+    expect(escapeCsvCell(-5000)).toBe("-5000");
+  });
 });
 
 describe("toCsv", () => {
