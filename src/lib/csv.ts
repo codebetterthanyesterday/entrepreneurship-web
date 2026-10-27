@@ -27,7 +27,20 @@ const UTF8_BOM = "﻿";
 const RECORD_SEPARATOR = "\r\n";
 
 /**
- * Escapes one cell per RFC 4180.
+ * Characters a spreadsheet reads as the start of a formula, tab and carriage
+ * return included (OWASP, "CSV Injection").
+ */
+const FORMULA_START = /^[=+\-@\t\r]/;
+
+/**
+ * Escapes one cell per RFC 4180, after neutralising formulas.
+ *
+ * A text cell that starts like a formula gets a leading apostrophe, which a
+ * spreadsheet shows as text and never evaluates. Customer names and notes are
+ * typed freely into the public preorder form, so without this a name like
+ * `=HYPERLINK("http://…","Klik")` would run as a formula on the admin's
+ * machine the moment the export is opened. Numbers are left alone: they come
+ * from the database, and a negative amount must stay a number that sums.
  *
  * A value is quoted when it contains the separator, a quote, or a line break —
  * otherwise a menu name like "Cimol, Isi 10" would silently become two columns
@@ -41,7 +54,10 @@ const RECORD_SEPARATOR = "\r\n";
 export function escapeCsvCell(value: CsvValue): string {
   if (value === null || value === undefined) return "";
 
-  const text = String(value);
+  let text = String(value);
+  if (typeof value === "string" && FORMULA_START.test(text)) {
+    text = `'${text}`;
+  }
 
   if (/[",\r\n]/.test(text)) {
     return `"${text.replaceAll('"', '""')}"`;

@@ -188,6 +188,24 @@ describe("export contents", () => {
     expect(fields).toHaveLength(header!.split(",").length);
   });
 
+  it("writes a customer name that looks like a formula as text, never as a formula", async () => {
+    // Names are typed freely into the public preorder form; opened in a
+    // spreadsheet, this one would otherwise run on the admin's machine.
+    const product = await makeProduct({ stock: 20 });
+    await createOrder({
+      channel: "ONSITE",
+      paymentStatus: "PAID",
+      paymentMethod: "CASH",
+      customerName: '=HYPERLINK("http://contoh.test","Klik")',
+      items: [{ productId: product.id, quantity: 1 }],
+    });
+
+    const [, row] = await records(await GET(request("orders")));
+
+    expect(row).toContain('"\'=HYPERLINK(""http://contoh.test"",""Klik"")"');
+    expect(row).not.toMatch(/(^|,)=HYPERLINK/);
+  });
+
   it("leaves a walk-in's blank phone and slot as empty cells, not 'null'", async () => {
     const product = await makeProduct({ stock: 20 });
     await createOrder({
