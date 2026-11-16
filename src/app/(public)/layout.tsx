@@ -1,11 +1,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
-import { getSiteTexts } from "@/lib/queries/site.query";
+import { getSiteIdentity } from "@/lib/queries/site.query";
 import { getSettings } from "@/lib/services/setting.service";
-import { getSiteEditContext } from "@/lib/site-edit";
 import { PublicNav } from "@/components/nav/public-nav";
-import { EditModeBar } from "@/components/site/edit-mode";
 import { SiteFooter } from "@/components/site/site-footer";
 import { BrandMark } from "@/components/site/brand-mark";
 import { AccentRoot } from "@/components/site/accent-root";
@@ -17,12 +15,10 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // The footer carries the business's identity on every customer page, so the
-  // layout needs the profile text and the store's number. Both are small reads
-  // and the session check below is a cookie decode, not a query.
-  const [{ isAdmin, editing, name }, texts, settings, jar, requestHeaders] = await Promise.all([
-    getSiteEditContext(),
-    getSiteTexts(),
+  // The header and footer name the business on every customer page, so the
+  // layout needs its name, tagline and contact. Both are small reads.
+  const [identity, settings, jar, requestHeaders] = await Promise.all([
+    getSiteIdentity(),
     getSettings(),
     cookies(),
     headers(),
@@ -45,13 +41,9 @@ export default async function PublicLayout({
     <AccentRoot
       initialAccent={accent}
       ask={ask}
-      brandName={texts["hero.title"].value}
+      brandName={identity.brandName}
       className="min-h-screen flex flex-col bg-cream"
     >
-      {/* Only ever rendered for a signed-in ADMIN. The switch it holds is a
-          cookie, which decides nothing on its own — see `site-edit.ts`. */}
-      {isAdmin && <EditModeBar editing={editing} name={name} />}
-
       {/* Header */}
       <header className="bg-white border-b-[1.5px] border-line sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
@@ -61,17 +53,16 @@ export default async function PublicLayout({
               {/*
                 A span, not a heading. This is the site's banner logo on every
                 customer page, and every one of those pages already has its own
-                <h1> — the catalogue's greeting, the tracker's title, the
-                profile's hero. Marking the logo up as one too gave each page two
+                <h1> — the catalogue's greeting, the tracker's title. Marking the logo up as one too gave each page two
                 first-level headings, which leaves someone navigating by heading
                 unable to tell where the page's own content starts.
               */}
               <span className="font-display font-semibold text-xl text-pink-deep">
-                {texts["hero.title"].value}
+                {identity.brandName}
               </span>
             </Link>
             <p className="text-[11px] text-ink-soft hidden sm:block mt-0.5">
-              {texts["footer.tagline"].value}
+              {identity.tagline}
             </p>
           </div>
 
@@ -95,7 +86,7 @@ export default async function PublicLayout({
       */}
       <main className="flex-1 w-full">{children}</main>
 
-      <SiteFooter texts={texts} whatsapp={settings.adminWhatsapp} editing={editing} />
+      <SiteFooter identity={identity} whatsapp={settings.adminWhatsapp} />
     </AccentRoot>
   );
 }

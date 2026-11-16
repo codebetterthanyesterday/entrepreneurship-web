@@ -17,10 +17,9 @@ export interface ProductCardProps {
  * One line of the menu.
  *
  * It used to be a bordered white card, and a column of those is the pattern that
- * made the whole site read as a template. It is a row on a hairline now — the
- * same grammar as the numbered advantages and the leader-dot menu on the profile
- * page — with the price set against the name, which is how a printed menu does it
- * and how prices are actually scanned.
+ * made the whole site read as a template. It is a row on a hairline now, with
+ * the price set against the name, which is how a printed menu does it and how
+ * prices are actually scanned.
  *
  * The horizontal shape stays. A photo grid would look better and work worse: a
  * menu where stock runs out during the event has to show the name, the price, the

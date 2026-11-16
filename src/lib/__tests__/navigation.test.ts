@@ -144,20 +144,19 @@ describe("which item is the current page", () => {
     return found;
   };
 
-  it("does not light the profile up on every page, because '/' is a prefix of all of them", () => {
+  it("does not light the menu up on every page, because '/' is a prefix of all of them", () => {
     expect(isNavItemActive(item("/"), "/")).toBe(true);
-    expect(isNavItemActive(item("/"), "/menu")).toBe(false);
     expect(isNavItemActive(item("/"), "/keranjang")).toBe(false);
     expect(isNavItemActive(item("/"), "/lacak")).toBe(false);
   });
 
-  it("lights the catalogue up at its own address, which is no longer '/'", () => {
-    expect(isNavItemActive(item("/menu"), "/menu")).toBe(true);
-    expect(isNavItemActive(item("/menu"), "/")).toBe(false);
+  it("opens on the menu: the first customer stop is the catalogue at '/'", () => {
+    expect(PUBLIC_NAV[0]).toMatchObject({ href: "/", label: "Menu" });
+    expect(PUBLIC_NAV.map((entry) => entry.label)).not.toContain("Tentang");
   });
 
   it("marks exactly one customer stop on every customer page", () => {
-    for (const pathname of ["/", "/menu", "/keranjang", "/checkout", "/lacak", "/pesanan/PO-0001"]) {
+    for (const pathname of ["/", "/keranjang", "/checkout", "/lacak", "/pesanan/PO-0001"]) {
       const active = PUBLIC_NAV.filter((entry) => isNavItemActive(entry, pathname));
 
       expect(active.map((entry) => entry.href), pathname).toHaveLength(1);

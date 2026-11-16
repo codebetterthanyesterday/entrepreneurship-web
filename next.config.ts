@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      // The site opens on the menu now; links and QR codes to the old address
+      // keep working.
+      { source: "/menu", destination: "/", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

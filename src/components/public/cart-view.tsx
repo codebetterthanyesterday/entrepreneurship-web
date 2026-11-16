@@ -78,7 +78,7 @@ function CartBody({
             title="Belum ada apa-apa di keranjang kamu."
             body="Pilih jajanannya dulu, nanti jumlah dan totalnya muncul di sini."
           >
-            <ButtonLink href="/menu" className="mt-7">
+            <ButtonLink href="/" className="mt-7">
               Lihat menu
             </ButtonLink>
           </JourneyEmpty>

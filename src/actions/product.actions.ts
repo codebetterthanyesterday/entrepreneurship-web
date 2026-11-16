@@ -22,11 +22,8 @@ const idSchema = z.string().min(1, "Menunya nggak ketemu");
 /** The admin menu list and the public catalogue both read product rows. */
 function revalidateCatalog() {
   revalidatePath("/admin/menu");
-  // The catalogue lives at /menu, and the profile page at "/" prints a short
-  // menu of its own from the same products, so a price or stock change touches
-  // both.
+  // The catalogue is the home page.
   revalidatePath("/");
-  revalidatePath("/menu");
 }
 
 export async function createProductAction(input: unknown): Promise<ActionResult<{ id: string }>> {

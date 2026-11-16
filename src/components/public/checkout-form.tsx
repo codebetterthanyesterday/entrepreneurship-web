@@ -131,7 +131,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
               title="Nggak ada yang bisa dikirim dulu."
               body="Pilih menunya dulu, baru isi data di sini."
             >
-              <ButtonLink href="/menu" className="mt-7">
+              <ButtonLink href="/" className="mt-7">
                 Lihat menu
               </ButtonLink>
             </JourneyEmpty>
@@ -185,8 +185,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
               Four numbered steps instead of four stacked fields.
               
               The form did not change — same ids, same handlers, same order — but a
-              wall of labels gives no sense of how much is left, and the numbers
-              carry the same rhythm as the profile page's sections.
+              wall of labels gives no sense of how much is left.
             */}
             <form
               id="checkout-form"

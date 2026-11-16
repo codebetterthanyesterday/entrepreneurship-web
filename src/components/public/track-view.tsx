@@ -252,7 +252,7 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
                 waktu pesan.
               </p>
 
-              <ButtonLink href="/menu" variant="ghost" size="sm" className="mt-6">
+              <ButtonLink href="/" variant="ghost" size="sm" className="mt-6">
                 Lihat menu
               </ButtonLink>
             </div>

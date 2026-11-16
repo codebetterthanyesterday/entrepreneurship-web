@@ -67,13 +67,6 @@ const PATHS: Record<NavIcon, React.ReactNode> = {
       <path d="M11.5 8c0-1.5 1.5-1.5 1.5-3" />
     </>
   ),
-  // A house: the profile is the business's front door.
-  rumah: (
-    <>
-      <path d="M4 10.5L12 4l8 6.5V20H4v-9.5z" />
-      <path d="M9.5 20v-5.5h5V20" />
-    </>
-  ),
   // A storefront awning: the catalogue is the shop.
   katalog: (
     <>
