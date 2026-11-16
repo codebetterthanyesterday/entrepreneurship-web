@@ -29,7 +29,7 @@ export default function Error({
         Coba lagi
       </Button>
       <ButtonLink
-        href="/menu"
+        href="/"
         className="border-2 border-white/40 bg-transparent text-white hover:bg-white/10"
       >
         Lihat menu

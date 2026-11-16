@@ -28,7 +28,7 @@ describe("JourneyRail", () => {
     render(<JourneyRail current="data" />);
     const rail = screen.getByRole("navigation", { name: "Langkah pemesanan" });
 
-    expect(within(rail).getByRole("link", { name: "Menu" }).getAttribute("href")).toBe("/menu");
+    expect(within(rail).getByRole("link", { name: "Menu" }).getAttribute("href")).toBe("/");
     expect(within(rail).getByRole("link", { name: "Keranjang" })).toBeTruthy();
     // The current stop and the one after it are not links.
     expect(within(rail).queryByRole("link", { name: "Isi data" })).toBeNull();

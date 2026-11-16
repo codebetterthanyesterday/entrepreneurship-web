@@ -9,7 +9,7 @@ import { EmptyBagArt } from "./journey-art";
  * been sent, drawn as the stage instead of as this rail.
  */
 const JOURNEY = [
-  { id: "menu", label: "Menu", href: "/menu" },
+  { id: "menu", label: "Menu", href: "/" },
   { id: "cart", label: "Keranjang", href: "/keranjang" },
   { id: "data", label: "Isi data", href: "/checkout" },
   { id: "track", label: "Lacak", href: "/lacak" },

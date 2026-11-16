@@ -28,6 +28,6 @@ export default async function CartPage() {
   }));
 
   // No `PageShell`: the cart brings its own full-bleed bands, so its dark heading
-  // can reach the screen edge like the profile and the catalogue.
+  // can reach the screen edge like the catalogue.
   return <CartView products={items} preorderOpen={settings.preorderOpen} />;
 }

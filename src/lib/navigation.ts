@@ -23,7 +23,6 @@ export type NavIcon =
   | "pengaturan"
   | "kasir"
   | "dapur"
-  | "rumah"
   | "katalog"
   | "keranjang"
   | "lacak";
@@ -181,14 +180,11 @@ export function roleNeedsPreorderCount(role: string): boolean {
 }
 
 /**
- * The customer's four stops.
- *
- * "/" is the company profile and the catalogue lives at "/menu" — so "Tentang"
- * comes first, matching the URL a QR code or a shared link lands on.
+ * The customer's three stops. The site opens on the menu, at "/": there is no
+ * profile page in front of it.
  */
 export const PUBLIC_NAV: readonly NavItem[] = [
-  { href: "/", label: "Tentang", icon: "rumah" },
-  { href: "/menu", label: "Menu", icon: "katalog" },
+  { href: "/", label: "Menu", icon: "katalog" },
   {
     href: "/keranjang",
     label: "Keranjang",

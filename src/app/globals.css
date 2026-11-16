@@ -310,14 +310,14 @@ html {
 /* ==========================================================================
    The editorial layer
    --------------------------------------------------------------------------
-   Everything below serves the company profile at "/". It is written as a small
+   Everything below began with the company profile, which is gone; the
+   catalogue at "/", the bag and checkout still use its bands. It is written as a small
    set of named classes rather than as Tailwind utilities repeated down the page,
    because these are type and layout *decisions* — a display size, the rhythm of
    a band, the way a section arrives — and a decision that appears in eight
    places should be spelled once.
 
-   Tokens are global on purpose: only "/" uses them today, and the rest of the
-   public side can adopt them later without re-litigating the scale.
+   Tokens are global on purpose, so every customer page shares one scale.
    ========================================================================== */
 
 :root {

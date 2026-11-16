@@ -154,7 +154,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               Pantau pesanan live
             </ButtonLink>
 
-            <ButtonLink href="/menu" variant="ghost" className="tablet:flex-1">
+            <ButtonLink href="/" variant="ghost" className="tablet:flex-1">
               Pesan lagi
             </ButtonLink>
           </div>

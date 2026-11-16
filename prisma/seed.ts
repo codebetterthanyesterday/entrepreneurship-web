@@ -99,53 +99,6 @@ async function main() {
     }
   }
 
-  // 5. Company profile — starting "keunggulan".
-  //
-  // Only the lists are seeded. Text blocks fall back to the defaults in
-  // src/lib/site-content.ts, so they need no rows at all, while an empty list
-  // has to stay a state the admin can reach — which is why this only fills it
-  // when it has never been filled, and never re-adds items that were deleted.
-  const advantages = await db.orm.public.SiteListItem.where({
-    section: 'advantage',
-  }).all();
-
-  if (advantages.length === 0) {
-    const starters = [
-      {
-        icon: 'leaf',
-        title: 'Selalu fresh',
-        body: 'Dibikin pagi hari, jadi pas kamu ambil masih enak.',
-      },
-      {
-        icon: 'tag',
-        title: 'Harga pelajar',
-        body: 'Dihitung supaya masih masuk buat uang jajan.',
-      },
-      {
-        icon: 'clock',
-        title: 'Bisa preorder',
-        body: 'Pesan dari rumah, tinggal ambil tanpa ngantre.',
-      },
-      {
-        icon: 'pin',
-        title: 'Ambil di booth',
-        body: 'Tunjukin nomor pesanan, langsung dibungkus.',
-      },
-    ];
-
-    for (const [index, starter] of starters.entries()) {
-      await db.orm.public.SiteListItem.create({
-        section: 'advantage',
-        icon: starter.icon,
-        title: starter.title,
-        body: starter.body,
-        sortOrder: index + 1,
-      });
-    }
-
-    console.log(`Created ${starters.length} starting advantages`);
-  }
-
   console.log('Seed completed.');
   await db.close();
 }

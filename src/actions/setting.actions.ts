@@ -22,7 +22,6 @@ function revalidateStore() {
   revalidatePath("/admin/pengaturan");
   revalidatePath("/admin/menu");
   revalidatePath("/");
-  revalidatePath("/menu");
   revalidatePath("/checkout");
   // The colour-mood switch lives in the public layout, so every customer page
   // has to be re-asked — not only the three above.

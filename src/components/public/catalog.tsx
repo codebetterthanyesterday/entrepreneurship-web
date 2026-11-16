@@ -23,12 +23,11 @@ export interface CatalogProps {
 }
 
 /**
- * The catalogue, in the profile page's visual language.
+ * The catalogue, and the page the site opens on.
  *
  * It owns its own bands rather than sitting inside `PageShell`, because the
- * heading needs the dark field the profile opens with — arriving here from that
- * page's "Lihat menu" should feel like the same site, not a jump to a different
- * one. The band structure is the only reason `main` gave up its measure.
+ * heading needs a dark field that reaches the screen edge. The band structure
+ * is the only reason `main` gave up its measure.
  *
  * What did not change is how ordering works: the filter, the sheet, the cart
  * panel and the sticky bill all behave exactly as before.

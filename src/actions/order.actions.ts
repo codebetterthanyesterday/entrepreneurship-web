@@ -50,7 +50,6 @@ export async function submitPreorderAction(
 
     // The catalogue shows live stock, so it has to reflect what was just taken.
     revalidatePath("/");
-    revalidatePath("/menu");
     revalidatePath("/checkout");
 
     return { ok: true, data: { orderNumber: order.orderNumber } };
@@ -112,7 +111,6 @@ export async function submitOnsiteOrderAction(
     revalidatePath("/dapur");
     // The public catalogue shows live stock too.
     revalidatePath("/");
-    revalidatePath("/menu");
 
     const prepItemCount = order.items
       .filter((item) => item.product.prepType === "NEEDS_PREP")

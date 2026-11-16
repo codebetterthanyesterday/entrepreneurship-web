@@ -8,7 +8,7 @@ export default function NotFound() {
       title="Halamannya nggak ada di sini."
       description="Mungkin link-nya salah ketik, atau halamannya sudah pindah. Menunya masih lengkap kok."
     >
-      <ButtonLink href="/menu" className="bg-white text-ink-deep hover:bg-pink-soft">
+      <ButtonLink href="/" className="bg-white text-ink-deep hover:bg-pink-soft">
         Lihat menu
       </ButtonLink>
       <ButtonLink
