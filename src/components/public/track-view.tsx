@@ -188,7 +188,7 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
 
       {/* The form sits on the light band, not the dark one: the fields are white,
           and their labels are ink — a working surface, not a statement. */}
-      <section className="band-tight band-cream">
+      <section className="band-tight menu-counter">
         <div className="band-inner stage-enter">
           <form
             onSubmit={handleSubmit}
@@ -356,7 +356,7 @@ function FoundOrder({
       </section>
 
       {/* ------------------------------------------------------ details ---- */}
-      <section className="band-tight band-cream">
+      <section className="band-tight menu-counter">
         <div className="band-inner flex items-start gap-10">
           <div className="min-w-0 flex-1">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 tablet:grid-cols-3">
@@ -396,7 +396,7 @@ function FoundOrder({
             )}
 
             {/* The receipt for the one column a phone has. */}
-            <div className="mt-10 desktop:hidden">{receipt}</div>
+            <div className="receipt-paper mt-10 desktop:hidden">{receipt}</div>
           </div>
 
           <SummaryPanel>{receipt}</SummaryPanel>

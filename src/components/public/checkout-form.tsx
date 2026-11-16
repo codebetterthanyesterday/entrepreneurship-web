@@ -109,7 +109,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
     return (
       <>
         {heading}
-        <section className="band-tight band-cream">
+        <section className="band-tight menu-counter">
           <div className="band-inner">
             <p className="text-sm text-ink-soft" aria-busy="true">
               Lagi ngambil keranjang kamu…
@@ -124,7 +124,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
     return (
       <>
         {heading}
-        <section className="band band-cream">
+        <section className="band menu-counter">
           <div className="band-inner">
             <JourneyEmpty
               eyebrow="Keranjang kosong"
@@ -160,7 +160,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
     <>
       {heading}
 
-      <section className="band-tight band-cream">
+      <section className="menu-counter py-6 tablet:py-10">
         <div className="band-inner">
           {!preorderOpen && (
             <p
@@ -190,7 +190,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
             <form
               id="checkout-form"
               onSubmit={handleSubmit}
-              className="min-w-0 flex-1 flex flex-col"
+              className="min-w-0 flex-1 flex flex-col gap-3 tablet:gap-4"
             >
               <Step number="01" title="Data kamu">
                 <div className="flex flex-col gap-4">
@@ -295,7 +295,10 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
                             : "border-line bg-white text-ink hover:border-pink",
                         )}
                       >
-                        {method === "CASH" ? "Bayar pas ambil" : "Transfer / QRIS"}
+                        <span className="flex items-center justify-center gap-2">
+                          <PaymentIcon method={method} />
+                          {method === "CASH" ? "Bayar pas ambil" : "Transfer / QRIS"}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -309,7 +312,7 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
                 </fieldset>
               </Step>
 
-              <Step number="04" title="Catatan" hint="Opsional" isLast>
+              <Step number="04" title="Catatan" hint="Opsional">
                 <Textarea
                   label="Ada permintaan khusus?"
                   placeholder="Misal: es-nya dikit aja"
@@ -340,9 +343,12 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
           {/* The receipt again, in the one column a phone has — the panel above is
               hidden there, and someone should be able to check the bill without
               going back. */}
-          <div className="mt-10 desktop:hidden">
-            <OrderReceipt lines={lines} total={cart.total} title="Pesanan kamu" />
-          </div>
+          <OrderReceipt
+            lines={lines}
+            total={cart.total}
+            title="Pesanan kamu"
+            className="receipt-paper mt-8 desktop:hidden"
+          />
         </div>
       </section>
 
@@ -363,26 +369,48 @@ function Step({
   number,
   title,
   hint,
-  isLast,
   children,
 }: {
   number: string;
   title: string;
   hint?: string;
-  isLast?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("border-t border-line py-7 first:border-t-0 first:pt-0", isLast && "pb-0")}>
-      <div className="flex items-baseline gap-3">
-        <span className="eyebrow flex-none text-pink-deep" aria-hidden="true">
+    // A ticket on the counter: one card per step, the number set large like the
+    // number on an order slip.
+    <div className="rounded-[24px] bg-white p-4 shadow-[0_14px_30px_-22px_rgba(46,33,32,0.45)] tablet:p-6">
+      <div className="flex items-center gap-3">
+        <span
+          className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-pink-soft font-[family-name:var(--font-display)] text-[15px] font-semibold text-pink-deep"
+          aria-hidden="true"
+        >
           {number}
         </span>
         <h2 className="display-3 flex-1 text-ink">{title}</h2>
         {hint && <span className="eyebrow flex-none text-ink-soft">{hint}</span>}
       </div>
 
-      <div className="mt-5">{children}</div>
+      <div className="mt-4">{children}</div>
     </div>
+  );
+}
+
+/** Cash in hand, or a QR code: what the payment choice means at a glance. */
+function PaymentIcon({ method }: { method: "CASH" | "QRIS" }) {
+  return method === "CASH" ? (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 flex-none" aria-hidden="true">
+      <rect x="3" y="6" width="18" height="12" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 flex-none" aria-hidden="true">
+      <g fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="4" y="4" width="6" height="6" rx="1.2" />
+        <rect x="14" y="4" width="6" height="6" rx="1.2" />
+        <rect x="4" y="14" width="6" height="6" rx="1.2" />
+      </g>
+      <path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5z" fill="currentColor" />
+    </svg>
   );
 }
