@@ -59,7 +59,7 @@ export function ChangePasswordForm({ mustChange }: { mustChange: boolean }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {mustChange && (
-        <p className="border-l-2 border-warn bg-warn-soft/70 py-3 pl-4 pr-3 text-[13.5px] leading-relaxed text-warn">
+        <p className="s-alert s-alert-warn text-[13.5px] leading-relaxed">
           Akun kamu masih pakai password awal yang dibagikan ke semua pengurus, jadi siapa pun di tim
           bisa menebaknya. Ganti sekarang ya.
         </p>
@@ -68,7 +68,7 @@ export function ChangePasswordForm({ mustChange }: { mustChange: boolean }) {
       {generalError && (
         <p
           role="alert"
-          className="border-l-2 border-hot bg-hot-soft/70 py-3 pl-4 pr-3 text-[13.5px] font-medium leading-relaxed text-hot"
+          className="s-alert text-[13.5px] font-semibold leading-relaxed"
         >
           {generalError}
         </p>

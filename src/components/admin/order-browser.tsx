@@ -67,15 +67,17 @@ function OrderCard({ order, onSelect }: { order: AdminOrder; onSelect: () => voi
       type="button"
       onClick={onSelect}
       aria-label={`Lihat detail pesanan ${order.orderNumber}`}
+      // The channel colours the card's left edge: sky for a preorder, gold for
+      // a sale at the booth (`.s-order` in `staff.css`).
+      data-channel={order.channel}
       className={cn(
-        "w-full text-left bg-white border-[1.5px] border-line rounded-[18px] p-3.5",
-        "transition-colors hover:border-pink focus:border-pink",
+        "s-order w-full text-left bg-white p-3.5 transition-transform hover:-translate-y-0.5",
         order.status === "CANCELLED" && "opacity-60",
       )}
     >
       <span className="flex items-start justify-between gap-3">
         <span className="min-w-0">
-          <span className="block font-[family-name:var(--font-display)] text-[15px] font-semibold text-ink">
+          <span className="s-order-no block">
             {order.orderNumber}
           </span>
           <span className="block text-[13px] font-semibold text-ink-soft truncate">
@@ -83,7 +85,7 @@ function OrderCard({ order, onSelect }: { order: AdminOrder; onSelect: () => voi
           </span>
         </span>
 
-        <span className="font-[family-name:var(--font-display)] text-[15px] text-ink flex-none tabular-nums">
+        <span className="text-[15px] font-extrabold text-ink flex-none tabular-nums">
           {formatRupiah(order.totalAmount)}
         </span>
       </span>
@@ -107,8 +109,8 @@ function OrderCard({ order, onSelect }: { order: AdminOrder; onSelect: () => voi
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex justify-between gap-4 py-1.5 border-b border-dashed border-line last:border-b-0">
-      <dt className="text-[13px] font-semibold text-ink-soft flex-none">{label}</dt>
+    <div className="flex justify-between gap-4 py-1.5 border-b-2 border-dashed border-line last:border-b-0">
+      <dt className="s-eyebrow flex-none pt-0.5">{label}</dt>
       <dd className="text-[13px] font-semibold text-ink text-right min-w-0">{value}</dd>
     </div>
   );
@@ -174,7 +176,7 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 tablet:grid tablet:grid-cols-2 desktop:grid-cols-3">
+      <div className="flex flex-col gap-3.5 tablet:grid tablet:grid-cols-2 desktop:grid-cols-3">
         {orders.map((order) => (
           <OrderCard
             key={order.id}
@@ -202,15 +204,15 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
             </div>
 
             <section>
-              <h3 className="text-sm font-semibold text-ink mb-1.5">Rincian pesanan</h3>
+              <h3 className="s-eyebrow mb-2">Rincian pesanan</h3>
               <ul>
                 {selected.items.map((item, index) => (
                   <li
                     key={`${item.name}-${index}`}
-                    className="flex justify-between gap-3 py-1.5 border-b border-dashed border-line last:border-b-0"
+                    className="flex justify-between gap-3 py-2 border-b-2 border-dashed border-line last:border-b-0"
                   >
                     <span className="min-w-0">
-                      <span className="block text-[13px] font-semibold text-ink">
+                      <span className="block text-[14px] font-extrabold text-ink">
                         {item.quantity}× {item.name}
                       </span>
                       {item.contents && (
@@ -230,16 +232,16 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
                 ))}
               </ul>
 
-              <div className="flex justify-between gap-3 pt-2.5 mt-1 border-t-[1.5px] border-line">
+              <div className="flex items-baseline justify-between gap-3 pt-2.5 mt-1 border-t-2 border-ink-deep">
                 <span className="text-sm font-semibold text-ink">Total</span>
-                <span className="font-[family-name:var(--font-display)] text-lg text-pink-deep tabular-nums">
+                <span className="s-total text-[22px] tabular-nums">
                   {formatRupiah(selected.totalAmount)}
                 </span>
               </div>
             </section>
 
             <section>
-              <h3 className="text-sm font-semibold text-ink mb-1.5">Data pesanan</h3>
+              <h3 className="s-eyebrow mb-2">Data pesanan</h3>
               <dl>
                 <DetailRow label="Pelanggan" value={selected.customerName} />
                 {selected.customerPhone && (
@@ -257,7 +259,7 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
             </section>
 
             <section>
-              <h3 className="text-sm font-semibold text-ink mb-1.5">Jejak waktu</h3>
+              <h3 className="s-eyebrow mb-2">Jejak waktu</h3>
               <dl>
                 {TIMELINE_ROWS.map((row) => {
                   const at = selected.timeline[row.key];

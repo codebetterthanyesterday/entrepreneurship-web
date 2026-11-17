@@ -75,15 +75,15 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
 
   return (
     <section aria-labelledby="bundle-manager-title" className="mt-10 flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2
-            id="bundle-manager-title"
-            className="font-[family-name:var(--font-display)] text-xl font-semibold text-ink"
-          >
+          <span className="k-tag k-tag-yellow" aria-hidden="true">
+            Combo set
+          </span>
+          <h2 id="bundle-manager-title" className="s-h2 mt-2.5 text-[22px]">
             Paket hemat
           </h2>
-          <p className="text-sm text-ink-soft">
+          <p className="mt-1 text-sm text-ink-soft">
             Stoknya ikut isi paket: tiap paket kejual motong stok tiap menu di dalamnya
           </p>
         </div>
@@ -94,11 +94,11 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
       </div>
 
       {bundles.length === 0 ? (
-        <p className="rounded-[16px] border-[1.5px] border-dashed border-line p-4 text-sm text-ink-soft">
+        <p className="border-2 border-dashed border-sand-line bg-white p-4 text-sm text-ink-soft">
           Belum ada paket. Bikin satu, misalnya Chicken Roll + Milk Tea dengan harga lebih hemat.
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-2.5 tablet:grid-cols-2 desktop:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2 desktop:grid-cols-3">
           {bundles.map((bundle) => {
             const available = bundlesAvailable(bundle.items, stockOf);
             const normal = bundle.items.reduce(
@@ -111,8 +111,8 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
               <li
                 key={bundle.id}
                 className={cn(
-                  "flex flex-col gap-2 rounded-[16px] border-[1.5px] border-line bg-white p-3.5",
-                  !bundle.isActive && "opacity-70",
+                  "s-slab s-bundle flex flex-col gap-2 p-3.5",
+                  !bundle.isActive && "s-bundle-off opacity-70",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -122,11 +122,11 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
                     className="min-w-0 text-left"
                     aria-label={`Ubah ${bundle.name}`}
                   >
-                    <span className="block font-semibold text-ink">{bundle.name}</span>
-                    <span className="block text-sm text-ink-soft tabular-nums">
+                    <span className="block font-extrabold text-[15px] text-ink">{bundle.name}</span>
+                    <span className="block text-sm font-bold text-pink-deep tabular-nums">
                       {formatRupiah(bundle.price)}
                       {normal > bundle.price && (
-                        <span className="ml-1.5 text-xs line-through">{formatRupiah(normal)}</span>
+                        <span className="ml-1.5 text-xs font-medium text-ink-soft line-through">{formatRupiah(normal)}</span>
                       )}
                     </span>
                   </button>
@@ -138,7 +138,7 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
                   />
                 </div>
 
-                <p className="text-xs leading-relaxed text-ink-soft">
+                <p className="text-[12.5px] leading-relaxed text-ink-soft">
                   {bundle.items
                     .map((item) => `${item.quantity}× ${productById.get(item.productId)?.name ?? "menu dihapus"}`)
                     .join(", ")}
@@ -273,7 +273,7 @@ function BundleFormSheet({
     <Sheet open onClose={() => !isSaving && onClose()} title={isEditing ? "Ubah paket" : "Paket baru"}>
       <form onSubmit={submit} className="flex flex-col gap-4 pb-2">
         {generalError && (
-          <div className="rounded-[12px] border border-hot/20 bg-hot-soft p-3 text-sm font-medium text-hot">
+          <div role="alert" className="s-alert text-sm font-semibold">
             {generalError}
           </div>
         )}
@@ -297,7 +297,7 @@ function BundleFormSheet({
         />
 
         <fieldset className="flex flex-col gap-2" disabled={isSaving}>
-          <legend className="mb-1.5 text-sm font-medium text-ink">Isi paket</legend>
+          <legend className="ui-label mb-1.5 text-sm font-medium text-ink">Isi paket</legend>
 
           {items.map((item, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -305,7 +305,7 @@ function BundleFormSheet({
                 aria-label={`Menu isi ke-${index + 1}`}
                 value={item.productId}
                 onChange={(event) => setItem(index, { productId: event.target.value })}
-                className="min-h-[44px] min-w-0 flex-1 rounded-[12px] border-[1.5px] border-line bg-white px-3 text-sm text-ink"
+                className="ui-field min-h-[44px] min-w-0 flex-1 rounded-[12px] border-[1.5px] border-line bg-white px-3 text-sm text-ink"
               >
                 <option value="">Pilih menu…</option>
                 {products.map((product) => (

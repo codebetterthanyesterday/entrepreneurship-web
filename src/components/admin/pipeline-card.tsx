@@ -15,6 +15,15 @@ const STAGE_LABEL: Readonly<Record<PipelineStatus, string>> = {
   DONE: "Selesai",
 };
 
+/** The kitchen board's column colours, so a stage looks the same on both screens. */
+const STAGE_COLOR: Readonly<Record<PipelineStatus, string>> = {
+  CONFIRMED: "bg-ink-soft",
+  IN_QUEUE: "bg-[var(--s-sky-deep)]",
+  IN_PROGRESS: "bg-[var(--k-gold)]",
+  READY: "bg-[var(--k-grass)]",
+  DONE: "bg-ink-deep",
+};
+
 export interface PipelineCardProps {
   pipeline: OrderPipeline;
 }
@@ -34,19 +43,19 @@ export function PipelineCard({ pipeline }: PipelineCardProps) {
       <dl className="flex flex-col gap-2.5">
         {PIPELINE_STATUSES.map((status) => (
           <div key={status} className="flex items-center gap-3">
-            <dt className="text-[13px] font-semibold text-ink-soft w-[112px] flex-none">
+            <dt className="text-[13.5px] font-semibold text-ink w-[118px] flex-none">
               {STAGE_LABEL[status]}
             </dt>
 
-            <span className="flex-1 h-2 rounded-full bg-cream overflow-hidden">
+            <span className="s-meter flex-1">
               <span
                 aria-hidden="true"
-                className="block h-full rounded-full bg-sky"
+                className={STAGE_COLOR[status]}
                 style={{ width: `${busiest === 0 ? 0 : (pipeline[status] / busiest) * 100}%` }}
               />
             </span>
 
-            <dd className="font-[family-name:var(--font-display)] text-[15px] text-ink flex-none tabular-nums w-6 text-right">
+            <dd className="font-[family-name:var(--font-display)] text-[17px] font-black text-ink flex-none tabular-nums w-7 text-right">
               {pipeline[status]}
             </dd>
           </div>

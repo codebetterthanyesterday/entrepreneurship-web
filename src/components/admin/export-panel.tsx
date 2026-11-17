@@ -43,7 +43,7 @@ export function ExportPanel() {
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-ink">
+        <h2 className="s-h2">
           Ekspor data
         </h2>
         <p className="text-sm text-ink-soft">
@@ -57,10 +57,10 @@ export function ExportPanel() {
             key={option.type}
             href={`/api/admin/export?type=${option.type}`}
             download
-            className="flex items-center justify-between gap-3 bg-white border-[1.5px] border-line rounded-[18px] p-3.5 min-h-[44px] transition-colors hover:border-pink focus:border-pink"
+            className="flex items-center justify-between gap-3 s-slab p-3.5 min-h-[44px] transition-transform hover:-translate-y-0.5"
           >
             <span className="min-w-0">
-              <span className="block font-semibold text-sm text-ink">{option.label}</span>
+              <span className="block font-extrabold text-[14.5px] text-ink">{option.label}</span>
               <span className="block text-xs font-medium text-ink-soft">
                 {option.description}
               </span>
@@ -68,7 +68,7 @@ export function ExportPanel() {
 
             <span
               aria-hidden="true"
-              className="flex-none text-[11px] font-semibold text-pink-deep uppercase tracking-wider"
+              className="ui-btn flex-none bg-pink-deep px-3 py-1.5 text-[11px] text-white shadow-[2px_2px_0_var(--k-navy)]"
             >
               Unduh
             </span>

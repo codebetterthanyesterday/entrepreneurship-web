@@ -125,7 +125,7 @@ export function ProductFormSheet({
         </p>
 
         {generalError && (
-          <div className="bg-hot-soft text-hot text-sm font-medium p-3 rounded-[12px] border border-hot/20">
+          <div className="s-alert text-sm font-semibold">
             {generalError}
           </div>
         )}

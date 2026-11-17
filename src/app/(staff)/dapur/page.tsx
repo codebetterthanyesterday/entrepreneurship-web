@@ -3,6 +3,7 @@ import { findKitchenQueue, toKitchenTicket } from "@/lib/queries/order.query";
 import { canTransition } from "@/lib/services/order.service";
 import { KitchenBoard } from "@/components/dapur/kitchen-board";
 import { pageTitle } from "@/lib/brand";
+import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
   title: pageTitle("Dapur"),
@@ -28,12 +29,12 @@ export default async function DapurPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-          Dapur {user.name}
-        </h1>
-        <p className="text-sm text-ink-soft">Kerjakan dari yang paling lama nunggu</p>
-      </div>
+      <PageHead
+        className="mb-0"
+        tag="Kitchen castle"
+        title={`Dapur ${user.name}`}
+        lede="Kerjakan dari yang paling lama nunggu"
+      />
 
       <KitchenBoard initialTickets={orders.map(toKitchenTicket)} canAct={canAct} />
     </div>

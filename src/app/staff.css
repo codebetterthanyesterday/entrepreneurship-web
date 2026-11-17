@@ -1,0 +1,1027 @@
+/* ==========================================================================
+   The Snack Kingdom theme — the staff side
+   --------------------------------------------------------------------------
+   The admin, the till and the kitchen in the same identity as the customer
+   pages: navy ink, crimson for anything you press, coin yellow for decoration,
+   lavender for quiet surfaces, hard navy shadows, mono uppercase labels. The
+   palette and the shared primitives come from `globals.css` and `kingdom.css`
+   (the staff layout renders `KingdomRoot`); this file adds what only the staff
+   screens have.
+
+   Work mode, though: no sky, no clouds, no tilted snapshots. Staff screens are
+   read fast and used all day, so the theme stays in the chrome, the labels and
+   the shadows, and the content keeps its room.
+
+   Each role gets a colour (`--role`), used on the strip under the header and
+   on the active tab, so a phone left on the counter says whose it is:
+
+     ADMIN  navy    World HQ
+     KASIR  crimson Counter Station
+     DAPUR  brown   Kitchen Castle
+
+   MOBILE-FIRST, like `kingdom.css`: every rule is the phone's, with `min-width`
+   blocks at 640px (tablet) and 1040px (desktop). Unlike the customer side, the
+   tab bar stays on the bottom edge on a tablet — a till iPad is held the same
+   way a phone is — and joins the header from 1040px.
+
+   Everything here is a `.s-*` class that only the staff markup carries, or is
+   scoped to `[data-staff-role]`, so nothing reaches the customer pages.
+   ========================================================================== */
+
+/*
+ * Layered as `components`, so a Tailwind utility on the same element wins:
+ * `<PageHead className="mb-0">` does what it says. The few rules that reshape
+ * the shared primitives (the form labels, at the end) stay unlayered, like
+ * `kingdom.css`, because they have to beat the utilities those primitives
+ * already carry.
+ */
+@layer components {
+/*
+ * The variables go on <html> as well as on the layout's wrapper, for the same
+ * reason the theme does: sheets and the toast are portalled into <body>, and
+ * `scroll-padding-top` is read from the root.
+ */
+[data-staff-role],
+html[data-staff-role] {
+  --role: #1d2d55;
+
+  --s-ok: #2f7a22;
+  --s-ok-soft: #e3f4dc;
+  --s-warn: #8a5a00;
+  --s-warn-soft: #fff1cc;
+  --s-hot: #b8151a;
+  --s-hot-soft: #fde0e0;
+  --s-sky-deep: #0d6b8a;
+  --s-sky-soft: #cdeeff;
+
+  /* The header is 60px on a phone; the strip under it scrolls away. */
+  --header-height: 60px;
+  --nav-row-height: 0px;
+  --page-top: var(--header-height);
+  /* The tab bar holds the bottom edge until the desktop breakpoint. */
+  --nav-bar-height: calc(64px + env(safe-area-inset-bottom));
+  --action-bar-inset: 12px;
+}
+
+[data-staff-role="KASIR"],
+html[data-staff-role="KASIR"] {
+  --role: #b8151a;
+}
+
+[data-staff-role="DAPUR"],
+html[data-staff-role="DAPUR"] {
+  --role: #8a5a2c;
+}
+
+.s-shell {
+  background: var(--color-cream);
+}
+
+.s-wrap {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 14px;
+}
+
+/* ------------------------------------------------------------- the header */
+
+.s-top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #fff;
+  border-bottom: 2px solid var(--color-line);
+}
+
+.s-top .s-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: var(--header-height);
+}
+
+.s-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.s-logo {
+  width: 34px;
+  flex: none;
+}
+
+.s-brand-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-pink-deep);
+}
+
+.s-role-pill {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  background: var(--role);
+  color: #fff;
+  font-family: var(--k-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.s-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+
+.s-who-text {
+  display: none;
+  text-align: right;
+  line-height: 1.2;
+}
+
+.s-who-text b {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.s-who-text span {
+  font-family: var(--k-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.s-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--k-yellow);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 3px 3px 0 var(--k-navy);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.s-avatar:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--k-navy);
+}
+
+/* -------------------------------------------- the strip under the header */
+
+.s-strip {
+  background: var(--role);
+  color: #fff;
+  border-bottom: 4px solid var(--k-navy);
+}
+
+.s-strip .s-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 36px;
+  font-family: var(--k-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.s-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.14);
+  white-space: nowrap;
+}
+
+.s-live i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8fe07a;
+  box-shadow: 0 0 0 3px rgb(143 224 122 / 0.25);
+  animation: s-pulse 2s infinite;
+}
+
+.s-live-off i {
+  background: var(--k-yellow);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes s-pulse {
+  50% {
+    box-shadow: 0 0 0 6px rgb(143 224 122 / 0);
+  }
+}
+
+/* The initial-password nudge: yellow, the whole row a link to Akun. */
+.s-notice {
+  display: block;
+  background: var(--s-warn-soft);
+  border-bottom: 2px solid #f3d98a;
+  color: #6b4a00;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.s-notice .s-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 10px;
+}
+
+.s-notice-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--k-gold);
+  color: var(--color-ink);
+  font-family: var(--k-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.s-notice:hover {
+  filter: brightness(0.98);
+}
+
+/* --------------------------------------------------------- the navigation */
+
+/* Phone and tablet: tabs on the bottom edge, where a thumb reaches them. */
+.s-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 40;
+  display: flex;
+  height: var(--nav-bar-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #fff;
+  border-top: 3px solid var(--k-navy);
+}
+
+.s-nav-item {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding-inline: 2px;
+  color: var(--color-ink-soft);
+  font-family: var(--k-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.s-nav-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+.s-nav-item[aria-current="page"] {
+  background: var(--role);
+  color: #fff;
+}
+
+/* Another area's screens: sky ink, so they read as "somewhere else". */
+.s-nav-cross {
+  color: var(--s-sky-deep);
+}
+
+.s-nav-cross[aria-current="page"] {
+  background: var(--s-sky-deep);
+}
+
+.s-nav-sep {
+  flex: 0 0 2px;
+  margin-block: 10px;
+  background: var(--color-line);
+}
+
+.s-nav-count {
+  position: absolute;
+  top: 5px;
+  left: calc(50% + 7px);
+  min-width: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--k-navy);
+  border-radius: 10px;
+  background: var(--k-yellow);
+  color: var(--color-ink);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.s-main {
+  padding-top: 18px;
+  padding-bottom: calc(var(--nav-bar-height) + 30px);
+}
+
+/* ---------------------------------------------------- the top of a screen */
+
+.s-phead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.s-h1 {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 7vw, 38px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--color-ink);
+}
+
+.s-lede {
+  margin-top: 6px;
+  max-width: 44em;
+  font-size: 14.5px;
+  color: var(--color-ink-soft);
+}
+
+.s-phead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A section heading inside a screen: "Lagi laris", "Paket". */
+.s-h2 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.s-eyebrow {
+  font-family: var(--k-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+/* -------------------------------------------------------- shared surfaces */
+
+/* A white slip with a hard navy shadow: the staff side's basic card. */
+.s-slab {
+  background: #fff;
+  box-shadow: 4px 4px 0 var(--k-navy);
+}
+
+/* A lavender panel with a navy ledge, for grouping (a kitchen column). */
+.s-panel {
+  background: var(--color-sand);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--k-navy);
+}
+
+.s-meter {
+  display: block;
+  height: 8px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+
+.s-meter > i,
+.s-meter > span {
+  display: block;
+  height: 100%;
+}
+
+/* A thumbnail with no photo: a sky tile with a strip of ground, like the
+   customer side's product art, the menu's first letter on it. */
+.s-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 10px;
+  background: linear-gradient(#3fa9f0, #8fd3ff 78%);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+
+.s-thumb::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 18%;
+  background: linear-gradient(var(--k-grass) 0 40%, var(--k-dirt) 40%);
+}
+
+.s-thumb > span {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 12%;
+  line-height: 1;
+  filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.15));
+}
+
+/* ------------------------------------------------------------------ admin */
+
+.s-stat {
+  position: relative;
+  padding: 12px;
+  background: #fff;
+  box-shadow: 4px 4px 0 var(--k-navy);
+}
+
+.s-stat-value {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.s-stat-sub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--color-ink-soft);
+}
+
+.s-stat-hero {
+  background: var(--k-navy);
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--k-gold);
+}
+
+.s-stat-hero .s-eyebrow,
+.s-stat-hero .s-stat-sub {
+  color: #cfd6f5;
+}
+
+.s-stat-hero .s-stat-value {
+  color: var(--k-yellow);
+}
+
+.s-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--s-hot-soft);
+  border-left: 6px solid var(--s-hot);
+  box-shadow: 4px 4px 0 var(--k-navy);
+  color: var(--s-hot);
+}
+
+.s-alert-warn {
+  background: var(--s-warn-soft);
+  border-left-color: var(--k-gold);
+  color: #6b4a00;
+}
+
+.s-card {
+  padding: 14px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 0 var(--k-navy);
+}
+
+/* The hour chart: crimson bars on a navy baseline. */
+.s-hours {
+  border-bottom: 3px solid var(--k-navy);
+}
+
+.s-hour-bar {
+  background: #f3a9a6;
+  border: 2px solid var(--k-navy);
+  border-bottom: 0;
+}
+
+.s-hour-bar-peak {
+  background: var(--k-red);
+}
+
+/* An order in the admin's list: the channel on its left edge. */
+.s-order {
+  border-left: 6px solid var(--color-sand-line);
+  box-shadow: 4px 4px 0 var(--k-navy);
+}
+
+.s-order[data-channel="PREORDER"] {
+  border-left-color: var(--s-sky-deep);
+}
+
+.s-order[data-channel="ONSITE"] {
+  border-left-color: var(--k-gold);
+}
+
+.s-order-no {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--color-pink-deep);
+}
+
+/* A menu's stock, big enough to read at arm's length. */
+.s-stock {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+}
+
+.s-stock small {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--k-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-ink-soft);
+}
+
+.s-stock-low {
+  color: var(--s-warn);
+}
+
+.s-stock-out {
+  color: var(--s-hot);
+}
+
+/* A paket: the yellow lid marks a bundle everywhere it appears. */
+.s-bundle {
+  border-top: 6px solid var(--k-yellow);
+}
+
+.s-bundle-off {
+  border-top-color: var(--color-sand-line);
+}
+
+/* --------------------------------------------------------------- the till */
+
+.s-tile {
+  position: relative;
+  background: #fff;
+  box-shadow: 3px 3px 0 var(--k-navy);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.s-tile:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--k-navy);
+}
+
+.s-tile-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: 2px solid var(--k-navy);
+  border-radius: 13px;
+  background: var(--color-pink-deep);
+  color: #fff;
+  font-family: var(--k-mono);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.s-tile-prep {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--k-gold);
+  border: 2px solid var(--k-navy);
+}
+
+.s-bill {
+  background: #fff;
+  box-shadow: 5px 5px 0 var(--k-navy);
+}
+
+.s-total {
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--color-pink-deep);
+}
+
+/* The bill's dock on a phone: cream, on a navy line, above the tab bar. */
+.s-dock {
+  background: var(--k-cream);
+  border-top: 3px solid var(--k-navy);
+}
+
+/* Tunai / QRIS. */
+.s-paytab {
+  min-height: 52px;
+  border: 2px solid var(--color-line);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.s-paytab[aria-pressed="true"],
+.s-paytab[aria-checked="true"] {
+  background: var(--k-red);
+  border-color: var(--k-navy);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--k-navy);
+}
+
+.s-change {
+  border-left: 6px solid var(--s-ok);
+  background: var(--s-ok-soft);
+  color: var(--s-ok);
+}
+
+.s-change-short {
+  border-left-color: var(--s-hot);
+  background: var(--s-hot-soft);
+  color: var(--s-hot);
+}
+
+.s-big-no {
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--color-pink-deep);
+}
+
+/* ------------------------------------------------------------ the kitchen */
+
+.s-col {
+  min-width: 0;
+  padding: 10px;
+}
+
+.s-col-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 2px solid var(--k-navy);
+  background: var(--col);
+}
+
+.s-col-count {
+  min-width: 30px;
+  padding: 2px 8px;
+  background: #fff;
+  box-shadow: 2px 2px 0 var(--k-navy);
+  font-family: var(--k-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* A ticket: the column's colour on its top edge. */
+.s-ticket {
+  background: #fff;
+  border-top: 7px solid var(--col, var(--color-sand-line));
+  box-shadow: 4px 4px 0 var(--k-navy);
+}
+
+.s-ticket-no {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.4vw, 34px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.s-timer {
+  padding: 4px 8px;
+  background: var(--s-ok-soft);
+  color: var(--s-ok);
+  font-family: var(--k-mono);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.s-timer-warn {
+  background: var(--s-warn-soft);
+  color: var(--s-warn);
+}
+
+.s-timer-hot {
+  background: var(--s-hot);
+  color: #fff;
+  animation: s-blink 1.4s infinite;
+}
+
+@keyframes s-blink {
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.s-ticket-qty {
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--color-pink-deep);
+}
+
+.s-ticket-note {
+  padding: 8px 10px;
+  background: var(--k-cream);
+  border-left: 4px solid var(--k-gold);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* The kitchen's column switcher on a phone. */
+.s-coltab {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 4px;
+  background: #fff;
+  border-top: 5px solid var(--col);
+  box-shadow: 3px 3px 0 var(--k-navy);
+  font-family: var(--k-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.s-coltab b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.s-coltab[aria-current="true"] {
+  background: var(--k-navy);
+  color: #fff;
+}
+
+/* --------------------------------------------------------------- sign-in */
+
+.s-login {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(#4fb3e6, #bfe8fc 70%);
+}
+
+.s-login-mid {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 28px 16px 20px;
+}
+
+.s-login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 22px 18px;
+  background: #fff;
+  border: 4px solid var(--k-navy);
+  box-shadow: 8px 8px 0 var(--k-navy);
+}
+
+.s-login-hills {
+  position: relative;
+  height: 90px;
+  overflow: hidden;
+}
+
+.s-login-hills i {
+  position: absolute;
+  bottom: 0;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--k-grass);
+  border: 5px solid var(--k-navy);
+  transform: translateY(62%);
+}
+
+.s-login-base {
+  height: 22px;
+  background: var(--k-grass);
+  border-top: 5px solid var(--k-navy);
+}
+
+.s-login-foot {
+  padding: 10px 14px;
+  background: #4e2c19;
+  border-top: 5px solid var(--k-navy);
+  color: var(--k-cream);
+  font-family: var(--k-pixel);
+  font-size: 10px;
+  text-align: center;
+}
+
+/* =========================================================================
+   TABLET — 640px and up
+   ========================================================================= */
+@media (min-width: 640px) {
+  .s-wrap {
+    padding-inline: 24px;
+  }
+
+  .s-who-text {
+    display: block;
+  }
+
+  .s-login-card {
+    padding: 28px;
+  }
+}
+
+/* =========================================================================
+   DESKTOP — 1040px and up: the bar joins the header
+   ========================================================================= */
+@media (min-width: 1040px) {
+  [data-staff-role],
+  html[data-staff-role] {
+    --header-height: 70px;
+    --nav-bar-height: 0px;
+    --action-bar-inset: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .s-brand-name {
+    font-size: 20px;
+  }
+
+  .s-logo {
+    width: 40px;
+  }
+
+  /* Room for the row of links in the middle; the name comes back at 1240px. */
+  .s-who-text {
+    display: none;
+  }
+
+  /* Fixed over the header rather than nested in it — see the layout. */
+  .s-nav {
+    inset: 0 auto auto 50%;
+    z-index: 41;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+    margin-top: 14px;
+    padding: 4px;
+    border: 2px solid var(--color-line);
+    border-radius: 6px;
+    background: var(--color-sand);
+    transform: translateX(-50%);
+  }
+
+  .s-nav-item {
+    flex: none;
+    flex-direction: row;
+    gap: 7px;
+    min-height: 38px;
+    padding: 4px 14px;
+    border-radius: 4px;
+    color: #5a3a45;
+    font-size: 12.5px;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+  }
+
+  .s-nav-item[aria-current="page"] {
+    box-shadow: 2px 2px 0 var(--k-navy);
+  }
+
+  .s-nav-cross {
+    color: var(--s-sky-deep);
+  }
+
+  .s-nav-icon {
+    display: none;
+  }
+
+  /* The avatar is right there in the same header. */
+  .s-nav-account {
+    display: none;
+  }
+
+  .s-nav-solo {
+    display: none;
+  }
+
+  .s-nav-sep {
+    flex: 0 0 2px;
+    height: 22px;
+    margin: 0 4px;
+    background: var(--color-sand-line);
+  }
+
+  .s-nav-count {
+    position: static;
+    margin-left: 2px;
+  }
+
+  .s-main {
+    padding-top: 24px;
+    padding-bottom: 48px;
+  }
+
+  .s-stat-value {
+    font-size: 28px;
+  }
+}
+
+@media (min-width: 1240px) {
+  .s-who-text {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-live i,
+  .s-timer-hot {
+    animation: none;
+  }
+}
+
+} /* @layer components */
+
+/* --------------------------------------------------------- form labels */
+
+/* The staff side labels its fields the way the theme labels everything else:
+   mono, uppercase, small. The customer forms keep their friendlier labels. */
+.s-shell .ui-label,
+.s-login .ui-label {
+  font-family: var(--k-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.s-shell .ui-field:focus,
+.s-login .ui-field:focus {
+  border-color: var(--k-navy);
+  box-shadow: 3px 3px 0 var(--k-navy);
+}

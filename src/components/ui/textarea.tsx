@@ -24,7 +24,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
-          <label htmlFor={textareaId} className="text-sm font-medium text-ink">
+          <label htmlFor={textareaId} className="ui-label text-sm font-medium text-ink">
             {label}
           </label>
         )}

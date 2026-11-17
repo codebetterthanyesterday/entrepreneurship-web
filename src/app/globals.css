@@ -181,7 +181,7 @@
    `palette-contrast.test.ts` runs every pair it checks against both palettes.
    It also fails if a role is added up there and not here. The shapes that go
    with these colours (hard shadows, mono labels) are in
-   `src/app/(public)/kingdom.css`.
+   `src/app/kingdom.css`.
    ========================================================================== */
 [data-theme="kingdom"] {
   --color-pink: #f6c744;
@@ -254,8 +254,10 @@ body {
 /*
  * The navigation's measurements, in one place.
  *
- * `NavBar` changes shape at 640px: below it the bar is fixed to the bottom of
- * the screen, above it the same list becomes a row under the header. Four other
+ * The navigation changes shape with the width: below a breakpoint the bar is
+ * fixed to the bottom of the screen, above it the same list joins the header.
+ * These are the defaults; the two themed sides restate them where their own
+ * shapes differ (`kingdom.css` for the customer, `staff.css` for staff). Four other
  * things have to agree with whichever shape is on screen, and none of them can
  * see the component:
  *

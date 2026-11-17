@@ -7,6 +7,7 @@ import { PosScreen } from "@/components/kasir/pos-screen";
 import { formatRupiah } from "@/lib/utils";
 import type { PublicProduct } from "@/types/admin";
 import { pageTitle } from "@/lib/brand";
+import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
   title: pageTitle("Kasir"),
@@ -45,24 +46,18 @@ export default async function CashierPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-            Kasir {user.name}
-          </h1>
-          <p className="text-sm text-ink-soft">Ketuk menu buat nambah ke bill</p>
-        </div>
-
-        <div className="text-right flex-none">
-          <div className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
-            Uang masuk hari ini
+    <div className="flex flex-col">
+      <PageHead
+        tag="Counter station"
+        title={`Kasir ${user.name}`}
+        lede="Ketuk menu buat nambah ke bill"
+        actions={
+          <div className="s-slab px-3 py-2 text-right">
+            <div className="s-eyebrow">Uang masuk hari ini</div>
+            <div className="s-total text-[20px] tabular-nums">{formatRupiah(revenue)}</div>
           </div>
-          <div className="font-[family-name:var(--font-display)] text-xl text-pink-deep">
-            {formatRupiah(revenue)}
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       <PosScreen
         products={items}

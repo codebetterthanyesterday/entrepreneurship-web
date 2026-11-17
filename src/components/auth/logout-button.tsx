@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 
 export function LogoutButton() {
   return (
-    <Button 
-      variant="flat" 
-      size="sm" 
+    <Button
+      variant="ghost"
+      size="sm"
+      className="flex-none text-hot"
       onClick={() => signOut({ callbackUrl: "/login" })}
     >
-      Logout
+      Keluar
     </Button>
   );
 }

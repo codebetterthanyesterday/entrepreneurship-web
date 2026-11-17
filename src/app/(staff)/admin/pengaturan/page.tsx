@@ -7,6 +7,7 @@ import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
 import type { AdminPickupSlot } from "@/types/admin";
 import { pageTitle } from "@/lib/brand";
+import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
   title: pageTitle("Pengaturan"),
@@ -27,29 +28,34 @@ export default async function AdminSettingsPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-7 max-w-[720px] mx-auto">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-          Pengaturan
-        </h1>
-        <p className="text-sm text-ink-soft">Atur kanal jualan, slot ambil, dan detail toko</p>
+    <div>
+      <PageHead
+        tag="Kingdom rules"
+        title="Pengaturan"
+        lede="Atur kanal jualan, slot ambil, dan detail toko"
+      />
+
+      {/* One column on a phone and a tablet; two from the desktop up, with
+          the export list across the bottom. */}
+      <div className="grid gap-8 desktop:grid-cols-2 desktop:items-start">
+        <StoreToggles
+          preorderOpen={settings.preorderOpen}
+          boothOpen={settings.boothOpen}
+        />
+
+        <PickupSlotManager slots={slotItems} />
+
+        <QrisUploader qrisImageUrl={settings.qrisImageUrl ?? null} />
+
+        <MiscSettingsForm
+          lowStockThreshold={settings.lowStockThreshold}
+          adminWhatsapp={settings.adminWhatsapp}
+        />
+
+        <div className="desktop:col-span-2">
+          <ExportPanel />
+        </div>
       </div>
-
-      <StoreToggles
-        preorderOpen={settings.preorderOpen}
-        boothOpen={settings.boothOpen}
-      />
-
-      <PickupSlotManager slots={slotItems} />
-
-      <QrisUploader qrisImageUrl={settings.qrisImageUrl ?? null} />
-
-      <MiscSettingsForm
-        lowStockThreshold={settings.lowStockThreshold}
-        adminWhatsapp={settings.adminWhatsapp}
-      />
-
-      <ExportPanel />
     </div>
   );
 }

@@ -111,10 +111,10 @@ export function PaymentSheet({
     <Sheet open onClose={closeUnlessSaving} title={title}>
       <div className="flex flex-col gap-4 pb-2">
         <div className="text-center py-1">
-          <div className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
+          <div className="s-eyebrow">
             Total
           </div>
-          <div className="font-[family-name:var(--font-display)] text-[40px] leading-tight font-semibold text-ink tabular-nums">
+          <div className="font-[family-name:var(--font-display)] text-[40px] leading-tight font-black text-ink tabular-nums">
             {formatRupiah(total)}
           </div>
         </div>
@@ -123,7 +123,7 @@ export function PaymentSheet({
           <div
             role="group"
             aria-label="Metode bayar"
-            className="grid grid-cols-2 gap-1 p-1 bg-cream rounded-[14px]"
+            className="grid grid-cols-2 gap-2"
           >
             {(["CASH", "QRIS"] as const).map((option) => (
               <button
@@ -132,12 +132,7 @@ export function PaymentSheet({
                 aria-pressed={method === option}
                 disabled={isSaving}
                 onClick={() => setChosenMethod(option)}
-                className={cn(
-                  "min-h-[44px] rounded-[11px] text-sm font-semibold transition-colors",
-                  method === option
-                    ? "bg-white text-pink-deep shadow-sm"
-                    : "text-ink-soft hover:text-ink",
-                )}
+                className="s-paytab transition-colors"
               >
                 {option === "CASH" ? "Tunai" : "QRIS"}
               </button>
@@ -151,7 +146,7 @@ export function PaymentSheet({
 
         {method === "CASH" ? (
           <div className="flex flex-col gap-2.5">
-            <label htmlFor="cash-received" className="text-sm font-medium text-ink">
+            <label htmlFor="cash-received" className="s-eyebrow text-ink">
               Uang diterima
             </label>
             <div className="relative">
@@ -169,7 +164,7 @@ export function PaymentSheet({
                   const value = parseCashInput(event.target.value);
                   setCashText(value === null ? "" : formatThousands(value));
                 }}
-                className="w-full bg-white border-[1.5px] border-line rounded-[14px] min-h-[54px] pl-11 pr-4 text-ink text-[20px] font-semibold tabular-nums focus:border-pink"
+                className="ui-field w-full bg-white border-[1.5px] border-line rounded-[14px] min-h-[54px] pl-11 pr-4 text-ink text-[20px] font-bold tabular-nums focus:border-pink"
               />
             </div>
 
@@ -181,11 +176,11 @@ export function PaymentSheet({
                     type="button"
                     disabled={isSaving}
                     onClick={() => setCashText(formatThousands(option.amount))}
+                    // A plain coin of a button: mono, square, hard-shadowed;
+                    // the amount already given is filled yellow.
                     className={cn(
-                      "min-h-[44px] rounded-[12px] border-[1.5px] text-sm font-semibold transition-colors",
-                      cash === option.amount
-                        ? "bg-pink-soft border-pink text-pink-deep"
-                        : "bg-white border-line text-ink hover:bg-cream",
+                      "ui-btn min-h-[44px] text-[12px] text-ink transition-colors",
+                      cash === option.amount ? "bg-[var(--k-yellow)]" : "bg-white hover:bg-pink-soft",
                     )}
                   >
                     {option.label}
@@ -198,16 +193,14 @@ export function PaymentSheet({
               <div
                 aria-live="polite"
                 className={cn(
-                  "flex justify-between items-baseline p-3 rounded-[14px] border",
-                  change >= 0
-                    ? "bg-ok-soft text-ok border-ok/20"
-                    : "bg-hot-soft text-hot border-hot/20",
+                  "s-change flex justify-between items-baseline p-3",
+                  change < 0 && "s-change-short",
                 )}
               >
                 <span className="text-sm font-semibold">
                   {change >= 0 ? "Kembalian" : "Uangnya belum cukup"}
                 </span>
-                <b className="text-lg tabular-nums">
+                <b className="font-[family-name:var(--font-display)] text-xl font-black tabular-nums">
                   {change >= 0 ? formatRupiah(change) : `kurang ${formatRupiah(-change)}`}
                 </b>
               </div>
@@ -220,7 +213,7 @@ export function PaymentSheet({
               <img
                 src={qrisImageUrl}
                 alt="Kode QRIS booth"
-                className="w-full max-w-[260px] aspect-square object-contain rounded-[14px] border border-line bg-white"
+                className="w-full max-w-[260px] aspect-square object-contain border-4 border-ink-deep bg-white shadow-[5px_5px_0_var(--k-navy)]"
               />
             ) : (
               <Note variant="hot" className="w-full">

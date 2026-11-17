@@ -26,16 +26,16 @@ export function LowStockAlert({ items }: LowStockAlertProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="bg-hot-soft border-[1.5px] border-hot/25 rounded-[16px] p-3.5">
-      <h3 className="font-[family-name:var(--font-display)] text-[14.5px] font-semibold text-hot mb-1.5">
+    <div className="s-alert flex-col gap-1">
+      <h3 className="font-[family-name:var(--font-display)] text-[15px] font-extrabold uppercase">
         {items.length} menu perlu diisi ulang
       </h3>
 
-      <ul>
+      <ul className="w-full">
         {items.map((item) => (
           <li
             key={item.id}
-            className="flex justify-between gap-3 text-[13px] font-semibold text-hot py-[3px]"
+            className="flex justify-between gap-3 text-[14px] font-bold py-[3px]"
           >
             <span className="truncate">{item.name}</span>
             <span className="flex-none tabular-nums">

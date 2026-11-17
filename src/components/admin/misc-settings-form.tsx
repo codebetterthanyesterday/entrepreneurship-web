@@ -50,16 +50,16 @@ export function MiscSettingsForm({
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-ink">
+      <h2 className="s-h2">
         Lain-lain
       </h2>
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 bg-white border-[1.5px] border-line rounded-[16px] p-3.5"
+        className="flex flex-col gap-4 s-slab p-3.5"
       >
         {error && !error.field && (
-          <div className="bg-hot-soft text-hot text-sm font-medium p-3 rounded-[12px] border border-hot/20">
+          <div className="s-alert text-sm font-semibold">
             {error.message}
           </div>
         )}

@@ -10,6 +10,7 @@ import { createProductAction, updateProductAction } from "@/actions/product.acti
 import { ProductCard } from "./product-card";
 import { ProductFormSheet, type ProductFormValues } from "./product-form-sheet";
 import type { AdminCategory, AdminProduct } from "@/types/admin";
+import { PageHead } from "@/components/staff/page-head";
 
 const ALL_FILTER = "Semua";
 const LOW_STOCK_FILTER = "Hampir habis";
@@ -76,22 +77,19 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-            Menu &amp; stok
-          </h1>
-          <p className="text-sm text-ink-soft">
-            Ketuk menu buat ubah stok, harga, atau sembunyikan dari katalog
-          </p>
-        </div>
+      <PageHead
+        className="mb-0"
+        tag="Item inventory"
+        title="Menu & stok"
+        lede="Ketuk menu buat ubah stok, harga, atau sembunyikan dari katalog"
+        actions={
+          <Button size="sm" variant="primary" onClick={() => openSheet(null)} className="flex-none">
+            + Menu
+          </Button>
+        }
+      />
 
-        <Button size="sm" variant="primary" onClick={() => openSheet(null)} className="flex-none">
-          + Menu
-        </Button>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 tablet:mx-0 tablet:px-0 tablet:flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pt-1 pb-2.5 -mx-3.5 px-3.5 [scrollbar-width:none] tablet:mx-0 tablet:px-0 tablet:flex-wrap">
         {filters.map((name) => (
           <Chip
             key={name}
@@ -121,7 +119,7 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
           }
         />
       ) : (
-        <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-3.5">
           {visibleProducts.map((product) => (
             <ProductCard
               key={product.id}
