@@ -100,8 +100,8 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
   const heading = (
     <JourneyHero
       step="data"
-      eyebrow="Checkout"
-      title="Dikit lagi selesai"
+      eyebrow="Stage 3: final checkpoint"
+      title="Mission: complete your order!"
       lede="Isi datanya biar kami nggak salah panggil pas kamu ambil."
       art={<CheckoutArt />}
     />

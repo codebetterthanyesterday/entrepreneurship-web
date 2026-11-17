@@ -67,21 +67,15 @@ export function PublicNav() {
 }
 
 /**
- * The bag in the header's corner: how many items, one tap from the cart.
- *
- * Shown from 640px up only. On a phone the tab bar's own cart tab already
- * carries the count, and a second copy of the same link above it would just be
- * one more thing to tab past.
+ * The bag in the header's corner, as the design draws it: how many items, one
+ * tap from the cart. It stays on a phone too — the count is the one thing a
+ * customer checks while scrolling the menu, and the header is always on screen.
  */
 export function HeaderBag() {
   const cart = useCartCount();
 
   return (
-    <Link
-      href="/keranjang"
-      aria-label={`Keranjang, ${cart} item`}
-      className="k-bag hidden tablet:inline-flex"
-    >
+    <Link href="/keranjang" aria-label={`Keranjang, ${cart} item`} className="k-bag">
       <NavIconGlyph name="keranjang" className="h-5 w-5 flex-none" />
       <span className="k-bag-count tabular-nums">x{cart}</span>
     </Link>

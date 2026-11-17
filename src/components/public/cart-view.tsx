@@ -26,8 +26,9 @@ export function CartView({ products, preorderOpen }: CartViewProps) {
       {/* ------------------------------------------------------- heading ---- */}
       <JourneyHero
         step="cart"
-        eyebrow="Keranjang"
-        title="Cek dulu sebelum lanjut"
+        eyebrow="Bag checkpoint"
+        title="Your power-up bag!"
+        lede="Cek dulu item pilihanmu sebelum lanjut isi data."
         art={<CartArt count={cart.isReady ? cart.itemCount : 0} />}
       />
 

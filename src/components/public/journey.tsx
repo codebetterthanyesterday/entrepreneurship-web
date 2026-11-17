@@ -117,36 +117,35 @@ export interface JourneyHeroProps {
 }
 
 /**
- * The dark band every ordering page opens with: where you are, what this page
- * is for, a picture of it, and the rail underneath.
+ * What every ordering page opens with — the design's page head: a lavender
+ * panel on a hard shadow, a tag saying where you are, the page's title set
+ * large, and a picture of it.
  *
- * Deliberately `band-tight`. These are working pages, and on a phone the first
- * menu item or the first field has to be on screen without a scroll — the full
- * stage treatment belongs to the tracker, where the stage *is* the content.
+ * Deliberately compact. These are working pages, and on a phone the first cart
+ * line or the first field has to be on screen without a scroll.
+ *
+ * `step` is kept in the props so each page still declares which stop it is,
+ * but nothing is drawn from it here any more: the four-stop progress moved to
+ * `WorldSteps`, the strip under the header, so it is in one place on every
+ * page instead of being redrawn inside each hero.
  */
-export function JourneyHero({ step, eyebrow, title, lede, art }: JourneyHeroProps) {
+export function JourneyHero({ eyebrow, title, lede, art }: JourneyHeroProps) {
   return (
-    // Tighter than `band-tight` on a phone, where every row of hero is a row of
-    // menu or form pushed below the fold; the shared rhythm returns from 640px.
-    <section className="band-dark pt-6 pb-4 tablet:py-[var(--band-y-tight)]">
-      {/* `relative` so that from a tablet up the picture can leave the title's
-          row and sit beside the whole block — kept in the row, its height
-          pushed a gap between the title and the lede on a wide screen. */}
-      <div className="band-inner stage-enter relative">
-        <div className="flex items-start justify-between gap-4 tablet:block">
-          <div className="min-w-0 tablet:pr-48">
-            <p className="eyebrow text-pink">{eyebrow}</p>
-            <h1 className="display-2 mt-3 text-white">{title}</h1>
+    <section className="pt-4 tablet:pt-6">
+      <div className="band-inner stage-enter">
+        <div className="k-panel flex items-start justify-between gap-4 p-4 tablet:items-center tablet:p-7">
+          <div className="min-w-0">
+            <p className="k-tag k-tag-yellow">{eyebrow}</p>
+            <h1 className="k-page-title mt-3 text-ink">{title}</h1>
+            {lede && <p className="journey-lede mt-2 text-ink-soft">{lede}</p>}
           </div>
 
-          <div className="-mt-1 h-[4.5rem] w-[4.5rem] flex-none tablet:absolute tablet:right-4 tablet:top-1/2 tablet:mt-0 tablet:h-36 tablet:w-36 tablet:-translate-y-1/2">
+          {/* The drawings are white-on-colour, made for a dark field, so the
+              picture keeps a navy tile of its own on the light panel. */}
+          <div className="k-hard-sm h-[4.5rem] w-[4.5rem] flex-none rounded-[14px] bg-ink-deep p-1.5 tablet:h-28 tablet:w-28 tablet:p-2.5">
             {art}
           </div>
         </div>
-
-        {lede && <p className="journey-lede mt-3 text-white/70 tablet:mt-4">{lede}</p>}
-
-        <JourneyRail current={step} className="mt-4 max-w-[28rem] tablet:mt-8" />
       </div>
     </section>
   );

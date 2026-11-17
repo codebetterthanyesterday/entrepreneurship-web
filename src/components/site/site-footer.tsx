@@ -39,7 +39,7 @@ export function SiteFooter({ identity, whatsapp }: SiteFooterProps) {
         <div className="band-inner grid gap-8 py-10 tablet:grid-cols-[2fr_1fr_1fr]">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <BrandMark className="w-12 text-pink" />
+              <BrandMark className="w-12 text-white" />
               <span className="font-[family-name:var(--font-display)] text-xl font-extrabold uppercase text-white">
                 {brandName} Snacks
               </span>

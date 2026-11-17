@@ -185,8 +185,8 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
       {/* ------------------------------------------------------- heading ---- */}
       <JourneyHero
         step="track"
-        eyebrow="Lacak"
-        title="Pesanan kamu sampai mana?"
+        eyebrow="Radar station"
+        title="Where's your mission?"
         lede="Masukin nomor pesanan dan 4 digit terakhir WhatsApp kamu."
         art={<StageArt id="masuk" />}
       />

@@ -967,3 +967,180 @@ html[data-theme="kingdom"] body > * {
     box-shadow: 0 10px 0 var(--color-ink);
   }
 }
+
+/* =========================================================================
+   The catalogue's cards and the quick-view sheet
+   ========================================================================= */
+
+/* The backdrop a drawn product stands on: sky, and a strip of ground. */
+.k-scene {
+  position: relative;
+  /* No padding of its own, whatever the caller passes: a percentage padding
+     resolves against the *parent's* width, which in a cart line is the whole
+     row, and it squeezed the drawing down to nothing. The drawing is sized
+     below instead, against the scene itself. */
+  padding: 0;
+  background: linear-gradient(#3fa9f0, #8fd3ff 78%);
+}
+
+.k-scene::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 14%;
+  background: linear-gradient(var(--k-grass) 0 38%, var(--k-dirt) 38%);
+}
+
+.k-scene > * {
+  position: relative;
+  z-index: 1;
+  width: 72%;
+  height: 72%;
+  margin-bottom: 8%;
+}
+
+/* The pixel-lettered pills on the quick view. */
+.k-pill {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 6px;
+  background: var(--k-red);
+  color: #fff;
+  font-family: var(--k-pixel);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.k-pill-yellow {
+  border-color: #f3c64a;
+  background: var(--k-yellow);
+  color: #7a4a12;
+}
+
+.k-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--k-navy);
+  border-radius: 50%;
+  background: var(--k-cream);
+  color: var(--k-navy);
+}
+
+.k-sheet-title {
+  font-family: var(--k-round);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.k-stock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid #fbe3a0;
+  border-radius: 12px;
+  background: var(--k-cream);
+}
+
+.k-qty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 2px solid #e8e3d3;
+  border-radius: 16px;
+  background: #f6f4ee;
+}
+
+.k-qty button {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--k-navy);
+  font-family: var(--k-mono);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 0 #d8d0bd;
+}
+
+.k-qty button:disabled {
+  color: #e9a9a7;
+}
+
+.k-qty-figure {
+  font-family: var(--k-round);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--k-navy);
+}
+
+.k-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--k-red);
+  color: #fff;
+  font-family: var(--k-round);
+  font-size: 20px;
+  font-weight: 600;
+  box-shadow: 0 7px 0 #a5211f;
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.k-add:active {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #a5211f;
+}
+
+.k-add-price {
+  color: var(--k-yellow);
+  font-family: var(--k-mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* The cart, docked along the bottom edge once there is something in it. */
+.k-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 3px solid var(--k-navy);
+  background: var(--k-cream);
+}
+
+@media (min-width: 640px) {
+  .k-dock {
+    max-width: 34rem;
+    margin: 0 auto 16px;
+    border: 3px solid var(--k-navy);
+    box-shadow: 5px 5px 0 var(--k-navy);
+  }
+}
+
+/* The title of a working page (cart, checkout, tracker). */
+.k-page-title {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 8vw, 52px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
