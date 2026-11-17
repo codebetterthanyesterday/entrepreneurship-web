@@ -10,10 +10,6 @@ export const updateSettingsSchema = z.object({
     .min(0, "Ambang stoknya nggak boleh minus")
     .max(999, "Ambang stoknya kegedean")
     .optional(),
-  qrisImageUrl: z
-    .union([z.string().url("Link gambar QRIS-nya belum benar"), z.literal("")])
-    .nullable()
-    .optional(),
   adminWhatsapp: z
     .union([
       z

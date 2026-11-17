@@ -10,20 +10,17 @@ import { updateSettingsAction } from "@/actions/setting.actions";
 export interface MiscSettingsFormProps {
   lowStockThreshold: number;
   adminWhatsapp: string | null;
-  qrisImageUrl: string | null;
 }
 
 export function MiscSettingsForm({
   lowStockThreshold,
   adminWhatsapp,
-  qrisImageUrl,
 }: MiscSettingsFormProps) {
   const router = useRouter();
   const { toast } = useToast();
 
   const [threshold, setThreshold] = React.useState(String(lowStockThreshold));
   const [whatsapp, setWhatsapp] = React.useState(adminWhatsapp ?? "");
-  const [qrisUrl, setQrisUrl] = React.useState(qrisImageUrl ?? "");
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<{ message: string; field?: string } | null>(null);
 
@@ -36,7 +33,6 @@ export function MiscSettingsForm({
     const result = await updateSettingsAction({
       lowStockThreshold: Number(threshold.replace(/\D/g, "") || "0"),
       adminWhatsapp: whatsapp.trim(),
-      qrisImageUrl: qrisUrl.trim(),
     });
 
     setIsSaving(false);
@@ -88,25 +84,6 @@ export function MiscSettingsForm({
           error={fieldError("adminWhatsapp")}
           disabled={isSaving}
         />
-
-        <Input
-          label="Link gambar QRIS"
-          placeholder="https://..."
-          hint="Sementara isi link gambarnya dulu ya, upload file nyusul"
-          value={qrisUrl}
-          onChange={(event) => setQrisUrl(event.target.value)}
-          error={fieldError("qrisImageUrl")}
-          disabled={isSaving}
-        />
-
-        {qrisUrl.trim() !== "" && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={qrisUrl}
-            alt="Pratinjau gambar QRIS"
-            className="w-[120px] h-[120px] object-contain rounded-[12px] border-[1.5px] border-line bg-cream"
-          />
-        )}
 
         <Button type="submit" variant="primary" size="sm" isLoading={isSaving} className="self-start px-6">
           Simpan

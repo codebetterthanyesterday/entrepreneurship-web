@@ -145,7 +145,7 @@ export function PaymentSheet({
           </div>
         ) : (
           <div className="text-center text-sm font-semibold text-ink-soft">
-            Metode bayar: {fixedMethod === "CASH" ? "Tunai" : "Transfer / QRIS"}
+            Metode bayar: {fixedMethod === "CASH" ? "Tunai" : "QRIS"}
           </div>
         )}
 

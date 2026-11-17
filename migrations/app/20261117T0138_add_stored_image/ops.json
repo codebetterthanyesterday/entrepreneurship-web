@@ -1,0 +1,41 @@
+[
+  {
+    "id": "table.storedImage",
+    "label": "Create table \"storedImage\"",
+    "summary": "Creates table \"storedImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "storedImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"storedImage\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"storedImage\"",
+        "sql": "CREATE TABLE \"public\".\"storedImage\" (\n  \"byteSize\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"data\" bytea NOT NULL,\n  \"id\" text NOT NULL,\n  \"kind\" text NOT NULL,\n  \"mimeType\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"storedImage_kind_check_f11fda7f\" CHECK (\"kind\" IN ('QRIS', 'PAYMENT_PROOF')),\n  CONSTRAINT \"stored_image_size_limit_0abf31e1\" CHECK (octet_length(data) BETWEEN 1 AND 3145728)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"storedImage\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ]
+  }
+]
