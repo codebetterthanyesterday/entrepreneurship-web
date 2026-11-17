@@ -27,6 +27,7 @@ const {
   countOrders,
   db,
   makePickupSlot,
+  makeBundle,
   makeProduct,
   makeUser,
   resetDatabase,
@@ -449,6 +450,47 @@ describe("submitOnsiteOrderAction — where the order goes", () => {
     expect(result.data.prepItemCount).toBe(2);
     expect(await stockOf(croffle.id)).toBe(8);
     expect(await stockOf(bottle.id)).toBe(9);
+  });
+
+  it("sells a paket at the booth, taking each product's stock", async () => {
+    await signInAs("KASIR");
+    const croffle = await makeProduct({ prepType: "NEEDS_PREP", price: 20_000, stock: 10 });
+    const kopi = await makeProduct({ prepType: "READY_TO_SERVE", price: 18_000, stock: 10 });
+    const combo = await makeBundle({
+      price: 32_000,
+      items: [
+        { productId: croffle.id, quantity: 1 },
+        { productId: kopi.id, quantity: 1 },
+      ],
+    });
+
+    const result = await submitOnsiteOrderAction({
+      items: [],
+      bundles: [{ bundleId: combo.id, quantity: 2 }],
+      paymentMethod: "CASH",
+      cashReceived: 70_000,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.totalAmount).toBe(64_000);
+    expect(result.data.change).toBe(6_000);
+    expect(result.data.status).toBe("IN_QUEUE");
+    expect(await stockOf(croffle.id)).toBe(8);
+    expect(await stockOf(kopi.id)).toBe(8);
+  });
+
+  it("refuses an empty bill even when the bundle list is present but empty", async () => {
+    await signInAs("KASIR");
+
+    const result = await submitOnsiteOrderAction({
+      items: [],
+      bundles: [],
+      paymentMethod: "QRIS",
+    });
+
+    expect(result.ok).toBe(false);
   });
 
   it("hands a ready-only basket over immediately", async () => {
