@@ -15,6 +15,7 @@ import {
 } from "@/lib/remembered-order";
 import { OrderTimeline } from "./order-timeline";
 import { OrderReceipt, SummaryPanel } from "./order-receipt";
+import { QrisPayment } from "./qris-payment";
 import { PhotoboothQr } from "./photobooth-qr";
 import { OrderStage, StageArt } from "./order-stage";
 import { Confetti } from "./confetti";
@@ -32,6 +33,7 @@ const POLL_INTERVAL_MS = 8_000;
 interface TrackingResponse {
   order: TrackedOrder | null;
   photoLink?: string | null;
+  qrisImageUrl?: string | null;
 }
 
 interface Search {
@@ -58,7 +60,7 @@ function searchKey(search: Search | null): string | null {
 
 const PAYMENT_LABEL = {
   CASH: "Bayar pas ambil",
-  QRIS: "Transfer / QRIS",
+  QRIS: "QRIS",
 } as const;
 
 /**
@@ -101,7 +103,7 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
       : null;
   const search = submitted ?? automatic;
 
-  const { data, error, isLoading } = useSWR<TrackingResponse>(searchKey(search), fetchOrder, {
+  const { data, error, isLoading, mutate } = useSWR<TrackingResponse>(searchKey(search), fetchOrder, {
     // Stop polling once the order can no longer move, and never poll a miss.
     refreshInterval: (latest) =>
       latest?.order && !isFinalStatus(latest.order.status) ? POLL_INTERVAL_MS : 0,
@@ -168,6 +170,9 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
       <FoundOrder
         order={order}
         photoLink={data?.photoLink ?? null}
+        qrisImageUrl={data?.qrisImageUrl ?? null}
+        phoneLast4={search?.phoneLast4}
+        onProofSent={() => void mutate()}
         burst={burst}
         offline={error !== undefined}
         onSwitch={switchOrder}
@@ -268,12 +273,18 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
 function FoundOrder({
   order,
   photoLink,
+  qrisImageUrl,
+  phoneLast4,
+  onProofSent,
   burst,
   offline,
   onSwitch,
 }: {
   order: TrackedOrder;
   photoLink: string | null;
+  qrisImageUrl: string | null;
+  phoneLast4?: string;
+  onProofSent: () => void;
   burst: number;
   offline: boolean;
   onSwitch: () => void;
@@ -359,6 +370,19 @@ function FoundOrder({
       <section className="band-tight menu-counter">
         <div className="band-inner flex items-start gap-10">
           <div className="min-w-0 flex-1">
+            {order.paymentMethod === "QRIS" && !cancelled && (
+              <QrisPayment
+                orderNumber={order.orderNumber}
+                totalAmount={order.totalAmount}
+                qrisImageUrl={qrisImageUrl}
+                paymentStatus={order.paymentStatus}
+                hasPaymentProof={order.hasPaymentProof}
+                phoneLast4={phoneLast4}
+                onProofSent={onProofSent}
+                className="mb-7"
+              />
+            )}
+
             <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 tablet:grid-cols-3">
               {order.pickupSlot && (
                 <Fact label="Jam ambil">

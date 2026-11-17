@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { pageTitle } from "@/lib/brand";
 import { photoboothLink } from "@/lib/photobooth-link";
 import { PhotoboothQr } from "@/components/public/photobooth-qr";
+import { QrisPayment } from "@/components/public/qris-payment";
+import { getSettings } from "@/lib/services/setting.service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
   const found = await findByNumber(decodeURIComponent(orderNumber));
   if (!found) notFound();
 
-  const charges = await findActiveCharges([found.id]);
+  const [charges, settings] = await Promise.all([findActiveCharges([found.id]), getSettings()]);
   const order = toTrackedOrder(found, charges.get(found.id));
   // No token here: this page opens with the order number alone.
   const photoLink = photoboothLink(found, { withToken: false });
@@ -105,6 +107,18 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         {/* A narrow measure, left-aligned: the number above was for reading across
             a counter, this part is for reading properly. */}
         <div className="band-inner-narrow">
+          {/* Paying comes first: it is the one thing left for the customer to do. */}
+          {order.paymentMethod === "QRIS" && order.status !== "CANCELLED" && (
+            <QrisPayment
+              orderNumber={order.orderNumber}
+              totalAmount={order.totalAmount}
+              qrisImageUrl={settings.qrisImageUrl ?? null}
+              paymentStatus={order.paymentStatus}
+              hasPaymentProof={order.hasPaymentProof}
+              className="mb-7"
+            />
+          )}
+
           <p
             className={cn(
               "border-l-2 py-3 pl-4 pr-3 text-[14px] leading-relaxed",

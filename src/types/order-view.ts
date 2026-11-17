@@ -33,6 +33,11 @@ export interface TrackedOrder {
   pickupSlot: string | null;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /**
+   * Whether a QRIS payment proof has been sent. The proof itself is for the
+   * cashier only, so the customer's view carries the fact, not the picture.
+   */
+  hasPaymentProof: boolean;
   status: OrderStatus;
   notes: string | null;
   totalAmount: number;
@@ -82,7 +87,7 @@ export interface CashierPreorder {
   pickupSlot: string | null;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
-  /** Transfer receipt the customer uploaded, for the cashier to check. */
+  /** The QRIS payment proof the customer uploaded, for the cashier to check (staff only). */
   paymentProofUrl: string | null;
   status: OrderStatus;
   notes: string | null;
