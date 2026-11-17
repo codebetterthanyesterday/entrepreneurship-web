@@ -45,6 +45,17 @@ enum PaymentMethod {
   QRIS = "QRIS"
 }
 
+// Tempat pesanan preorder diserahkan. OTHER wajib disertai detail lokasi
+// (`Order.handoverDetail`) dan baru diproses setelah dicek pengurus
+// (`Order.locationReviewedAt`).
+enum HandoverLocation {
+  @@type("pg/text@1")
+  CAMPUS_B = "CAMPUS_B"
+  CAMPUS_C = "CAMPUS_C"
+  MARKET_DAY = "MARKET_DAY"
+  OTHER = "OTHER"
+}
+
 enum StoredImageKind {
   @@type("pg/text@1")
   QRIS = "QRIS"
@@ -133,6 +144,17 @@ model Order {
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus  @default(UNPAID)
   paymentProofUrl String?
+  // Jadwal serah terima preorder: tanggal (WIB, "2026-11-24"), lokasi, detail
+  // titik temu, dan rentang jam yang dipesan. `pickupSlot` tetap menyimpan
+  // label rentang jamnya ("11.00 - 12.00") untuk struk dan integrasi.
+  // Semuanya kosong untuk pesanan on-the-spot dan pesanan dari sebelum jadwal ada.
+  serviceDate        String?
+  handoverLocation   HandoverLocation?
+  handoverDetail     String?
+  serviceWindowId    String?
+  serviceWindow      ServiceWindow?    @relation(fields: [serviceWindowId], references: [id])
+  // Pesanan berlokasi OTHER menunggu dicek pengurus; diisi saat diterima.
+  locationReviewedAt DateTime?
   cashReceived    Int?
   totalAmount     Int
   notes           String?
@@ -153,6 +175,7 @@ model Order {
   @@index([channel])
   @@index([createdAt])
   @@index([channel, status])
+  @@index([serviceDate])
 }
 
 model OrderItem {
@@ -281,6 +304,9 @@ model StoreSetting {
   // warna di header. Mati: pengunjung baru tetap pink; yang sudah memilih
   // tetap memakai pilihannya (cookie `accent`), hanya tidak bisa menggantinya.
   accentChoiceEnabled Boolean @default(true)
+  // Batas pesan untuk tanggal D: jam ini (menit sejak 00.00 WIB) di hari D-1.
+  // Bawaan 21.00.
+  orderCutoffMinute Int @default(1260)
   updatedAt         temporal.updatedAt()
 }
 
@@ -300,6 +326,39 @@ model StoredImage {
   @@check(expression: "octet_length(data) BETWEEN 1 AND 3145728", name: "stored_image_size_limit")
 }
 
+// Tanggal yang dibuka pengurus untuk menangani preorder. Tanggal yang tidak ada
+// di sini (atau `isOpen` mati) berarti tidak ada layanan preorder hari itu.
+// `locations` berisi nilai HandoverLocation yang dilayani tanggal itu.
+model ServiceDay {
+  id        String          @id @default(uuid())
+  date      String          @unique
+  isOpen    Boolean         @default(true)
+  locations String[]
+  createdAt DateTime        @default(now())
+  windows   ServiceWindow[]
+}
+
+// Rentang jam serah terima pada satu tanggal layanan, dengan kuotanya sendiri.
+// `booked` dinaikkan lewat update bersyarat (booked < quota), seperti slot lama,
+// supaya database yang menjaga kuota saat dua pelanggan checkout bersamaan.
+model ServiceWindow {
+  id          String     @id @default(uuid())
+  dayId       String
+  day         ServiceDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  startMinute Int
+  endMinute   Int
+  quota       Int
+  booked      Int        @default(0)
+  orders      Order[]
+
+  @@unique([dayId, startMinute])
+  @@index([dayId])
+  @@check(expression: "booked >= 0", name: "service_window_booked_non_negative")
+  @@check(expression: "booked <= quota", name: "service_window_booked_within_quota")
+}
+
+// Slot jam lama (satu hari, tanpa tanggal). Tidak dipakai pesanan baru sejak
+// jadwal layanan (ServiceDay/ServiceWindow); dibiarkan untuk pesanan lama.
 model PickupSlot {
   id        String  @id @default(uuid())
   // label, contoh "09.00 - 10.00"

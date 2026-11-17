@@ -1,6 +1,6 @@
 import { getActiveBundles } from "@/lib/queries/bundle.query";
 import { getActiveProducts } from "@/lib/queries/product.query";
-import { getSelectablePickupSlots } from "@/lib/queries/slot.query";
+import { getBookableSchedule } from "@/lib/queries/schedule.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { CheckoutForm } from "@/components/public/checkout-form";
 import type { PublicProduct } from "@/types/admin";
@@ -10,16 +10,16 @@ export const metadata = {
   title: pageTitle("Dikit lagi selesai"),
 };
 
-// Slot availability and the preorder switch change minute to minute, and none
+// The schedule and the preorder switch change minute to minute, and none
 // of it is read through `fetch`, so without this Next would prerender the page
-// at build time and serve stale slots.
+// at build time and serve a stale schedule.
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
-  const [products, bundles, slots, settings] = await Promise.all([
+  const [products, bundles, schedule, settings] = await Promise.all([
     getActiveProducts(),
     getActiveBundles(),
-    getSelectablePickupSlots(),
+    getBookableSchedule(),
     getSettings(),
   ]);
 
@@ -39,7 +39,7 @@ export default async function CheckoutPage() {
     <CheckoutForm
       products={items}
       bundles={bundles}
-      slots={slots}
+      schedule={schedule}
       preorderOpen={settings.preorderOpen}
       qrisAvailable={Boolean(settings.qrisImageUrl)}
     />

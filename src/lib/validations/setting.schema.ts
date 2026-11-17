@@ -20,19 +20,3 @@ export const updateSettingsSchema = z.object({
     .nullable()
     .optional(),
 });
-
-export const upsertPickupSlotSchema = z.object({
-  id: z.string().min(1).optional().nullable(),
-  label: z.string().min(2, "Label slotnya belum diisi, contoh: 09.00 - 10.00"),
-  quota: z
-    .number()
-    .int("Kuotanya harus angka bulat")
-    .min(1, "Kuotanya minimal 1")
-    .max(999, "Kuotanya kegedean"),
-  sortOrder: z.number().int().min(0).optional().nullable(),
-  isActive: z.boolean().optional(),
-});
-
-export const deletePickupSlotSchema = z.object({
-  id: z.string().min(1, "Slot pengambilannya nggak ketemu"),
-});

@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import type { OrderChannel } from "@/types/order";
+import { goesToPhotobooth } from "@/lib/schedule";
 
 /**
  * The link to a preorder's photos in the photobooth service, shown as a QR
@@ -26,12 +27,13 @@ export function claimLinkToken(orderNumber: string, secret: string): string {
  * hand anyone's photos to whoever guesses a number.
  */
 export function photoboothLink(
-  order: { orderNumber: string; channel: OrderChannel },
+  order: { orderNumber: string; channel: OrderChannel; handoverLocation?: string | null },
   options: { withToken: boolean },
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
   const base = env.PHOTOBOOTH_URL;
-  if (!base || order.channel !== "PREORDER") return null;
+  // Only a Market Day handover has a photobooth to go with it.
+  if (!base || !goesToPhotobooth(order)) return null;
 
   const url = new URL("/foto", base);
   url.searchParams.set("kode", order.orderNumber);

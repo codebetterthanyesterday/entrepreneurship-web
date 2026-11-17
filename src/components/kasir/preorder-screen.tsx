@@ -9,7 +9,18 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Note } from "@/components/ui/note";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
-import { markAsPaidAction, transitionOrderAction } from "@/actions/kasir.actions";
+import {
+  confirmHandoverLocationAction,
+  markAsPaidAction,
+  rejectHandoverLocationAction,
+  transitionOrderAction,
+} from "@/actions/kasir.actions";
+import {
+  HANDOVER_LABEL,
+  describeHandover,
+  formatServiceDate,
+  isHandoverLocation,
+} from "@/lib/schedule";
 import {
   PREORDER_FILTERS,
   PREORDER_STATUS,
@@ -47,6 +58,9 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
 
   const [search, setSearch] = React.useState("");
   const [filterKey, setFilterKey] = React.useState(PREORDER_FILTERS[0]!.key);
+  /** "ALL", one service date, or "REVIEW" for "Lainnya" orders waiting on a check. */
+  const [dateKey, setDateKey] = React.useState<string>("ALL");
+  const [rejectReason, setRejectReason] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [payOpen, setPayOpen] = React.useState(false);
   const [isWorking, setIsWorking] = React.useState(false);
@@ -67,11 +81,22 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
   // Narrowed here rather than on the server: the whole list is already in hand,
   // and the counter needs the list to settle as the cashier types, not one
   // round trip later.
+  const dates = [...new Set(preorders.map((order) => order.serviceDate).filter(Boolean) as string[])].sort();
+  const awaiting = preorders.filter((order) => order.awaitingLocationCheck).length;
+
   const visible = preorders.filter(
     (order) =>
       (activeFilter.statuses.length === 0 || activeFilter.statuses.includes(order.status)) &&
+      (dateKey === "ALL" ||
+        (dateKey === "REVIEW" ? order.awaitingLocationCheck : order.serviceDate === dateKey)) &&
       matchesPreorderSearch(order, search),
   );
+
+  // What to bring on the chosen day, place by place: the counter's packing list.
+  const packing =
+    dateKey !== "ALL" && dateKey !== "REVIEW"
+      ? packingList(visible.filter((order) => order.status !== "CANCELLED"))
+      : null;
 
   const closePayment = React.useCallback(() => setPayOpen(false), []);
 
@@ -121,6 +146,27 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
     setSelectedId(null);
   };
 
+  const reviewLocation = async (accept: boolean) => {
+    if (!selected || isWorking) return;
+    setIsWorking(true);
+    const result = accept
+      ? await confirmHandoverLocationAction(selected.id)
+      : await rejectHandoverLocationAction({ orderId: selected.id, reason: rejectReason.trim() || null });
+    setIsWorking(false);
+    if (!result.ok) {
+      toast(result.error);
+      return;
+    }
+    toast(
+      accept
+        ? `Lokasi ${result.data.orderNumber} diterima`
+        : `${result.data.orderNumber} dibatalkan, stoknya kembali`,
+    );
+    setRejectReason("");
+    if (!accept) setSelectedId(null);
+    router.refresh();
+  };
+
   const action = selected ? resolvePreorderAction(selected) : null;
 
   return (
@@ -147,6 +193,46 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
           </Chip>
         ))}
       </div>
+
+      {(dates.length > 0 || awaiting > 0) && (
+        <div
+          role="group"
+          aria-label="Tanggal serah terima"
+          className="flex gap-2 overflow-x-auto pb-2.5 -mx-3.5 px-3.5 [scrollbar-width:none] tablet:mx-0 tablet:px-0 tablet:flex-wrap"
+        >
+          <Chip active={dateKey === "ALL"} aria-pressed={dateKey === "ALL"} onClick={() => setDateKey("ALL")} className="flex-none">
+            Semua tanggal
+          </Chip>
+          {dates.map((date) => (
+            <Chip key={date} active={dateKey === date} aria-pressed={dateKey === date} onClick={() => setDateKey(date)} className="flex-none">
+              {formatServiceDate(date).replace(/ \d{4}$/, "")}
+            </Chip>
+          ))}
+          {awaiting > 0 && (
+            <Chip active={dateKey === "REVIEW"} aria-pressed={dateKey === "REVIEW"} onClick={() => setDateKey("REVIEW")} className="flex-none">
+              Cek lokasi ({awaiting})
+            </Chip>
+          )}
+        </div>
+      )}
+
+      {packing && packing.length > 0 && (
+        <section aria-label="Yang harus dibawa" className="s-slab p-3.5">
+          <p className="s-eyebrow">Yang harus dibawa · {formatServiceDate(dateKey)}</p>
+          <ul className="mt-2 flex flex-col gap-2.5">
+            {packing.map((group) => (
+              <li key={group.location}>
+                <p className="text-sm font-bold text-ink">
+                  {group.label} · {group.orders} pesanan
+                </p>
+                <p className="text-[13px] text-ink-soft">
+                  {group.items.map((item) => `${item.quantity}× ${item.name}`).join(", ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {visible.length === 0 ? (
         <EmptyState
@@ -177,7 +263,13 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                       {order.customerName}
                     </span>
                     <span className="block text-[12.5px] text-ink-soft truncate">
-                      {order.pickupSlot ? `ambil ${order.pickupSlot} · ` : ""}
+                      {order.serviceDate
+                        ? `${formatServiceDate(order.serviceDate).replace(/ \d{4}$/, "")} ${order.pickupSlot ?? ""} · ${
+                            isHandoverLocation(order.handoverLocation) ? HANDOVER_LABEL[order.handoverLocation] : ""
+                          } · `
+                        : order.pickupSlot
+                          ? `ambil ${order.pickupSlot} · `
+                          : ""}
                       {order.itemCount} item · {formatRupiah(order.totalAmount)}
                       {order.paymentStatus === "UNPAID" &&
                         (order.paymentMethod === "QRIS" && order.paymentProofUrl ? (
@@ -228,10 +320,11 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
             </div>
 
             <p className="text-sm text-ink-soft -mt-1">
-              {selected.customerName}
-              {selected.pickupSlot ? ` · ambil ${selected.pickupSlot}` : ""} ·{" "}
-              {PAYMENT_LABEL[selected.paymentMethod]}
+              {selected.customerName} · {PAYMENT_LABEL[selected.paymentMethod]}
             </p>
+            {selected.pickupSlot && (
+              <p className="text-sm font-semibold text-ink -mt-2">{describeHandover(selected)}</p>
+            )}
 
             <ul className="bg-sand rounded-[10px] p-3 flex flex-col gap-2">
               {selected.items.map((item, index) => (
@@ -329,7 +422,28 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
               </div>
             )}
 
-            {action.kind === "BLOCKED" ? (
+            {selected.awaitingLocationCheck ? (
+              <div className="flex flex-col gap-2">
+                <Note variant="warn">
+                  Lokasi &ldquo;Lainnya&rdquo;: cek dulu jangkauannya (hubungi pelanggan lewat WhatsApp).
+                  Pesanan baru bisa diproses setelah lokasinya diterima.
+                </Note>
+                <Button variant="go" fullWidth isLoading={isWorking} onClick={() => reviewLocation(true)}>
+                  Lokasi bisa, terima
+                </Button>
+                <input
+                  value={rejectReason}
+                  onChange={(event) => setRejectReason(event.target.value)}
+                  maxLength={150}
+                  placeholder="Alasan (opsional), misal: terlalu jauh"
+                  aria-label="Alasan menolak lokasi"
+                  className="ui-field bg-white border-[1.5px] border-line rounded-[12px] min-h-[46px] px-3 text-ink text-[15px]"
+                />
+                <Button variant="flat" fullWidth disabled={isWorking} onClick={() => reviewLocation(false)}>
+                  Di luar jangkauan, batalkan
+                </Button>
+              </div>
+            ) : action.kind === "BLOCKED" ? (
               <Button variant="flat" fullWidth disabled>
                 {action.label}
               </Button>
@@ -366,4 +480,23 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
       )}
     </div>
   );
+}
+
+/** The day's active orders grouped by place, with item totals: what to pack. */
+function packingList(orders: CashierPreorder[]) {
+  const groups = new Map<string, { location: string; label: string; orders: number; items: Map<string, number> }>();
+  for (const order of orders) {
+    const location = order.handoverLocation ?? "LAINNYA";
+    const label = isHandoverLocation(location) ? HANDOVER_LABEL[location] : "Tanpa lokasi";
+    const group = groups.get(location) ?? { location, label, orders: 0, items: new Map() };
+    group.orders += 1;
+    for (const item of order.items) {
+      group.items.set(item.name, (group.items.get(item.name) ?? 0) + item.quantity);
+    }
+    groups.set(location, group);
+  }
+  return [...groups.values()].map((group) => ({
+    ...group,
+    items: [...group.items.entries()].map(([name, quantity]) => ({ name, quantity })),
+  }));
 }

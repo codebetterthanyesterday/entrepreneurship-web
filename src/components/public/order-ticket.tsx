@@ -1,5 +1,6 @@
 import * as React from "react";
 import { renderSVG } from "uqr";
+import { describeHandover, formatServiceDate } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 import { CopyCodeButton } from "./copy-code-button";
 import { OrderReceipt } from "./order-receipt";
@@ -55,8 +56,11 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
             Official adventurer pass
           </p>
           <p className="flex flex-wrap gap-1.5">
+            {order.serviceDate && (
+              <span className="k-tag k-tag-flat !bg-sand">{formatServiceDate(order.serviceDate)}</span>
+            )}
             {order.pickupSlot && (
-              <span className="k-tag k-tag-flat !bg-sand">Slot: {order.pickupSlot}</span>
+              <span className="k-tag k-tag-flat !bg-sand">Jam: {order.pickupSlot}</span>
             )}
             <span
               className={cn(
@@ -86,11 +90,19 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
             </p>
             {order.pickupSlot && (
               <p className="text-[13.5px] text-ink-soft">
-                Ambil jam <span className="font-bold tabular-nums text-ink">{order.pickupSlot}</span>
+                {order.serviceDate ? "Diserahkan " : "Ambil jam "}
+                <span className="font-bold text-ink">{describeHandover(order)}</span>
               </p>
             )}
           </div>
         </div>
+
+        {order.awaitingLocationCheck && (
+          <p role="status" className="mt-3 rounded-[10px] bg-warn-soft px-3 py-2.5 text-[13px] leading-relaxed text-warn">
+            <b>Lokasinya lagi kami cek.</b> Kami kabari lewat WhatsApp kalau bisa diantar ke sana.
+            Kalau di luar jangkauan, pesanannya kami batalkan dan stoknya kembali.
+          </p>
+        )}
 
         <OrderReceipt
           lines={order.items.map((item, index) => ({

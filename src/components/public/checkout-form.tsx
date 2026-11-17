@@ -12,7 +12,8 @@ import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receip
 import { JourneyEmpty, JourneyHero } from "./journey";
 import { CheckoutArt } from "./journey-art";
 import type { PublicBundle } from "@/lib/bundle";
-import type { PublicPickupSlot } from "@/lib/queries/slot.query";
+import type { BookableSchedule } from "@/lib/queries/schedule.query";
+import { HandoverSteps, type HandoverChoice } from "./handover-picker";
 import type { PublicProduct } from "@/types/admin";
 import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
 
@@ -25,7 +26,8 @@ const PAYMENT_NOTE: Record<PaymentMethod, string> = {
 
 export interface CheckoutFormProps {
   products: PublicProduct[];
-  slots: PublicPickupSlot[];
+  /** The dates, places and time ranges a customer can book right now. */
+  schedule: BookableSchedule;
   preorderOpen: boolean;
   /** Whether the admin has uploaded a QRIS; without one only cash is offered. */
   qrisAvailable: boolean;
@@ -42,7 +44,7 @@ interface FieldError {
 
 export function CheckoutForm({
   products,
-  slots,
+  schedule,
   preorderOpen,
   qrisAvailable,
   bundles = NO_BUNDLES,
@@ -56,7 +58,12 @@ export function CheckoutForm({
 
   const [customerName, setCustomerName] = React.useState("");
   const [customerPhone, setCustomerPhone] = React.useState("");
-  const [pickupSlot, setPickupSlot] = React.useState<string | null>(null);
+  const [handover, setHandover] = React.useState<HandoverChoice>({
+    location: null,
+    detail: "",
+    date: null,
+    windowId: null,
+  });
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("CASH");
   const [notes, setNotes] = React.useState("");
 
@@ -84,7 +91,9 @@ export function CheckoutForm({
     const result = await submitPreorderAction({
       customerName,
       customerPhone,
-      pickupSlot: pickupSlot ?? "",
+      handoverLocation: handover.location ?? undefined,
+      handoverDetail: handover.detail.trim() === "" ? undefined : handover.detail.trim(),
+      serviceWindowId: handover.windowId ?? "",
       paymentMethod,
       notes: notes.trim() === "" ? undefined : notes,
       // Loose products and pakets go apart; the server prices both again.
@@ -233,66 +242,21 @@ export function CheckoutForm({
                 </div>
               </Step>
 
-              <Step number="02" title="Mau ambil jam berapa?">
-                <fieldset disabled={isSubmitting} className="min-w-0">
-                  <legend className="sr-only">Jam pengambilan</legend>
+              <HandoverSteps
+                schedule={schedule}
+                value={handover}
+                onChange={(next) => {
+                  setHandover(next);
+                  if (error?.field && ["handoverLocation", "handoverDetail", "serviceWindowId"].includes(error.field)) {
+                    setError(null);
+                  }
+                }}
+                disabled={isSubmitting}
+                fieldError={fieldError}
+                Step={Step}
+              />
 
-                  {slots.length === 0 ? (
-                    <p className="text-sm text-ink-soft">
-                      Belum ada jam ambil yang dibuka. Coba lagi nanti ya.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {slots.map((slot) => {
-                        const active = pickupSlot === slot.label;
-                        const reason = slot.isPast ? "Udah lewat" : slot.isFull ? "Penuh" : null;
-
-                        return (
-                          <button
-                            key={slot.id}
-                            type="button"
-                            aria-pressed={active}
-                            disabled={!slot.isSelectable}
-                            onClick={() => {
-                              setPickupSlot(slot.label);
-                              if (error?.field === "pickupSlot") setError(null);
-                            }}
-                            className={cn(
-                              "min-h-[58px] rounded-[8px] border-2 px-3.5 text-left transition-colors",
-                              // The design's "checkpoint active": red on a hard
-                              // shadow, the same filled look the category bar
-                              // uses, so "selected" looks the same everywhere.
-                              active
-                                ? "k-choice-on text-white"
-                                : "border-line bg-white text-ink hover:border-pink",
-                              !slot.isSelectable &&
-                                "cursor-not-allowed opacity-45 hover:border-line",
-                            )}
-                          >
-                            <span className="block text-[14.5px] font-semibold tabular-nums">
-                              {slot.label}
-                            </span>
-                            <span
-                              className={cn(
-                                "eyebrow mt-0.5 block",
-                                active ? "text-white/60" : "text-ink-soft",
-                              )}
-                            >
-                              {reason ?? `Sisa ${Math.max(0, slot.quota - slot.booked)} tempat`}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {fieldError("pickupSlot") && (
-                    <p className="mt-2 text-sm text-hot">{fieldError("pickupSlot")}</p>
-                  )}
-                </fieldset>
-              </Step>
-
-              <Step number="03" title="Bayarnya gimana?">
+              <Step number="05" title="Bayarnya gimana?">
                 <fieldset disabled={isSubmitting} className="min-w-0">
                   <legend className="sr-only">Cara pembayaran</legend>
 
@@ -334,7 +298,7 @@ export function CheckoutForm({
                 </fieldset>
               </Step>
 
-              <Step number="04" title="Catatan" hint="Opsional">
+              <Step number="06" title="Catatan" hint="Opsional">
                 <Textarea
                   label="Ada permintaan khusus?"
                   placeholder="Misal: es-nya dikit aja"
@@ -410,7 +374,7 @@ function Step({
           {number}
         </span>
         <h2 className="display-3 flex-1 text-ink">{title}</h2>
-        {hint && <span className="eyebrow flex-none text-ink-soft">{hint}</span>}
+        {hint && <span className="eyebrow max-w-[40%] text-right text-ink-soft">{hint}</span>}
       </div>
 
       <div className="mt-4">{children}</div>

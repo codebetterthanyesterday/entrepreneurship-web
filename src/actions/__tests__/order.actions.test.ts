@@ -26,23 +26,44 @@ const {
   closeDatabase,
   countOrders,
   db,
-  makePickupSlot,
   makeBundle,
   makeProduct,
   makeUser,
   resetDatabase,
   setStoreOpen,
-  slotByLabel,
   stockOf,
 } = await import("@/lib/services/__tests__/helpers/test-db");
 
-const SLOT = "09.00 - 10.00";
+const { openServiceDay } = await import("@/lib/services/schedule.service");
+const { Temporal } = await import("@js-temporal/polyfill");
+const { todayInJakarta } = await import("@/lib/schedule");
+
+// Far enough ahead to be bookable whatever the cut-off, inside the checkout horizon.
+const DATE = Temporal.PlainDate.from(todayInJakarta()).add({ days: 10 }).toString();
+const RANGE = "09.00 - 10.00";
+let windowId = "";
+
+/** Opens DATE for Kampus B with one 09.00 - 10.00 range of `quota` places. */
+async function openWindow(quota: number) {
+  const day = await openServiceDay({
+    date: DATE,
+    locations: ["CAMPUS_B", "MARKET_DAY"],
+    windows: [{ startMinute: 540, endMinute: 600, quota }],
+  });
+  const window = await db.orm.public.ServiceWindow.where({ dayId: day.id }).first();
+  windowId = window!.id;
+}
+
+async function bookedOn(id: string) {
+  return (await db.orm.public.ServiceWindow.where({ id }).first())!.booked;
+}
 
 function payload(overrides: Record<string, unknown> = {}) {
   return {
     customerName: "Pelanggan Uji",
     customerPhone: "081234567890",
-    pickupSlot: SLOT,
+    handoverLocation: "CAMPUS_B",
+    serviceWindowId: windowId,
     paymentMethod: "CASH",
     ...overrides,
   };
@@ -68,7 +89,7 @@ afterAll(async () => {
 describe("submitPreorderAction — what it refuses to trust", () => {
   it("ignores paymentStatus, channel, prices and handler sent by the client", async () => {
     const product = await makeProduct({ name: "Lemonade", price: 19_000, stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(
       payload({
@@ -99,7 +120,7 @@ describe("submitPreorderAction — what it refuses to trust", () => {
 
   it("prices from the product row even when the price changes mid-session", async () => {
     const product = await makeProduct({ price: 10_000, stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     await db.orm.public.Product.where({ id: product.id }).update({ price: 12_000 });
 
@@ -116,13 +137,36 @@ describe("submitPreorderAction — what it refuses to trust", () => {
 
   it("numbers the order on the preorder sequence", async () => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(
       payload({ items: [{ productId: product.id, quantity: 1 }] }),
     );
 
     expect(result.ok && result.data.orderNumber).toBe("PO-0001");
+  });
+
+  it("records where, which day and which range, taking the range's label from the server", async () => {
+    const product = await makeProduct({ stock: 10 });
+    await openWindow(20);
+
+    const result = await submitPreorderAction(
+      payload({
+        items: [{ productId: product.id, quantity: 1 }],
+        handoverDetail: "Depan gazebo",
+        pickupSlot: "23.00 - 24.00",
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const order = await orderByNumber(result.data.orderNumber);
+    expect(order.serviceDate).toBe(DATE);
+    expect(order.pickupSlot).toBe(RANGE);
+    expect(order.handoverLocation).toBe("CAMPUS_B");
+    expect(order.handoverDetail).toBe("Depan gazebo");
+    expect(order.serviceWindowId).toBe(windowId);
+    expect(await bookedOn(windowId)).toBe(1);
   });
 });
 
@@ -131,13 +175,15 @@ describe("submitPreorderAction — validation", () => {
     ["a name that is too short", { customerName: "A" }, "customerName", "Isi nama dulu ya"],
     ["a phone that is not 0-prefixed", { customerPhone: "6281234" }, "customerPhone", "Nomor WhatsApp-nya belum betul"],
     ["a phone that is too short", { customerPhone: "0812345" }, "customerPhone", "Nomor WhatsApp-nya belum betul"],
-    ["a missing slot", { pickupSlot: "" }, "pickupSlot", "Pilih jam ambil dulu ya"],
+    ["a missing time range", { serviceWindowId: "" }, "serviceWindowId", "Pilih tanggal dan jamnya dulu ya"],
+    ["a missing location", { handoverLocation: undefined }, "handoverLocation", "Pilih lokasi serah terimanya dulu ya"],
+    ["a Lainnya without its detail", { handoverLocation: "OTHER", handoverDetail: "kos" }, "handoverDetail", "Tulis lokasinya lengkap ya, biar kami bisa cek jangkauannya"],
     ["an unknown payment method", { paymentMethod: "GRATIS" }, "paymentMethod", "Pilih cara bayarnya ya"],
   ];
 
   it.each(cases)("rejects %s", async (_label, overrides, field, message) => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(
       payload({ items: [{ productId: product.id, quantity: 1 }], ...overrides }),
@@ -152,7 +198,7 @@ describe("submitPreorderAction — validation", () => {
   });
 
   it("rejects an empty basket", async () => {
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(payload({ items: [] }));
 
@@ -163,7 +209,7 @@ describe("submitPreorderAction — validation", () => {
 
   it("rejects a note longer than 200 characters", async () => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(
       payload({ notes: "x".repeat(201), items: [{ productId: product.id, quantity: 1 }] }),
@@ -176,7 +222,7 @@ describe("submitPreorderAction — validation", () => {
 
   it("accepts a note of exactly 200 characters", async () => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(
       payload({ notes: "x".repeat(200), items: [{ productId: product.id, quantity: 1 }] }),
@@ -189,7 +235,7 @@ describe("submitPreorderAction — validation", () => {
 describe("submitPreorderAction — failures the customer can act on", () => {
   it("names the product that ran out", async () => {
     const product = await makeProduct({ name: "Croffle Butter Sugar", stock: 2 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const result = await submitPreorderAction(
       payload({ items: [{ productId: product.id, quantity: 5 }] }),
@@ -206,7 +252,7 @@ describe("submitPreorderAction — failures the customer can act on", () => {
 
   it("refuses when the preorder channel is closed, however the request was made", async () => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
     await setStoreOpen({ preorderOpen: false });
 
     const result = await submitPreorderAction(
@@ -221,9 +267,9 @@ describe("submitPreorderAction — failures the customer can act on", () => {
     expect(await stockOf(product.id)).toBe(10);
   });
 
-  it("refuses a full slot and leaves stock alone", async () => {
+  it("refuses a full time range and leaves stock alone", async () => {
     const product = await makeProduct({ stock: 50 });
-    await makePickupSlot(SLOT, 1);
+    await openWindow(1);
 
     const first = await submitPreorderAction(
       payload({ items: [{ productId: product.id, quantity: 1 }] }),
@@ -238,10 +284,10 @@ describe("submitPreorderAction — failures the customer can act on", () => {
     if (second.ok) return;
 
     expect(second.error).toMatch(/udah penuh/);
-    expect(second.field).toBe("pickupSlot");
+    expect(second.field).toBe("serviceWindowId");
     expect(await countOrders()).toBe(1);
     expect(await stockOf(product.id)).toBe(49);
-    expect((await slotByLabel(SLOT)).booked).toBe(1);
+    expect(await bookedOn(windowId)).toBe(1);
   });
 
   it("does not leak a database error to the customer", async () => {
@@ -259,7 +305,7 @@ describe("submitPreorderAction — double submit", () => {
     // itself is not idempotent — this pins down what actually happens so the
     // guarantee is understood to live in the client, not here.
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot(SLOT, 20);
+    await openWindow(20);
 
     const body = payload({ items: [{ productId: product.id, quantity: 1 }] });
     const [first, second] = await Promise.all([
