@@ -99,6 +99,58 @@ async function main() {
     }
   }
 
+  // Paket hemat. Created once by name and left alone afterwards, like the
+  // products' stock, so an admin's edits survive a re-seed.
+  const bundles = [
+    {
+      name: 'Little Power Combo',
+      description: 'Croffle renyah ditemani es kopi susu gula aren. Paduan manis yang pas!',
+      price: 32000,
+      sortOrder: 1,
+      items: [
+        { name: 'Croffle Butter Sugar', quantity: 1 },
+        { name: 'Es Kopi Susu Gula Aren', quantity: 1 },
+      ],
+    },
+    {
+      name: 'Super Power Combo',
+      description: 'Paket lengkap buat pesta ngemil bareng party anggota!',
+      price: 60000,
+      sortOrder: 2,
+      items: [
+        { name: 'Dubai Chocolate Bar', quantity: 1 },
+        { name: 'Puding Susu Cup', quantity: 1 },
+        { name: 'Strawberry Matcha Latte', quantity: 1 },
+      ],
+    },
+  ];
+
+  for (const b of bundles) {
+    const existing = await db.orm.public.Bundle.where({ name: b.name }).first();
+    if (existing) continue;
+
+    const contents = [];
+    for (const item of b.items) {
+      const product = await db.orm.public.Product.where({ name: item.name }).first();
+      if (product) contents.push({ productId: product.id, quantity: item.quantity });
+    }
+    if (contents.length !== b.items.length) {
+      console.log(`Skipped Bundle: ${b.name} (a product in it is missing)`);
+      continue;
+    }
+
+    const bundle = await db.orm.public.Bundle.create({
+      name: b.name,
+      description: b.description,
+      price: b.price,
+      sortOrder: b.sortOrder,
+    });
+    for (const content of contents) {
+      await db.orm.public.BundleItem.create({ bundleId: bundle.id, ...content });
+    }
+    console.log(`Created Bundle: ${b.name}`);
+  }
+
   console.log('Seed completed.');
   await db.close();
 }

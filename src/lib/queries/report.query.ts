@@ -416,7 +416,7 @@ export async function getOrderPipeline(): Promise<OrderPipeline> {
  */
 export type OrderWithItemsAndHandler = Shape<
   Models.public_Order,
-  { items: { "+": "product" }; handledBy: { "+": "id" | "name" | "role" } }
+  { "+": "bundles"; items: { "+": "product" }; handledBy: { "+": "id" | "name" | "role" } }
 >;
 
 export interface OrderListFilter {
@@ -496,6 +496,7 @@ export async function getAllOrders(filter: OrderListFilter = {}): Promise<OrderL
 
   const orders = await query
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .include("handledBy", (user) => user.select("id", "name", "role"))
     .orderBy([(order) => order.createdAt.desc(), (order) => order.id.desc()])
     .limit(pageSize)
@@ -635,17 +636,40 @@ export interface OrderItemExportRow {
  * been repriced produces the same numbers as the first export did.
  */
 export async function getOrderItemsForExport(): Promise<OrderItemExportRow[]> {
+  // A paket is one row of its own, carrying its price; its contents follow as
+  // rows at zero labelled with the paket, so the sheet still says which
+  // products left the shelf without counting their money twice.
   const plan = db.raw.sql`
-    SELECT
-      ord."orderNumber" AS "orderNumber",
-      product."name" AS "productName",
-      item."quantity" AS "quantity",
-      item."priceAtOrder" AS "priceAtOrder",
-      item."subtotal" AS "subtotal"
-    FROM "public"."orderItem" item
-    JOIN "public"."order" ord ON ord."id" = item."orderId"
-    JOIN "public"."product" product ON product."id" = item."productId"
-    ORDER BY ord."createdAt" ASC, ord."id" ASC, product."name" ASC
+    SELECT "orderNumber", "productName", "quantity", "priceAtOrder", "subtotal"
+    FROM (
+      SELECT
+        ord."orderNumber" AS "orderNumber",
+        ord."createdAt" AS "createdAt",
+        ord."id" AS "orderId",
+        CASE
+          WHEN bundle."id" IS NULL THEN product."name"
+          ELSE product."name" || ' (isi ' || bundle."name" || ')'
+        END AS "productName",
+        item."quantity" AS "quantity",
+        item."priceAtOrder" AS "priceAtOrder",
+        item."subtotal" AS "subtotal"
+      FROM "public"."orderItem" item
+      JOIN "public"."order" ord ON ord."id" = item."orderId"
+      JOIN "public"."product" product ON product."id" = item."productId"
+      LEFT JOIN "public"."orderBundle" bundle ON bundle."id" = item."orderBundleId"
+      UNION ALL
+      SELECT
+        ord."orderNumber",
+        ord."createdAt",
+        ord."id",
+        'Paket: ' || bundle."name",
+        bundle."quantity",
+        bundle."priceAtOrder",
+        bundle."subtotal"
+      FROM "public"."orderBundle" bundle
+      JOIN "public"."order" ord ON ord."id" = bundle."orderId"
+    ) line
+    ORDER BY "createdAt" ASC, "orderId" ASC, "productName" ASC
   `
     .returnsRow({
       orderNumber: "pg/text@1",

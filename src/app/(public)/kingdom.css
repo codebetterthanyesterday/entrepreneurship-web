@@ -1478,3 +1478,31 @@ html[data-theme="kingdom"] body > * {
     margin-bottom: 10px;
   }
 }
+
+/* =========================================================================
+   Power-up combos
+   ========================================================================= */
+
+/* The folded price tag in a combo card's corner. */
+.k-combo-off {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  padding: 22px 12px 8px 16px;
+  background: var(--k-yellow);
+  color: var(--color-ink);
+  font-family: var(--k-mono);
+  font-size: 11px;
+  font-weight: 700;
+  transform: rotate(8deg);
+}
+
+.k-combo-off-red {
+  background: var(--color-pink-deep);
+  color: #fff;
+}
+
+[data-theme="kingdom"] .ui-btn-go {
+  background: var(--k-gold);
+  color: var(--color-ink);
+}

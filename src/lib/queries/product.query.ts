@@ -61,3 +61,25 @@ export async function getProductSalesCounts(): Promise<Record<string, number>> {
     return acc;
   }, {});
 }
+
+/**
+ * Pakets sold per paket, keyed by paket id. Cancelled orders do not count.
+ */
+export async function getBundleSalesCounts(): Promise<Record<string, number>> {
+  const plan = db.raw.sql`
+    SELECT ob."bundleId" AS "bundleId", SUM(ob."quantity")::int AS "sold"
+    FROM "public"."orderBundle" ob
+    JOIN "public"."order" o ON o."id" = ob."orderId"
+    WHERE o."status" <> 'CANCELLED'
+    GROUP BY ob."bundleId"
+  `
+    .returnsRow({ bundleId: "pg/text@1", sold: "pg/int4@1" })
+    .build();
+
+  const rows = await db.runtime().query(plan);
+
+  return rows.reduce<Record<string, number>>((acc, row) => {
+    acc[row.bundleId] = row.sold;
+    return acc;
+  }, {});
+}

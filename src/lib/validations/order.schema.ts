@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bundleOrderLineSchema } from "./bundle.schema";
 
 export const orderLineSchema = z.object({
   productId: z.string().min(1, "Menunya nggak valid"),
@@ -9,8 +10,25 @@ export const orderLineSchema = z.object({
     .max(99, "Jumlahnya kebanyakan nih"),
 });
 
+/**
+ * A basket holds loose products, pakets, or both — but not nothing. The
+ * emptiness check therefore looks at the two lists together; each on its own
+ * may be empty.
+ */
+const EMPTY_BASKET = "Pesanannya masih kosong, pilih menu dulu ya";
+
+function basketNotEmpty(
+  data: { items: readonly unknown[]; bundles?: readonly unknown[] },
+  ctx: z.RefinementCtx,
+): void {
+  if (data.items.length === 0 && (data.bundles?.length ?? 0) === 0) {
+    ctx.addIssue({ code: "custom", path: ["items"], message: EMPTY_BASKET });
+  }
+}
+
 const orderBaseSchema = z.object({
-  items: z.array(orderLineSchema).min(1, "Pesanannya masih kosong, pilih menu dulu ya"),
+  items: z.array(orderLineSchema),
+  bundles: z.array(bundleOrderLineSchema).max(20, "Paketnya kebanyakan nih").optional(),
   customerName: z.string().trim().min(2, "Isi nama dulu ya"),
   notes: z.string().trim().max(200, "Catatannya kepanjangan, maksimal 200 huruf").optional(),
 });
@@ -23,14 +41,16 @@ const orderBaseSchema = z.object({
  * recomputed by `createOrder` from the product rows; letting any of those
  * arrive from the browser would let a customer mark their own order paid.
  */
-export const createPreorderSchema = orderBaseSchema.extend({
-  customerPhone: z
-    .string()
-    .trim()
-    .regex(/^0\d{8,13}$/, "Nomor WhatsApp-nya belum betul"),
-  pickupSlot: z.string().trim().min(1, "Pilih jam ambil dulu ya"),
-  paymentMethod: z.enum(["CASH", "QRIS"], { message: "Pilih cara bayarnya ya" }),
-});
+export const createPreorderSchema = orderBaseSchema
+  .extend({
+    customerPhone: z
+      .string()
+      .trim()
+      .regex(/^0\d{8,13}$/, "Nomor WhatsApp-nya belum betul"),
+    pickupSlot: z.string().trim().min(1, "Pilih jam ambil dulu ya"),
+    paymentMethod: z.enum(["CASH", "QRIS"], { message: "Pilih cara bayarnya ya" }),
+  })
+  .superRefine(basketNotEmpty);
 
 export type CreatePreorderInput = z.infer<typeof createPreorderSchema>;
 
@@ -49,6 +69,7 @@ export type CreatePreorderInput = z.infer<typeof createPreorderSchema>;
 export const createOnsiteOrderSchema = z
   .object({
     items: orderBaseSchema.shape.items,
+    bundles: orderBaseSchema.shape.bundles,
     notes: orderBaseSchema.shape.notes,
     customerName: z.string().trim().max(60, "Namanya kepanjangan").optional(),
     paymentMethod: z.enum(["CASH", "QRIS"], { message: "Pilih cara bayarnya ya" }),
@@ -61,6 +82,7 @@ export const createOnsiteOrderSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
+    basketNotEmpty(data, ctx);
     if (data.paymentMethod === "CASH" && (data.cashReceived === undefined || data.cashReceived === null)) {
       ctx.addIssue({
         code: "custom",

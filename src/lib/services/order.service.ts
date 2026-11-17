@@ -24,6 +24,12 @@ export interface OrderLineInput {
   quantity: number;
 }
 
+/** A paket (combo) in the basket: which one, and how many of it. */
+export interface BundleLineInput {
+  bundleId: string;
+  quantity: number;
+}
+
 /** The only product fields `resolveInitialStatus` needs. */
 export interface PrepTypeOf {
   id: string;
@@ -41,6 +47,8 @@ export interface Actor {
 export interface CreateOrderInput {
   channel: OrderChannel;
   items: readonly OrderLineInput[];
+  /** Pakets in the basket. Optional, so every caller written before bundles still works. */
+  bundles?: readonly BundleLineInput[];
   customerName: string;
   customerPhone?: string | null;
   pickupSlot?: string | null;
@@ -52,8 +60,19 @@ export interface CreateOrderInput {
   handledById?: string | null;
 }
 
-/** An order together with its items and each item's product. */
-export type OrderWithItems = Shape<Models.public_Order, { items: { "+": "product" } }>;
+/**
+ * An order together with its items, each item's product, and the pakets on it.
+ *
+ * A paket's contents are ordinary `items` rows pointing at their `OrderBundle`
+ * through `orderBundleId`, priced at zero; the money is on the bundle row. So
+ * anything that only cares what has to be made or taken out of stock (the
+ * kitchen, cancellation) can keep reading `items`, and anything that shows
+ * money (receipts) reads loose items and `bundles` — see `order-lines.ts`.
+ */
+export type OrderWithItems = Shape<
+  Models.public_Order,
+  { "+": "bundles"; items: { "+": "product" } }
+>;
 
 // ---------------------------------------------------------------------------
 // 1. Initial status
@@ -78,6 +97,19 @@ export function resolveInitialStatus(
   const needsPrep = items.some((item) => prepTypeById.get(item.productId) === "NEEDS_PREP");
 
   return needsPrep ? "IN_QUEUE" : "DONE";
+}
+
+/** Collapses repeated lines for the same paket into one, like `mergeOrderLines`. */
+export function mergeBundleLines(bundles: readonly BundleLineInput[]): BundleLineInput[] {
+  const merged = new Map<string, BundleLineInput>();
+
+  for (const line of bundles) {
+    const existing = merged.get(line.bundleId);
+    if (existing) existing.quantity += line.quantity;
+    else merged.set(line.bundleId, { bundleId: line.bundleId, quantity: line.quantity });
+  }
+
+  return [...merged.values()];
 }
 
 /**
@@ -243,6 +275,7 @@ const STATUS_TIMESTAMP: Readonly<Partial<Record<OrderStatus, "queuedAt" | "start
 async function loadOrderWithItems(tx: TxClient, orderId: string): Promise<OrderWithItems> {
   const order = await tx.orm.public.Order.where({ id: orderId })
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .first();
 
   if (!order) throw new NotFoundError("Pesanannya nggak ketemu");
@@ -257,7 +290,9 @@ async function loadOrderWithItems(tx: TxClient, orderId: string): Promise<OrderW
  * at all is written.
  */
 export async function createOrder(input: CreateOrderInput): Promise<OrderWithItems> {
-  if (input.items.length === 0) {
+  const requestedBundles = input.bundles ?? [];
+
+  if (input.items.length === 0 && requestedBundles.length === 0) {
     throw new ValidationError("Pesanannya masih kosong, pilih menu dulu ya", "items");
   }
 
@@ -265,19 +300,60 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     throw new ValidationError("Jumlah pesanan tiap menu minimal 1", "items");
   }
 
+  if (requestedBundles.some((line) => line.quantity <= 0)) {
+    throw new ValidationError("Jumlah tiap paket minimal 1", "items");
+  }
+
   const items = mergeOrderLines(input.items);
+  const bundleLines = mergeBundleLines(requestedBundles);
 
   return await db.transaction(async (tx) => {
-    // (a) Load every referenced product and make sure it can still be sold.
-    const productIds = items.map((item) => item.productId);
+    // (a0) Load every referenced paket with its contents. A paket is sold only
+    // while it is switched on and holds at least one product.
+    const bundleIds = bundleLines.map((line) => line.bundleId);
+    const bundles =
+      bundleIds.length === 0
+        ? []
+        : await tx.orm.public.Bundle.where((bundle) => bundle.id.in(bundleIds))
+            .include("items")
+            .all();
+    const bundleById = new Map(bundles.map((bundle) => [bundle.id, bundle]));
+
+    for (const bundleId of bundleIds) {
+      const bundle = bundleById.get(bundleId);
+      if (!bundle) throw new NotFoundError("Ada paket yang udah nggak ada di katalog");
+      if (!bundle.isActive || bundle.items.length === 0) {
+        throw new ValidationError(`Paket ${bundle.name} lagi nggak dijual`, "items");
+      }
+    }
+
+    // (a) Load every referenced product — loose ones and every paket's
+    // contents — and make sure each can still be sold.
+    const productIds = [
+      ...new Set([
+        ...items.map((item) => item.productId),
+        ...bundles.flatMap((bundle) => bundle.items.map((item) => item.productId)),
+      ]),
+    ];
     const products = await tx.orm.public.Product.where((product) => product.id.in(productIds)).all();
     const productById = new Map(products.map((product) => [product.id, product]));
 
-    for (const productId of productIds) {
-      const product = productById.get(productId);
+    for (const item of items) {
+      const product = productById.get(item.productId);
       if (!product) throw new NotFoundError("Ada menu yang udah nggak ada di katalog");
       if (!product.isActive) {
         throw new ValidationError(`Menu ${product.name} lagi nggak dijual`, "items");
+      }
+    }
+
+    // A paket whose product was hidden is not on the menu either, whatever the
+    // paket's own switch says.
+    for (const bundle of bundles) {
+      for (const component of bundle.items) {
+        const product = productById.get(component.productId);
+        if (!product?.isActive) {
+          throw new ValidationError(`Paket ${bundle.name} lagi nggak dijual`, "items");
+        }
       }
     }
 
@@ -315,7 +391,33 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       };
     });
 
-    const totalAmount = lines.reduce((sum, line) => sum + line.subtotal, 0);
+    // A paket is charged at its own price — the saving is the point of it —
+    // read from the row now, never from the browser.
+    const pricedBundles = bundleLines.map((line) => {
+      const bundle = bundleById.get(line.bundleId)!;
+      return {
+        bundle,
+        quantity: line.quantity,
+        priceAtOrder: bundle.price,
+        subtotal: bundle.price * line.quantity,
+      };
+    });
+
+    // Every product this basket takes out of stock, loose and inside pakets,
+    // for the status decision below.
+    const allProductLines: OrderLineInput[] = [
+      ...items,
+      ...pricedBundles.flatMap(({ bundle, quantity }) =>
+        bundle.items.map((component) => ({
+          productId: component.productId,
+          quantity: component.quantity * quantity,
+        })),
+      ),
+    ];
+
+    const totalAmount =
+      lines.reduce((sum, line) => sum + line.subtotal, 0) +
+      pricedBundles.reduce((sum, line) => sum + line.subtotal, 0);
 
     // Cash handed over at the counter has to cover the total — the total worked
     // out just above from the product rows, not any figure the till sent. It is
@@ -337,7 +439,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     // turn up — the cashier is the one who moves it on to IN_QUEUE or DONE.
     // Only an on-the-spot sale skips straight to its resolved status.
     const status: OrderStatus =
-      input.channel === "PREORDER" ? "CONFIRMED" : resolveInitialStatus(items, products);
+      input.channel === "PREORDER" ? "CONFIRMED" : resolveInitialStatus(allProductLines, products);
     const now = Temporal.Now.instant();
 
     // (f) A number drawn from the channel's sequence — never a row count.
@@ -383,6 +485,43 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
         priceAtOrder: line.priceAtOrder,
         subtotal: line.subtotal,
       });
+    }
+
+    // (e2) Each paket: one priced row, then its contents as ordinary order
+    // lines at zero, each taking its own product's stock. A shortfall in any
+    // content throws InsufficientStockError naming that product and rolls the
+    // whole order back, exactly as for a loose item.
+    for (const line of pricedBundles) {
+      const orderBundle = await tx.orm.public.OrderBundle.create({
+        orderId: order.id,
+        bundleId: line.bundle.id,
+        name: line.bundle.name,
+        quantity: line.quantity,
+        priceAtOrder: line.priceAtOrder,
+        subtotal: line.subtotal,
+      });
+
+      for (const component of line.bundle.items) {
+        const quantity = component.quantity * line.quantity;
+
+        await adjustStock({
+          tx,
+          productId: component.productId,
+          delta: -quantity,
+          reason: "ORDER_CONFIRMED",
+          actorId: input.handledById ?? null,
+          orderId: order.id,
+        });
+
+        await tx.orm.public.OrderItem.create({
+          orderId: order.id,
+          productId: component.productId,
+          orderBundleId: orderBundle.id,
+          quantity,
+          priceAtOrder: 0,
+          subtotal: 0,
+        });
+      }
     }
 
     // (h)

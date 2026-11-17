@@ -1,3 +1,4 @@
+import { getActiveBundles } from "@/lib/queries/bundle.query";
 import { getActiveProducts } from "@/lib/queries/product.query";
 import { getSelectablePickupSlots } from "@/lib/queries/slot.query";
 import { getSettings } from "@/lib/services/setting.service";
@@ -15,8 +16,9 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
-  const [products, slots, settings] = await Promise.all([
+  const [products, bundles, slots, settings] = await Promise.all([
     getActiveProducts(),
+    getActiveBundles(),
     getSelectablePickupSlots(),
     getSettings(),
   ]);
@@ -36,6 +38,7 @@ export default async function CheckoutPage() {
   return (
     <CheckoutForm
       products={items}
+      bundles={bundles}
       slots={slots}
       preorderOpen={settings.preorderOpen}
       qrisAvailable={Boolean(settings.qrisImageUrl)}

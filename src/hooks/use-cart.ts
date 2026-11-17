@@ -1,6 +1,13 @@
 "use client";
 
 import * as React from "react";
+import {
+  bundleIdOf,
+  bundleKey,
+  bundlesAvailable,
+  portionsUsed,
+  type BundleComponent,
+} from "@/lib/bundle";
 
 /*
  * Deliberately keeps its old prefix while the rest of the app is being
@@ -12,7 +19,8 @@ const STORAGE_KEY = "ngd-cart";
 
 /**
  * What the cart keeps per line — an id and a count, and deliberately nothing
- * else. Prices are never stored: they are read back from the server on every
+ * else. A paket's line uses the same shape, its id under the `paket:` prefix
+ * (`bundleKey`), so carts already saved in customers' browsers keep reading. Prices are never stored: they are read back from the server on every
  * render and recomputed inside `createOrder`, so a hand-edited localStorage
  * entry cannot change what an order costs.
  */
@@ -29,9 +37,25 @@ export interface CartProduct {
   stock: number;
 }
 
+/** The paket fields the cart needs: its price, and what it takes from stock. */
+export interface CartBundle {
+  id: string;
+  name: string;
+  price: number;
+  items: readonly BundleComponent[];
+}
+
+/**
+ * One line in the cart. `productId` is the line's key and `product` its name,
+ * price and cap — for a paket line too, so everything that only lists lines
+ * (receipts, counts, totals) needs no second code path. A paket line also
+ * carries `bundle`, for the pages that show what is inside it and for checkout,
+ * which sends pakets separately.
+ */
 export interface CartEntry extends CartLine {
   product: CartProduct;
   subtotal: number;
+  bundle?: CartBundle;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +145,7 @@ function writeStorage(lines: CartLine[]): void {
 }
 
 export interface UseCartResult {
-  /** Lines whose product is still in the catalogue, priced from `products`. */
+  /** Lines whose product or paket is still in the catalogue, priced from it. */
   entries: CartEntry[];
   /** False until the browser's cart has been read; the server render has none. */
   isReady: boolean;
@@ -134,6 +158,13 @@ export interface UseCartResult {
   quantityOf: (productId: string) => number;
   /** Stock left once what is already in the cart is taken off the shelf. */
   remainingStock: (product: CartProduct) => number;
+  /** How many more of a paket the stock still allows, given the cart. */
+  remainingBundles: (bundleId: string) => number;
+  /** What checkout sends: loose products and pakets, apart. */
+  orderLines: () => {
+    items: { productId: string; quantity: number }[];
+    bundles: { bundleId: string; quantity: number }[];
+  };
 }
 
 /**
@@ -144,7 +175,13 @@ export interface UseCartResult {
  * a word, because a shopper coming back a day later should just see a cart with
  * the still-orderable things in it, not a list of errors.
  */
-export function useCart(products: readonly CartProduct[]): UseCartResult {
+/** Shared, so a caller with no pakets does not hand the hook a new array every render. */
+const NO_BUNDLES: readonly CartBundle[] = [];
+
+export function useCart(
+  products: readonly CartProduct[],
+  bundles: readonly CartBundle[] = NO_BUNDLES,
+): UseCartResult {
   const lines = React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const isReady = React.useSyncExternalStore(
     subscribe,
@@ -157,19 +194,33 @@ export function useCart(products: readonly CartProduct[]): UseCartResult {
     [products],
   );
 
+  const bundleById = React.useMemo(
+    () => new Map(bundles.map((bundle) => [bundle.id, bundle])),
+    [bundles],
+  );
+
+  /** Whether a stored line still points at something on sale. */
+  const isKnown = React.useCallback(
+    (key: string) => {
+      const bundleId = bundleIdOf(key);
+      return bundleId ? bundleById.has(bundleId) : productById.has(key);
+    },
+    [bundleById, productById],
+  );
+
   // Keep what is on disk in step with what is still sellable. This only syncs
   // an external store — the re-render comes back through the store itself.
   React.useEffect(() => {
-    const kept = lines.filter((line) => productById.has(line.productId));
+    const kept = lines.filter((line) => isKnown(line.productId));
     if (kept.length !== lines.length) writeStorage(kept);
-  }, [lines, productById]);
+  }, [lines, isKnown]);
 
   const commit = React.useCallback(
     (next: CartLine[]) => {
       // Every write also drops anything that has left the catalogue.
-      writeStorage(next.filter((line) => productById.has(line.productId)));
+      writeStorage(next.filter((line) => isKnown(line.productId)));
     },
-    [productById],
+    [isKnown],
   );
 
   const quantityOf = React.useCallback(
@@ -177,19 +228,66 @@ export function useCart(products: readonly CartProduct[]): UseCartResult {
     [lines],
   );
 
+  /**
+   * Portions of each product the cart already takes — loose, and inside every
+   * paket in it. A paket and a loose product draw on the same shelf, so both
+   * caps below read this one figure.
+   */
+  const used = React.useMemo(() => {
+    const loose: { productId: string; quantity: number }[] = [];
+    const inBundles: { quantity: number; components: readonly BundleComponent[] }[] = [];
+
+    for (const line of lines) {
+      const bundleId = bundleIdOf(line.productId);
+      if (!bundleId) {
+        loose.push(line);
+        continue;
+      }
+      const bundle = bundleById.get(bundleId);
+      if (bundle) inBundles.push({ quantity: line.quantity, components: bundle.items });
+    }
+
+    return portionsUsed(loose, inBundles);
+  }, [lines, bundleById]);
+
+  const productLeft = React.useCallback(
+    (productId: string) => Math.max(0, (productById.get(productId)?.stock ?? 0) - (used.get(productId) ?? 0)),
+    [productById, used],
+  );
+
+  const remainingBundles = React.useCallback(
+    (bundleId: string) => {
+      const bundle = bundleById.get(bundleId);
+      return bundle ? bundlesAvailable(bundle.items, productLeft) : 0;
+    },
+    [bundleById, productLeft],
+  );
+
   const remainingStock = React.useCallback(
-    (product: CartProduct) => Math.max(0, product.stock - quantityOf(product.id)),
-    [quantityOf],
+    (product: CartProduct) => {
+      const bundleId = bundleIdOf(product.id);
+      return bundleId ? remainingBundles(bundleId) : productLeft(product.id);
+    },
+    [productLeft, remainingBundles],
+  );
+
+  /** The most a line may hold: what it has, plus what the shelf still allows. */
+  const capFor = React.useCallback(
+    (key: string) => {
+      const bundleId = bundleIdOf(key);
+      const left = bundleId ? remainingBundles(bundleId) : productLeft(key);
+      return quantityOf(key) + left;
+    },
+    [productLeft, quantityOf, remainingBundles],
   );
 
   const addItem = React.useCallback(
     (productId: string, quantity = 1) => {
-      const product = productById.get(productId);
-      if (!product || quantity <= 0) return;
+      if (!isKnown(productId) || quantity <= 0) return;
 
-      const existing = lines.find((line) => line.productId === productId)?.quantity ?? 0;
-      const capped = Math.min(existing + quantity, product.stock);
-      if (capped === existing) return;
+      const existing = quantityOf(productId);
+      const capped = Math.min(existing + quantity, capFor(productId));
+      if (capped <= existing) return;
 
       commit(
         existing === 0
@@ -199,20 +297,20 @@ export function useCart(products: readonly CartProduct[]): UseCartResult {
             ),
       );
     },
-    [commit, lines, productById],
+    [capFor, commit, isKnown, lines, quantityOf],
   );
 
   const updateQuantity = React.useCallback(
     (productId: string, quantity: number) => {
-      const product = productById.get(productId);
-      if (!product) return;
+      if (!isKnown(productId)) return;
 
       if (quantity <= 0) {
         commit(lines.filter((line) => line.productId !== productId));
         return;
       }
 
-      const capped = Math.min(quantity, product.stock);
+      const capped = Math.min(quantity, capFor(productId));
+      if (capped <= 0) return;
       const exists = lines.some((line) => line.productId === productId);
 
       // Upsert rather than no-op: a caller asking for a quantity of a product
@@ -226,7 +324,7 @@ export function useCart(products: readonly CartProduct[]): UseCartResult {
           : [...lines, { productId, quantity: capped }],
       );
     },
-    [commit, lines, productById],
+    [capFor, commit, isKnown, lines],
   );
 
   const removeItem = React.useCallback(
@@ -239,12 +337,47 @@ export function useCart(products: readonly CartProduct[]): UseCartResult {
   const entries = React.useMemo(
     () =>
       lines.flatMap((line): CartEntry[] => {
+        const bundleId = bundleIdOf(line.productId);
+
+        if (bundleId) {
+          const bundle = bundleById.get(bundleId);
+          if (!bundle) return [];
+
+          return [
+            {
+              ...line,
+              // A paket's own "stock" is however many the cart could hold of
+              // it: what it has, plus what the shelf still allows.
+              product: {
+                id: line.productId,
+                name: bundle.name,
+                price: bundle.price,
+                stock: line.quantity + bundlesAvailable(bundle.items, productLeft),
+              },
+              subtotal: bundle.price * line.quantity,
+              bundle,
+            },
+          ];
+        }
+
         const product = productById.get(line.productId);
         if (!product) return [];
 
         return [{ ...line, product, subtotal: product.price * line.quantity }];
       }),
-    [lines, productById],
+    [lines, productById, bundleById, productLeft],
+  );
+
+  const orderLines = React.useCallback(
+    () => ({
+      items: entries
+        .filter((entry) => !entry.bundle)
+        .map((entry) => ({ productId: entry.productId, quantity: entry.quantity })),
+      bundles: entries.flatMap((entry) =>
+        entry.bundle ? [{ bundleId: entry.bundle.id, quantity: entry.quantity }] : [],
+      ),
+    }),
+    [entries],
   );
 
   const itemCount = entries.reduce((sum, entry) => sum + entry.quantity, 0);
@@ -261,8 +394,12 @@ export function useCart(products: readonly CartProduct[]): UseCartResult {
     clearCart,
     quantityOf,
     remainingStock,
+    remainingBundles,
+    orderLines,
   };
 }
+
+export { bundleKey };
 
 /**
  * Just how many things are in the cart, for the badge in the navigation.

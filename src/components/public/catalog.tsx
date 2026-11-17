@@ -5,12 +5,14 @@ import Link from "next/link";
 import { cn, formatRupiah } from "@/lib/utils";
 import { buttonClasses } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
+import { bundleKey, useCart } from "@/hooks/use-cart";
+import type { PublicBundle } from "@/lib/bundle";
 import { flyToCart } from "@/lib/fly-to-cart";
 import { isDrink } from "@/lib/flavor";
 import { BRAND_NAME } from "@/lib/brand";
 import { JourneyEmpty } from "./journey";
 import { ProductCard, ProductVisual } from "./product-card";
+import { ComboCard } from "./combo-card";
 import { ProductDetailSheet } from "./product-detail-sheet";
 import type { PublicProduct } from "@/types/admin";
 
@@ -19,9 +21,15 @@ const OTHER = "Lainnya";
 
 export interface CatalogProps {
   products: PublicProduct[];
+  /** Pakets on offer; their section is left out when there are none. */
+  bundles?: PublicBundle[];
   categories: string[];
   preorderOpen: boolean;
 }
+
+/** The combo section's anchor, for the category bar and the hero. */
+const COMBO_ID = "paket-hemat";
+const NO_BUNDLES: PublicBundle[] = [];
 
 /**
  * The menu, and the page the site opens on.
@@ -37,13 +45,16 @@ export interface CatalogProps {
  * the cart. The design has no cart panel beside the menu, so the dock is the
  * one summary at every width.
  */
-export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
+export function Catalog({ products, bundles = NO_BUNDLES, categories, preorderOpen }: CatalogProps) {
   const { toast } = useToast();
-  const cart = useCart(products);
+  const cart = useCart(products, bundles);
   const [selected, setSelected] = React.useState<PublicProduct | null>(null);
 
   const shelves = React.useMemo(() => shelvesOf(products, categories), [products, categories]);
-  const active = useActiveShelf(shelves.map((shelf) => shelf.id));
+  const active = useActiveShelf([
+    ...shelves.map((shelf) => shelf.id),
+    ...(bundles.length > 0 ? [COMBO_ID] : []),
+  ]);
 
   const add = (product: PublicProduct, quantity: number, origin?: DOMRect) => {
     cart.addItem(product.id, quantity);
@@ -51,6 +62,12 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
     // was pressed.
     flyToCart(origin);
     toast(`${product.name} masuk keranjang!`);
+  };
+
+  const claim = (bundle: PublicBundle, origin?: DOMRect) => {
+    cart.addItem(bundleKey(bundle.id), 1);
+    flyToCart(origin);
+    toast(`${bundle.name} masuk keranjang!`);
   };
 
   const handleSheetAdd = (productId: string, quantity: number, origin?: DOMRect) => {
@@ -68,7 +85,9 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
         firstShelf={shelves[0]?.id ?? null}
       />
 
-      {shelves.length > 1 && <ShelfBar shelves={shelves} active={active} />}
+      {shelves.length + (bundles.length > 0 ? 1 : 0) > 1 && (
+        <ShelfBar shelves={shelves} active={active} comboCount={bundles.length} />
+      )}
 
       <section
         className="menu-counter pb-10 pt-5 tablet:pt-8"
@@ -136,6 +155,40 @@ export function Catalog({ products, categories, preorderOpen }: CatalogProps) {
           )}
         </div>
       </section>
+
+      {bundles.length > 0 && (
+        <section
+          id={COMBO_ID}
+          aria-labelledby={`${COMBO_ID}-title`}
+          className="shelf band-tight bg-sand"
+        >
+          <div className="band-inner">
+            <div className="mx-auto max-w-[36em] text-center">
+              <span className="k-tag k-tag-yellow">✪ Level up your snack!</span>
+              <h2 id={`${COMBO_ID}-title`} className="display-2 mt-3 text-[var(--k-navy)]">
+                Special power-up combos
+              </h2>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                Paket hemat buat ngemil lebih puas dan lebih ramah di kantong koinmu.
+              </p>
+            </div>
+
+            <div className="mt-7 grid gap-6 tablet:grid-cols-2">
+              {bundles.map((bundle, index) => (
+                <ComboCard
+                  key={bundle.id}
+                  bundle={bundle}
+                  index={index}
+                  remaining={cart.remainingBundles(bundle.id)}
+                  inCart={cart.quantityOf(bundleKey(bundle.id))}
+                  preorderOpen={preorderOpen}
+                  onClaim={claim}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/*
         Outside the band on purpose: `position: sticky` is bounded by its
@@ -339,7 +392,21 @@ function useActiveShelf(ids: string[]): string | null {
   return active;
 }
 
-function ShelfBar({ shelves, active }: { shelves: Shelf[]; active: string | null }) {
+function ShelfBar({
+  shelves,
+  active,
+  comboCount,
+}: {
+  shelves: Shelf[];
+  active: string | null;
+  /** Pakets on offer; their chip goes last. */
+  comboCount: number;
+}) {
+  const chips = [
+    ...shelves.map((shelf) => ({ id: shelf.id, name: shelf.name, count: shelf.products.length })),
+    ...(comboCount > 0 ? [{ id: COMBO_ID, name: "✪ Paket hemat", count: comboCount }] : []),
+  ];
+
   return (
     <nav
       aria-label="Kategori menu"
@@ -351,7 +418,7 @@ function ShelfBar({ shelves, active }: { shelves: Shelf[]; active: string | null
       )}
     >
       <ul className="band-inner flex gap-2 overflow-x-auto py-2.5">
-        {shelves.map((shelf) => {
+        {chips.map((shelf) => {
           const current = active === shelf.id;
           return (
             <li key={shelf.id} className="flex-none">
@@ -367,7 +434,7 @@ function ShelfBar({ shelves, active }: { shelves: Shelf[]; active: string | null
               >
                 [ {shelf.name} ]
                 <span className={cn("tabular-nums", current ? "text-white/75" : "text-ink-soft")}>
-                  {shelf.products.length}
+                  {shelf.count}
                 </span>
               </a>
             </li>

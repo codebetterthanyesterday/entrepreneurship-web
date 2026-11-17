@@ -7,6 +7,8 @@ export interface TrackedOrderItem {
   /** The price snapshot taken at checkout — never the product's price today. */
   priceAtOrder: number;
   subtotal: number;
+  /** A paket's contents per paket; null for a loose product. */
+  contents?: string | null;
 }
 
 /**
@@ -70,6 +72,8 @@ export interface CashierPreorderItem {
   subtotal: number;
   /** Made to order, so this line is what sends the order to the kitchen. */
   needsPrep: boolean;
+  /** A paket's contents per paket; null for a loose product. */
+  contents?: string | null;
 }
 
 /**
@@ -152,6 +156,8 @@ export interface AdminOrderItem {
   /** The price snapshot taken at checkout, not the product's price today. */
   priceAtOrder: number;
   subtotal: number;
+  /** A paket's contents per paket; null for a loose product. */
+  contents?: string | null;
 }
 
 /**

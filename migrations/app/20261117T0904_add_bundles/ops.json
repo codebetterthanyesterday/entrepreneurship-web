@@ -1,0 +1,647 @@
+[
+  {
+    "id": "table.bundle",
+    "label": "Create table \"bundle\"",
+    "summary": "Creates table \"bundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "bundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"bundle\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundle\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"bundle\"",
+        "sql": "CREATE TABLE \"public\".\"bundle\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" text NOT NULL,\n  \"imageUrl\" text,\n  \"isActive\" bool DEFAULT true NOT NULL,\n  \"name\" text NOT NULL,\n  \"price\" int4 NOT NULL,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"bundle_price_non_negative_faabb23d\" CHECK (price >= 0)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"bundle\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundle\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.bundleItem",
+    "label": "Create table \"bundleItem\"",
+    "summary": "Creates table \"bundleItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "bundleItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"bundleItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"bundleItem\"",
+        "sql": "CREATE TABLE \"public\".\"bundleItem\" (\n  \"bundleId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"productId\" text NOT NULL,\n  \"quantity\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"bundle_item_quantity_positive_4402679f\" CHECK (quantity > 0)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"bundleItem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.orderBundle",
+    "label": "Create table \"orderBundle\"",
+    "summary": "Creates table \"orderBundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "orderBundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"orderBundle\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderBundle\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"orderBundle\"",
+        "sql": "CREATE TABLE \"public\".\"orderBundle\" (\n  \"bundleId\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"orderId\" text NOT NULL,\n  \"priceAtOrder\" int4 NOT NULL,\n  \"quantity\" int4 NOT NULL,\n  \"subtotal\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"orderBundle\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderBundle\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.orderItem.orderBundleId",
+    "label": "Add column \"orderBundleId\" to \"orderItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "orderBundleId",
+        "table": "orderItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"orderBundleId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "orderItem",
+          "orderBundleId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"orderBundleId\"",
+        "sql": "ALTER TABLE \"public\".\"orderItem\" ADD COLUMN \"orderBundleId\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"orderBundleId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "orderItem",
+          "orderBundleId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.bundleItem.bundleItem_bundleId_productId_key",
+    "label": "Add unique constraint on \"bundleItem\" (bundleId, productId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "bundleItem_bundleId_productId_key",
+        "table": "bundleItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"bundleItem_bundleId_productId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "bundleItem_bundleId_productId_key",
+          "public",
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"bundleItem_bundleId_productId_key\"",
+        "sql": "ALTER TABLE \"public\".\"bundleItem\" ADD CONSTRAINT \"bundleItem_bundleId_productId_key\" UNIQUE (\"bundleId\", \"productId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"bundleItem_bundleId_productId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "bundleItem_bundleId_productId_key",
+          "public",
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.bundle.bundle_isActive_idx_77fe3ba1",
+    "label": "Create index \"bundle_isActive_idx_77fe3ba1\" on \"bundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "bundle_isActive_idx_77fe3ba1",
+        "table": "bundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"bundle_isActive_idx_77fe3ba1\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundle_isActive_idx_77fe3ba1\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"bundle_isActive_idx_77fe3ba1\"",
+        "sql": "CREATE INDEX \"bundle_isActive_idx_77fe3ba1\" ON \"public\".\"bundle\" (\"isActive\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"bundle_isActive_idx_77fe3ba1\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundle_isActive_idx_77fe3ba1\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.bundleItem.bundleItem_bundleId_idx_ca20b7d2",
+    "label": "Create index \"bundleItem_bundleId_idx_ca20b7d2\" on \"bundleItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "bundleItem_bundleId_idx_ca20b7d2",
+        "table": "bundleItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"bundleItem_bundleId_idx_ca20b7d2\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundleItem_bundleId_idx_ca20b7d2\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"bundleItem_bundleId_idx_ca20b7d2\"",
+        "sql": "CREATE INDEX \"bundleItem_bundleId_idx_ca20b7d2\" ON \"public\".\"bundleItem\" (\"bundleId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"bundleItem_bundleId_idx_ca20b7d2\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundleItem_bundleId_idx_ca20b7d2\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.bundleItem.bundleItem_productId_idx_5858600a",
+    "label": "Create index \"bundleItem_productId_idx_5858600a\" on \"bundleItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "bundleItem_productId_idx_5858600a",
+        "table": "bundleItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"bundleItem_productId_idx_5858600a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundleItem_productId_idx_5858600a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"bundleItem_productId_idx_5858600a\"",
+        "sql": "CREATE INDEX \"bundleItem_productId_idx_5858600a\" ON \"public\".\"bundleItem\" (\"productId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"bundleItem_productId_idx_5858600a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"bundleItem_productId_idx_5858600a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.orderBundle.orderBundle_bundleId_idx_ca20b7d2",
+    "label": "Create index \"orderBundle_bundleId_idx_ca20b7d2\" on \"orderBundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "orderBundle_bundleId_idx_ca20b7d2",
+        "table": "orderBundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"orderBundle_bundleId_idx_ca20b7d2\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderBundle_bundleId_idx_ca20b7d2\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"orderBundle_bundleId_idx_ca20b7d2\"",
+        "sql": "CREATE INDEX \"orderBundle_bundleId_idx_ca20b7d2\" ON \"public\".\"orderBundle\" (\"bundleId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"orderBundle_bundleId_idx_ca20b7d2\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderBundle_bundleId_idx_ca20b7d2\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.orderBundle.orderBundle_orderId_idx_d284871b",
+    "label": "Create index \"orderBundle_orderId_idx_d284871b\" on \"orderBundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "orderBundle_orderId_idx_d284871b",
+        "table": "orderBundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"orderBundle_orderId_idx_d284871b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderBundle_orderId_idx_d284871b\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"orderBundle_orderId_idx_d284871b\"",
+        "sql": "CREATE INDEX \"orderBundle_orderId_idx_d284871b\" ON \"public\".\"orderBundle\" (\"orderId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"orderBundle_orderId_idx_d284871b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderBundle_orderId_idx_d284871b\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.orderItem.orderItem_orderBundleId_idx_f85f2d99",
+    "label": "Create index \"orderItem_orderBundleId_idx_f85f2d99\" on \"orderItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "orderItem_orderBundleId_idx_f85f2d99",
+        "table": "orderItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"orderItem_orderBundleId_idx_f85f2d99\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderItem_orderBundleId_idx_f85f2d99\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"orderItem_orderBundleId_idx_f85f2d99\"",
+        "sql": "CREATE INDEX \"orderItem_orderBundleId_idx_f85f2d99\" ON \"public\".\"orderItem\" (\"orderBundleId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"orderItem_orderBundleId_idx_f85f2d99\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"orderItem_orderBundleId_idx_f85f2d99\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.bundleItem.bundleItem_bundleId_fkey",
+    "label": "Add foreign key \"bundleItem_bundleId_fkey\" on \"bundleItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "bundleItem_bundleId_fkey",
+        "table": "bundleItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"bundleItem_bundleId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "bundleItem_bundleId_fkey",
+          "public",
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"bundleItem_bundleId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"bundleItem\"\nADD CONSTRAINT \"bundleItem_bundleId_fkey\"\nFOREIGN KEY (\"bundleId\")\nREFERENCES \"public\".\"bundle\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"bundleItem_bundleId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "bundleItem_bundleId_fkey",
+          "public",
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.bundleItem.bundleItem_productId_fkey",
+    "label": "Add foreign key \"bundleItem_productId_fkey\" on \"bundleItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "bundleItem_productId_fkey",
+        "table": "bundleItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"bundleItem_productId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "bundleItem_productId_fkey",
+          "public",
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"bundleItem_productId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"bundleItem\"\nADD CONSTRAINT \"bundleItem_productId_fkey\"\nFOREIGN KEY (\"productId\")\nREFERENCES \"public\".\"product\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"bundleItem_productId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "bundleItem_productId_fkey",
+          "public",
+          "\"public\".\"bundleItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.orderBundle.orderBundle_orderId_fkey",
+    "label": "Add foreign key \"orderBundle_orderId_fkey\" on \"orderBundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "orderBundle_orderId_fkey",
+        "table": "orderBundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"orderBundle_orderId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "orderBundle_orderId_fkey",
+          "public",
+          "\"public\".\"orderBundle\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"orderBundle_orderId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"orderBundle\"\nADD CONSTRAINT \"orderBundle_orderId_fkey\"\nFOREIGN KEY (\"orderId\")\nREFERENCES \"public\".\"order\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"orderBundle_orderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "orderBundle_orderId_fkey",
+          "public",
+          "\"public\".\"orderBundle\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.orderBundle.orderBundle_bundleId_fkey",
+    "label": "Add foreign key \"orderBundle_bundleId_fkey\" on \"orderBundle\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "orderBundle_bundleId_fkey",
+        "table": "orderBundle"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"orderBundle_bundleId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "orderBundle_bundleId_fkey",
+          "public",
+          "\"public\".\"orderBundle\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"orderBundle_bundleId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"orderBundle\"\nADD CONSTRAINT \"orderBundle_bundleId_fkey\"\nFOREIGN KEY (\"bundleId\")\nREFERENCES \"public\".\"bundle\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"orderBundle_bundleId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "orderBundle_bundleId_fkey",
+          "public",
+          "\"public\".\"orderBundle\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.orderItem.orderItem_orderBundleId_fkey",
+    "label": "Add foreign key \"orderItem_orderBundleId_fkey\" on \"orderItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "orderItem_orderBundleId_fkey",
+        "table": "orderItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"orderItem_orderBundleId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "orderItem_orderBundleId_fkey",
+          "public",
+          "\"public\".\"orderItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"orderItem_orderBundleId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"orderItem\"\nADD CONSTRAINT \"orderItem_orderBundleId_fkey\"\nFOREIGN KEY (\"orderBundleId\")\nREFERENCES \"public\".\"orderBundle\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"orderItem_orderBundleId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "orderItem_orderBundleId_fkey",
+          "public",
+          "\"public\".\"orderItem\""
+        ]
+      }
+    ]
+  }
+]

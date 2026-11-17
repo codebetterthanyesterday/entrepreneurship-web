@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
 import { JourneyEmpty, JourneyHero } from "./journey";
 import { CheckoutArt } from "./journey-art";
+import type { PublicBundle } from "@/lib/bundle";
 import type { PublicPickupSlot } from "@/lib/queries/slot.query";
 import type { PublicProduct } from "@/types/admin";
 import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
@@ -28,16 +29,30 @@ export interface CheckoutFormProps {
   preorderOpen: boolean;
   /** Whether the admin has uploaded a QRIS; without one only cash is offered. */
   qrisAvailable: boolean;
+  /** Pakets on sale, so a paket already in the cart is priced and sent. */
+  bundles?: PublicBundle[];
 }
+
+const NO_BUNDLES: PublicBundle[] = [];
 
 interface FieldError {
   message: string;
   field?: string;
 }
 
-export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: CheckoutFormProps) {
+export function CheckoutForm({
+  products,
+  slots,
+  preorderOpen,
+  qrisAvailable,
+  bundles = NO_BUNDLES,
+}: CheckoutFormProps) {
   const router = useRouter();
-  const cart = useCart(products);
+  const cart = useCart(products, bundles);
+  const nameOf = React.useCallback(
+    (id: string) => products.find((product) => product.id === id)?.name,
+    [products],
+  );
 
   const [customerName, setCustomerName] = React.useState("");
   const [customerPhone, setCustomerPhone] = React.useState("");
@@ -72,10 +87,8 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
       pickupSlot: pickupSlot ?? "",
       paymentMethod,
       notes: notes.trim() === "" ? undefined : notes,
-      items: cart.entries.map((entry) => ({
-        productId: entry.productId,
-        quantity: entry.quantity,
-      })),
+      // Loose products and pakets go apart; the server prices both again.
+      ...cart.orderLines(),
     });
 
     if (!result.ok) {
@@ -143,7 +156,7 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
     );
   }
 
-  const lines = cartLines(cart.entries);
+  const lines = cartLines(cart.entries, nameOf);
 
   const submitButton = (
     <Button

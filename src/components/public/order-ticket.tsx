@@ -98,6 +98,7 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
             name: item.name,
             quantity: item.quantity,
             subtotal: item.subtotal,
+            detail: item.contents ?? null,
           }))}
           total={order.totalAmount}
           photobooth={order.photobooth}

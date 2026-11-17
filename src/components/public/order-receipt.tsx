@@ -21,6 +21,8 @@ export interface ReceiptLine {
   name: string;
   quantity: number;
   subtotal: number;
+  /** A paket's contents, set small under its name. */
+  detail?: string | null;
 }
 
 /** A line another service added to the note, already paid there. */
@@ -77,6 +79,11 @@ export function OrderReceipt({
                     hides how many of it were ordered. */}
                 <span className="font-semibold text-ink tabular-nums">{line.quantity}&times;</span>{" "}
                 <span className="truncate">{line.name}</span>
+                {line.detail && (
+                  <span className="mt-0.5 block text-[12px] leading-snug text-ink-soft">
+                    Isi: {line.detail}
+                  </span>
+                )}
               </span>
               <span className="flex-none tabular-nums">{formatRupiah(line.subtotal)}</span>
             </li>
@@ -198,12 +205,25 @@ export function ActionBar({
 
 /** Turns cart entries into receipt lines. */
 export function cartLines(
-  entries: readonly { productId: string; quantity: number; subtotal: number; product: { name: string } }[],
+  entries: readonly {
+    productId: string;
+    quantity: number;
+    subtotal: number;
+    product: { name: string };
+    bundle?: { items: readonly { productId: string; quantity: number }[] };
+  }[],
+  /** Product names, so a paket's line can say what is in it. */
+  nameOf: (productId: string) => string | undefined = () => undefined,
 ): ReceiptLine[] {
   return entries.map((entry) => ({
     key: entry.productId,
     name: entry.product.name,
     quantity: entry.quantity,
     subtotal: entry.subtotal,
+    detail: entry.bundle
+      ? entry.bundle.items
+          .map((item) => `${item.quantity}× ${nameOf(item.productId) ?? "menu"}`)
+          .join(", ")
+      : null,
   }));
 }

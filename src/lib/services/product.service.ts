@@ -78,6 +78,13 @@ export async function deleteProduct(id: string) {
     const product = await tx.orm.public.Product.where({ id }).first();
     if (!product) throw new NotFoundError("Menunya nggak ketemu");
 
+    const inBundle = await tx.orm.public.BundleItem.where({ productId: id }).first();
+    if (inBundle) {
+      throw new ValidationError(
+        "Menu ini masih jadi isi paket. Keluarin dulu dari paketnya, atau sembunyiin aja menunya.",
+      );
+    }
+
     const orderItem = await tx.orm.public.OrderItem.where({ productId: id }).first();
     if (orderItem) {
       throw new ValidationError(

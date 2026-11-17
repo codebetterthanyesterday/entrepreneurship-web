@@ -5,6 +5,7 @@ import { canTransition } from "@/lib/services/order.service";
 import { ORDER_FILTERS, orderListHref, resolveOrderFilter } from "@/lib/order-filters";
 import { OrderBrowser } from "@/components/admin/order-browser";
 import { cn, formatRupiah } from "@/lib/utils";
+import { pricedLines } from "@/lib/order-lines";
 import type { AdminOrder } from "@/types/order-view";
 import { pageTitle } from "@/lib/brand";
 
@@ -73,11 +74,12 @@ export default async function AdminOrdersPage({
     totalAmount: order.totalAmount,
     itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
     handledByName: order.handledBy?.name ?? null,
-    items: order.items.map((item) => ({
-      name: item.product.name,
-      quantity: item.quantity,
-      priceAtOrder: item.priceAtOrder,
-      subtotal: item.subtotal,
+    items: pricedLines(order).map((line) => ({
+      name: line.name,
+      quantity: line.quantity,
+      priceAtOrder: line.priceAtOrder,
+      subtotal: line.subtotal,
+      contents: line.contents,
     })),
     timeline: {
       createdAt: order.createdAt.toString(),

@@ -11,15 +11,21 @@ import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receip
 import { JourneyEmpty, JourneyHero } from "./journey";
 import { CartArt } from "./journey-art";
 import { ProductVisual } from "./product-card";
+import { BundleVisual } from "./bundle-visual";
+import type { PublicBundle } from "@/lib/bundle";
 import type { PublicProduct } from "@/types/admin";
 
 export interface CartViewProps {
   products: PublicProduct[];
+  /** Pakets on sale, so a paket in the cart is priced and pictured. */
+  bundles?: PublicBundle[];
   preorderOpen: boolean;
 }
 
-export function CartView({ products, preorderOpen }: CartViewProps) {
-  const cart = useCart(products);
+const NO_BUNDLES: PublicBundle[] = [];
+
+export function CartView({ products, bundles = NO_BUNDLES, preorderOpen }: CartViewProps) {
+  const cart = useCart(products, bundles);
 
   return (
     <>
@@ -32,7 +38,7 @@ export function CartView({ products, preorderOpen }: CartViewProps) {
         art={<CartArt count={cart.isReady ? cart.itemCount : 0} />}
       />
 
-      <CartBody cart={cart} products={products} preorderOpen={preorderOpen} />
+      <CartBody cart={cart} products={products} bundles={bundles} preorderOpen={preorderOpen} />
     </>
   );
 }
@@ -45,11 +51,13 @@ export function CartView({ products, preorderOpen }: CartViewProps) {
 function CartBody({
   cart,
   products,
+  bundles,
   preorderOpen,
 }: {
   cart: ReturnType<typeof useCart>;
   /** The full rows, for each line's picture — the cart itself keeps only ids. */
   products: PublicProduct[];
+  bundles: PublicBundle[];
   preorderOpen: boolean;
 }) {
   // Before the browser's cart has been read there is nothing to show yet, and
@@ -90,8 +98,9 @@ function CartBody({
     );
   }
 
-  const lines = cartLines(cart.entries);
   const productsById = new Map(products.map((product) => [product.id, product]));
+  const bundlesById = new Map(bundles.map((bundle) => [bundle.id, bundle]));
+  const lines = cartLines(cart.entries, (id) => productsById.get(id)?.name);
 
   return (
     <>
@@ -124,22 +133,45 @@ function CartBody({
                     key={entry.productId}
                     className="flex items-center gap-3 k-line bg-white p-3 tablet:gap-4 tablet:p-3.5"
                   >
-                    <ProductVisual
-                      product={
-                        productsById.get(entry.productId) ?? {
-                          ...entry.product,
-                          imageUrl: null,
-                          categoryName: null,
+                    {entry.bundle && bundlesById.has(entry.bundle.id) ? (
+                      <BundleVisual
+                        bundle={bundlesById.get(entry.bundle.id)!}
+                        className="h-[76px] w-[76px] flex-none overflow-hidden rounded-[16px] tablet:h-20 tablet:w-20"
+                      />
+                    ) : (
+                      <ProductVisual
+                        product={
+                          productsById.get(entry.productId) ?? {
+                            ...entry.product,
+                            imageUrl: null,
+                            categoryName: null,
+                          }
                         }
-                      }
-                      className="h-[76px] w-[76px] rounded-[16px] p-2 tablet:h-20 tablet:w-20"
-                    />
+                        className="h-[76px] w-[76px] rounded-[16px] p-2 tablet:h-20 tablet:w-20"
+                      />
+                    )}
 
                     <span className="flex min-w-0 flex-1 flex-col gap-2 tablet:flex-row tablet:items-center tablet:gap-4">
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-semibold leading-snug text-ink line-clamp-2">
+                          {entry.bundle && (
+                            <span className="k-tag k-tag-yellow k-tag-flat mr-1.5 align-middle !text-[9px]">
+                              Paket
+                            </span>
+                          )}
                           {entry.product.name}
                         </span>
+                        {entry.bundle && (
+                          <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-soft">
+                            Isi:{" "}
+                            {entry.bundle.items
+                              .map(
+                                (item) =>
+                                  `${item.quantity}× ${productsById.get(item.productId)?.name ?? "menu"}`,
+                              )
+                              .join(", ")}
+                          </span>
+                        )}
                         <span className="mt-0.5 flex items-baseline gap-2">
                           <span className="font-[family-name:var(--font-display)] text-[16px] font-semibold text-ink tabular-nums">
                             {formatRupiah(entry.subtotal)}

@@ -243,6 +243,11 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                         racik
                       </Badge>
                     )}
+                    {/* A paket is handed over as its contents, so the cashier
+                        needs to see what goes in the bag. */}
+                    {item.contents && (
+                      <span className="block text-xs text-ink-soft">Isi: {item.contents}</span>
+                    )}
                   </span>
                   <span className="flex-none text-ink-soft tabular-nums">
                     {formatRupiah(item.subtotal)}
