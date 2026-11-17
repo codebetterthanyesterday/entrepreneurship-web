@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Sheet } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { cn, formatRupiah } from "@/lib/utils";
 import { ProductVisual } from "./product-card";
 import type { PublicProduct } from "@/types/admin";
@@ -17,9 +16,13 @@ export interface ProductDetailSheetProps {
 }
 
 /**
- * One product, up close: the picture large and alive (ice bobbing, steam off
- * what is made to order), then the name and price, what to expect, how many,
- * and one button that says what it will cost.
+ * One product, up close — the design's "item quick view": the name, the
+ * picture with its badges, how it is made and how many are left, a large
+ * quantity control, and one button that says what it will cost.
+ *
+ * It rises from the bottom edge on a phone and sits in the middle of the
+ * screen from the desktop breakpoint up; that part is `Sheet`'s, and the frame
+ * around it is `.ui-sheet` in `kingdom.css`.
  */
 export function ProductDetailSheet({
   product,
@@ -37,59 +40,66 @@ export function ProductDetailSheet({
   return (
     <Sheet open onClose={onClose} ariaLabel={product.name}>
       <div className="flex flex-col pb-2">
-        {/* Full-bleed across the sheet's own padding. */}
-        <div className="-mx-4 desktop:-mx-6 desktop:-mt-6">
+        <div className="flex items-start justify-between gap-3">
+          <span className="k-pill k-pill-yellow mt-2">★ Item quick view</span>
+          <button type="button" onClick={onClose} aria-label="Tutup" className="k-close">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <h2 className="k-sheet-title mt-2 text-ink">{product.name}</h2>
+        {product.description && (
+          <p className="mt-1 text-[14px] leading-relaxed text-ink-soft">{product.description}</p>
+        )}
+
+        <div className="relative mt-3 overflow-hidden rounded-[16px]">
           <ProductVisual
             product={product}
             live
-            className="h-44 w-full p-5 min-[380px]:h-52 desktop:h-60 desktop:rounded-t-[22px]"
+            className="h-40 w-full min-[380px]:h-48 desktop:h-52"
           />
+          <div className="absolute left-2.5 top-2.5 flex gap-1.5">
+            {isLow && <span className="k-pill">Hot item</span>}
+            <span className="k-pill k-pill-yellow">{product.categoryName ?? "Menu"}</span>
+          </div>
         </div>
 
-        <div className="mt-5 flex items-start justify-between gap-4">
-          <h2 className="display-3 min-w-0 text-ink">{product.name}</h2>
-          <span className="flex-none font-[family-name:var(--font-display)] text-[22px] font-semibold text-pink-deep tabular-nums">
-            {formatRupiah(product.price)}
+        <div className="k-stock mt-3">
+          <span className="flex min-w-0 items-center gap-2 text-[13.5px] font-extrabold uppercase text-ink">
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 flex-none rounded-full bg-[var(--k-grass)]"
+            />
+            {fresh ? "Diracik dadakan" : "Siap ambil"}
+          </span>
+          <span className={cn("flex-none text-[13.5px] font-bold", isLow ? "text-hot" : "text-warn")}>
+            {isLow ? "Tinggal" : "Sisa"}{" "}
+            <span className="k-tag k-tag-yellow k-tag-flat !text-[12px]">{remaining} porsi</span>
           </span>
         </div>
 
-        {product.description && (
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{product.description}</p>
-        )}
-
-        <ul className="mt-4 grid grid-cols-2 gap-2 text-[12.5px]">
-          <li className={cn("rounded-[14px] px-3 py-2.5", fresh ? "bg-warn-soft" : "bg-sky-soft")}>
-            <span className={cn("block font-bold", fresh ? "text-warn" : "text-sky-deep")}>
-              {fresh ? "Diracik dadakan" : "Siap ambil"}
-            </span>
-            <span className="text-ink-soft">
-              {fresh ? "Dibikin pas kamu ambil" : "Udah siap, tinggal ambil"}
-            </span>
-          </li>
-          <li className={cn("rounded-[14px] px-3 py-2.5", isLow ? "bg-hot-soft" : "bg-cream")}>
-            <span className={cn("block font-bold", isLow ? "text-hot" : "text-ink")}>
-              {isLow ? `Tinggal ${remaining} lagi` : `Sisa ${remaining} porsi`}
-            </span>
-            <span className="text-ink-soft">Stok kepotong tiap ada yang pesan</span>
-          </li>
-        </ul>
-
-        <div className="mt-5 flex items-center justify-between gap-4 rounded-[18px] bg-cream p-2">
+        <div className="k-qty mt-3">
           <button
             type="button"
             aria-label="Kurangi"
             disabled={quantity <= 1}
             onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-            className="flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-white text-2xl text-ink shadow-sm transition-transform active:scale-90 disabled:opacity-40"
           >
             &minus;
           </button>
 
           <div className="text-center" aria-live="polite">
-            <div key={quantity} className="nav-count-pop font-[family-name:var(--font-display)] text-3xl font-semibold text-ink tabular-nums">
+            <div key={quantity} className="nav-count-pop k-qty-figure tabular-nums">
               {quantity}
             </div>
-            <div className="text-[11.5px] font-semibold text-ink-soft">porsi</div>
+            <div className="text-[12px] font-bold text-ink-soft">porsi</div>
           </div>
 
           <button
@@ -97,7 +107,6 @@ export function ProductDetailSheet({
             aria-label="Tambah"
             disabled={quantity >= max}
             onClick={() => setQuantity((current) => Math.min(max, current + 1))}
-            className="flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-pink-deep text-2xl text-white shadow-sm transition-transform active:scale-90 disabled:opacity-40"
           >
             +
           </button>
@@ -109,18 +118,17 @@ export function ProductDetailSheet({
 
         {/* Stuck to the bottom of the sheet, so the one thing to press is never
             below the fold on a short phone. */}
-        <div className="sticky bottom-0 -mx-4 mt-4 bg-white px-4 pt-2 desktop:-mx-0 desktop:px-0">
-          <Button
-            variant="primary"
-            fullWidth
+        <div className="sticky bottom-0 -mx-4 mt-3 bg-white px-4 pb-2 pt-2 desktop:-mx-0 desktop:px-0">
+          <button
+            type="button"
+            className="k-add"
             onClick={(event) =>
               onAdd(product.id, quantity, event.currentTarget.getBoundingClientRect())
             }
-            className="justify-between px-5"
           >
             <span>Masukin keranjang</span>
-            <span className="tabular-nums">{formatRupiah(subtotal)}</span>
-          </Button>
+            <span className="k-add-price tabular-nums">{formatRupiah(subtotal)}</span>
+          </button>
         </div>
       </div>
     </Sheet>

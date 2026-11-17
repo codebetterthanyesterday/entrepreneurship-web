@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { useCart, type CartProduct } from "@/hooks/use-cart";
+import { bundleKey, useCart, type CartBundle, type CartProduct } from "@/hooks/use-cart";
 
 const STORAGE_KEY = "ngd-cart";
 
@@ -219,5 +219,74 @@ describe("useCart — stock", () => {
     const { result } = renderHook(() => useCart(CATALOGUE));
 
     expect(result.current.remainingStock(croffle)).toBe(0);
+  });
+});
+
+describe("useCart — pakets", () => {
+  // Two croffles left, so at most two combos, and a loose croffle eats into that.
+  const combo: CartBundle = {
+    id: "combo",
+    name: "Kopi + Croffle",
+    price: 33_000,
+    items: [
+      { productId: "kopi", quantity: 1 },
+      { productId: "croffle", quantity: 1 },
+    ],
+  };
+  const BUNDLES = [combo];
+  const key = bundleKey("combo");
+
+  it("adds a paket as its own line, priced at the paket's price", () => {
+    const { result } = renderHook(() => useCart(CATALOGUE, BUNDLES));
+
+    act(() => result.current.addItem(key));
+
+    expect(result.current.entries).toHaveLength(1);
+    expect(result.current.entries[0]).toMatchObject({ quantity: 1, subtotal: 33_000 });
+    expect(result.current.entries[0]!.bundle?.id).toBe("combo");
+    expect(result.current.total).toBe(33_000);
+  });
+
+  it("caps a paket at the product that runs out first", () => {
+    const { result } = renderHook(() => useCart(CATALOGUE, BUNDLES));
+
+    act(() => result.current.addItem(key, 5));
+
+    expect(result.current.quantityOf(key)).toBe(2);
+    expect(result.current.remainingBundles("combo")).toBe(0);
+  });
+
+  it("draws a paket and a loose product from the same shelf", () => {
+    const { result } = renderHook(() => useCart(CATALOGUE, BUNDLES));
+
+    act(() => result.current.addItem("croffle", 1));
+
+    expect(result.current.remainingBundles("combo")).toBe(1);
+
+    act(() => result.current.addItem(key, 1));
+
+    expect(result.current.remainingStock(croffle)).toBe(0);
+    // Kopi is plentiful; only the one in the combo is taken.
+    expect(result.current.remainingStock(kopi)).toBe(9);
+  });
+
+  it("hands checkout the products and pakets apart", () => {
+    const { result } = renderHook(() => useCart(CATALOGUE, BUNDLES));
+
+    act(() => result.current.addItem("kopi", 2));
+    act(() => result.current.addItem(key, 1));
+
+    expect(result.current.orderLines()).toEqual({
+      items: [{ productId: "kopi", quantity: 2 }],
+      bundles: [{ bundleId: "combo", quantity: 1 }],
+    });
+  });
+
+  it("drops a paket that has left the catalogue", () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([{ productId: key, quantity: 1 }]));
+
+    const { result } = renderHook(() => useCart(CATALOGUE));
+
+    expect(result.current.entries).toEqual([]);
   });
 });

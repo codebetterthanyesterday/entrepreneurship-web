@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/session";
 import { getActiveProducts, getCategories } from "@/lib/queries/product.query";
+import { getActiveBundles } from "@/lib/queries/bundle.query";
 import { getTodayRevenue } from "@/lib/queries/report.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { PosScreen } from "@/components/kasir/pos-screen";
@@ -22,8 +23,9 @@ export default async function CashierPage() {
   // The preorder count that used to be read here moved to the staff layout with
   // the tabs that showed it, so it is fetched once for the whole area rather
   // than again on each of its screens.
-  const [products, categories, settings, revenue] = await Promise.all([
+  const [products, bundles, categories, settings, revenue] = await Promise.all([
     getActiveProducts(),
+    getActiveBundles(),
     getCategories(),
     getSettings(),
     getTodayRevenue(),
@@ -64,6 +66,7 @@ export default async function CashierPage() {
 
       <PosScreen
         products={items}
+        bundles={bundles}
         categories={categories.map((category) => category.name)}
         boothOpen={settings.boothOpen}
         qrisImageUrl={settings.qrisImageUrl ?? null}

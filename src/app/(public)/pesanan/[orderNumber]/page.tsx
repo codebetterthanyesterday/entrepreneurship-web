@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
 import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { findByNumber, toTrackedOrder } from "@/lib/queries/order.query";
-import { OrderReceipt } from "@/components/public/order-receipt";
-import { StageRing } from "@/components/public/order-stage";
+import { OrderTicket } from "@/components/public/order-ticket";
 import { cn } from "@/lib/utils";
 import { pageTitle } from "@/lib/brand";
 import { photoboothLink } from "@/lib/photobooth-link";
@@ -44,81 +43,65 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         text: "Semua pesanan kamu siap kemas, jadi tinggal ambil pas mampir.",
       };
 
+  const cancelled = order.status === "CANCELLED";
+
   return (
     <>
       {/*
-        The whole point of this page is a number somebody will read out at a booth
-        or screenshot for later, so the number is the page and everything else gets
-        out of its way. Centred, on the dark field, at display size — and without
-        the party emoji that used to sit on top of it, which said nothing the
-        heading does not already say.
+        The design's "Level complete" screen: a banner that says the order went
+        through, then the ticket. The whole point of this page is a number
+        somebody will read out at a booth or screenshot for later, so the number
+        is the page's <h1> — it sits on the ticket, set large — and the banner's
+        line above it is a plain paragraph, however big it is drawn.
       */}
-      <section className="band band-dark band-glow !pt-5 !pb-10 tablet:!pt-8 tablet:!pb-[var(--band-y)]">
-        <div className="band-inner text-center">
+      <section className="pt-4 tablet:pt-6">
+        <div className="band-inner stage-enter">
+          <div className={cn("k-victory", cancelled && "k-victory-off")}>
+            <p className="flex flex-wrap items-center gap-2">
+              <span className="k-tag k-tag-yellow k-tag-flat">
+                {cancelled ? "Game over" : "Victory clear!"}
+              </span>
+              {!cancelled && (
+                <span aria-hidden="true" className="text-[var(--k-yellow)]">
+                  ★★★
+                </span>
+              )}
+            </p>
+            <p className="k-victory-title">
+              {cancelled ? "Pesanan dibatalkan" : "Level complete!"}
+            </p>
+            <p className="max-w-[34em] text-[14.5px] leading-relaxed text-white/85">
+              {cancelled
+                ? "Pesanan ini udah dibatalkan. Kalau ini keliru, kabarin kami lewat WhatsApp ya."
+                : "Yeay, pesanan kamu berhasil dibuat! Simpen nomornya atau screenshot halaman ini, nanti ditanya pas ambil."}
+            </p>
+          </div>
+
           {/*
-            The stage the order is on, the same picture and ring the tracker
-            opens with — so moving from here to "Lacak pesanan" continues one
-            story rather than starting a new screen.
+            Paying comes before the ticket: it is the one thing left for the
+            customer to do, and the ticket carries a QR code of its own (the
+            order number, for the cashier). With the ticket first, a customer
+            reached for their e-wallet and scanned the wrong one.
           */}
-          <StageRing
-            status={order.status}
-            needsPrep={order.needsPrep}
-            className="!w-[9.5rem] min-[380px]:!w-[11rem] tablet:!w-[13rem]"
-          />
-
-          <p className="eyebrow -mt-2 text-pink">Pesanan diterima</p>
-
-          {/*
-            The number is the page's subject, so it is the page's <h1> — the
-            visual hierarchy and the heading hierarchy agree for once. The label
-            above it is drawn for sighted readers and hidden from assistive tech,
-            which gets the same words from inside the heading instead of hearing
-            them twice.
-          */}
-          <p
-            aria-hidden="true"
-            className="mt-5 text-[12px] font-semibold uppercase tracking-[0.2em] text-white/55 tablet:mt-7"
-          >
-            Nomor pesanan
-          </p>
-          <h1 className="display-1 mt-2 text-white tabular-nums">
-            <span className="sr-only">Nomor pesanan </span>
-            {order.orderNumber}
-          </h1>
-
-          <p className="mt-5 text-[14px] text-white/70 tablet:mt-7">
-            Atas nama <span className="font-semibold text-white">{order.customerName}</span>
-            {order.pickupSlot && (
-              <>
-                {" "}
-                &middot; ambil jam{" "}
-                <span className="font-semibold tabular-nums text-white">{order.pickupSlot}</span>
-              </>
-            )}
-          </p>
-
-          <p className="mx-auto mt-3 max-w-[36ch] text-[13px] leading-relaxed text-white/55">
-            Simpen nomornya, atau screenshot halaman ini — nanti ditanya pas ambil.
-          </p>
-        </div>
-      </section>
-
-      <section className="band-tight menu-counter">
-        {/* A narrow measure, left-aligned: the number above was for reading across
-            a counter, this part is for reading properly. */}
-        <div className="band-inner-narrow">
-          {/* Paying comes first: it is the one thing left for the customer to do. */}
-          {order.paymentMethod === "QRIS" && order.status !== "CANCELLED" && (
+          {order.paymentMethod === "QRIS" && !cancelled && (
             <QrisPayment
               orderNumber={order.orderNumber}
               totalAmount={order.totalAmount}
               qrisImageUrl={settings.qrisImageUrl ?? null}
               paymentStatus={order.paymentStatus}
               hasPaymentProof={order.hasPaymentProof}
-              className="mb-7"
+              className="mt-5"
             />
           )}
 
+          <OrderTicket order={order} numberAs="h1" className="mt-5" />
+        </div>
+      </section>
+
+      <section className="band-tight menu-counter">
+        {/* A narrow measure, left-aligned: the ticket above was for reading across
+            a counter, this part is for reading properly. */}
+        <div className="band-inner-narrow">
           <p
             className={cn(
               "border-l-2 py-3 pl-4 pr-3 text-[14px] leading-relaxed",
@@ -129,20 +112,6 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
           >
             {instruction.text}
           </p>
-
-          <div className="receipt-paper mt-9">
-            <OrderReceipt
-              lines={order.items.map((item, index) => ({
-                key: `${item.name}-${index}`,
-                name: item.name,
-                quantity: item.quantity,
-                subtotal: item.subtotal,
-              }))}
-              total={order.totalAmount}
-              photobooth={order.photobooth}
-              title="Yang kamu pesan"
-            />
-          </div>
 
           {order.notes && (
             <p className="mt-6 border-l-2 border-line pl-4 text-[13px] italic leading-relaxed text-ink-soft">

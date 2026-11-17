@@ -213,6 +213,11 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
                       <span className="block text-[13px] font-semibold text-ink">
                         {item.quantity}× {item.name}
                       </span>
+                      {item.contents && (
+                        <span className="block text-xs font-medium text-ink-soft">
+                          Isi paket: {item.contents}
+                        </span>
+                      )}
                       {/* The price charged at the time, not the menu's price today. */}
                       <span className="block text-xs font-medium text-ink-soft">
                         @ {formatRupiah(item.priceAtOrder)}

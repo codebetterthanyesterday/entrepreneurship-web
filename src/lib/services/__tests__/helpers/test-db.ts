@@ -21,6 +21,9 @@ const TABLES = [
   "storedImage",
   "stockMovement",
   "orderItem",
+  "orderBundle",
+  "bundleItem",
+  "bundle",
   "order",
   "product",
   "category",
@@ -90,6 +93,25 @@ export async function makeProduct(options: MakeProductOptions = {}) {
     prepType: options.prepType ?? "READY_TO_SERVE",
     isActive: options.isActive ?? true,
   });
+}
+
+export async function makeBundle(options: {
+  name?: string;
+  price?: number;
+  isActive?: boolean;
+  items: { productId: string; quantity: number }[];
+}) {
+  const bundle = await db.orm.public.Bundle.create({
+    name: options.name ?? `Paket Uji ${Math.random().toString(36).slice(2, 8)}`,
+    price: options.price ?? 25_000,
+    isActive: options.isActive ?? true,
+  });
+
+  for (const item of options.items) {
+    await db.orm.public.BundleItem.create({ bundleId: bundle.id, ...item });
+  }
+
+  return bundle;
 }
 
 export async function makeUser(role: UserRole = "KASIR") {

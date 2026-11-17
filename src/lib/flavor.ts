@@ -12,7 +12,7 @@
  * menu, in its sheet and in the cart, and the server and the browser agree.
  *
  * These are food colours, not brand colours. They belong to the picture the
- * way a photo's colours would, so they stay the same in both accent moods and
+ * way a photo's colours would, so they stay the same whatever theme the page wears and
  * never carry text.
  */
 

@@ -105,7 +105,7 @@ export function Sheet({ open, onClose, title, ariaLabel, children }: SheetProps)
         className={cn(
           // The dialog itself is focused on open only to seed the focus trap; a ring
           // around the whole sheet would say "this panel is the control".
-          "relative z-50 bg-white w-full flex flex-col focus:outline-none",
+          "ui-sheet relative z-50 bg-white w-full flex flex-col focus:outline-none",
           // Mobile Bottom Sheet
           "rounded-t-[24px] pb-[max(16px,env(safe-area-inset-bottom))] max-h-[86vh]",
           "animate-slide-up",

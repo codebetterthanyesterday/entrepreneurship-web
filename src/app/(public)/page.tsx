@@ -1,3 +1,4 @@
+import { getActiveBundles } from "@/lib/queries/bundle.query";
 import { getActiveProducts, getCategories } from "@/lib/queries/product.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { Catalog } from "@/components/public/catalog";
@@ -21,8 +22,9 @@ export const dynamic = "force-dynamic";
  * here (`next.config.ts`).
  */
 export default async function CatalogPage() {
-  const [products, categories, settings] = await Promise.all([
+  const [products, bundles, categories, settings] = await Promise.all([
     getActiveProducts(),
+    getActiveBundles(),
     getCategories(),
     getSettings(),
   ]);
@@ -45,6 +47,7 @@ export default async function CatalogPage() {
   return (
     <Catalog
       products={items}
+      bundles={bundles}
       categories={categories.map((category) => category.name)}
       preorderOpen={settings.preorderOpen}
     />

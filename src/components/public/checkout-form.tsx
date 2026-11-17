@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
 import { JourneyEmpty, JourneyHero } from "./journey";
 import { CheckoutArt } from "./journey-art";
+import type { PublicBundle } from "@/lib/bundle";
 import type { PublicPickupSlot } from "@/lib/queries/slot.query";
 import type { PublicProduct } from "@/types/admin";
 import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
@@ -28,16 +29,30 @@ export interface CheckoutFormProps {
   preorderOpen: boolean;
   /** Whether the admin has uploaded a QRIS; without one only cash is offered. */
   qrisAvailable: boolean;
+  /** Pakets on sale, so a paket already in the cart is priced and sent. */
+  bundles?: PublicBundle[];
 }
+
+const NO_BUNDLES: PublicBundle[] = [];
 
 interface FieldError {
   message: string;
   field?: string;
 }
 
-export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: CheckoutFormProps) {
+export function CheckoutForm({
+  products,
+  slots,
+  preorderOpen,
+  qrisAvailable,
+  bundles = NO_BUNDLES,
+}: CheckoutFormProps) {
   const router = useRouter();
-  const cart = useCart(products);
+  const cart = useCart(products, bundles);
+  const nameOf = React.useCallback(
+    (id: string) => products.find((product) => product.id === id)?.name,
+    [products],
+  );
 
   const [customerName, setCustomerName] = React.useState("");
   const [customerPhone, setCustomerPhone] = React.useState("");
@@ -72,10 +87,8 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
       pickupSlot: pickupSlot ?? "",
       paymentMethod,
       notes: notes.trim() === "" ? undefined : notes,
-      items: cart.entries.map((entry) => ({
-        productId: entry.productId,
-        quantity: entry.quantity,
-      })),
+      // Loose products and pakets go apart; the server prices both again.
+      ...cart.orderLines(),
     });
 
     if (!result.ok) {
@@ -100,8 +113,8 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
   const heading = (
     <JourneyHero
       step="data"
-      eyebrow="Checkout"
-      title="Dikit lagi selesai"
+      eyebrow="Stage 3: final checkpoint"
+      title="Mission: complete your order!"
       lede="Isi datanya biar kami nggak salah panggil pas kamu ambil."
       art={<CheckoutArt />}
     />
@@ -143,7 +156,7 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
     );
   }
 
-  const lines = cartLines(cart.entries);
+  const lines = cartLines(cart.entries, nameOf);
 
   const submitButton = (
     <Button
@@ -245,12 +258,12 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
                               if (error?.field === "pickupSlot") setError(null);
                             }}
                             className={cn(
-                              "min-h-[58px] rounded-[14px] border-[1.5px] px-3.5 text-left transition-colors",
-                              // Ink, not pink, for the chosen one — the same
-                              // filled-dark selection the catalogue's category bar
+                              "min-h-[58px] rounded-[8px] border-2 px-3.5 text-left transition-colors",
+                              // The design's "checkpoint active": red on a hard
+                              // shadow, the same filled look the category bar
                               // uses, so "selected" looks the same everywhere.
                               active
-                                ? "border-ink bg-ink text-white"
+                                ? "k-choice-on text-white"
                                 : "border-line bg-white text-ink hover:border-pink",
                               !slot.isSelectable &&
                                 "cursor-not-allowed opacity-45 hover:border-line",
@@ -292,9 +305,9 @@ export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: C
                         disabled={method === "QRIS" && !qrisAvailable}
                         onClick={() => setPaymentMethod(method)}
                         className={cn(
-                          "min-h-[52px] rounded-[14px] border-[1.5px] px-3 text-[14.5px] font-semibold transition-colors",
+                          "min-h-[52px] rounded-[8px] border-2 px-3 text-[14.5px] font-semibold transition-colors",
                           paymentMethod === method
-                            ? "border-ink bg-ink text-white"
+                            ? "k-choice-on text-white"
                             : "border-line bg-white text-ink hover:border-pink",
                           "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-line",
                         )}
@@ -388,10 +401,10 @@ function Step({
   return (
     // A ticket on the counter: one card per step, the number set large like the
     // number on an order slip.
-    <div className="rounded-[24px] bg-white p-4 shadow-[0_14px_30px_-22px_rgba(46,33,32,0.45)] tablet:p-6">
+    <div className="k-form-card bg-white p-4 tablet:p-6">
       <div className="flex items-center gap-3">
         <span
-          className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-pink-soft font-[family-name:var(--font-display)] text-[15px] font-semibold text-pink-deep"
+          className="k-num"
           aria-hidden="true"
         >
           {number}

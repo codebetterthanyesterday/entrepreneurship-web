@@ -16,7 +16,7 @@ const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
         ref={ref}
         className={cn(
           // 44px, not 40: the project's own touch-target floor.
-          "inline-flex items-center justify-center px-4 rounded-full min-h-[44px] text-sm font-medium transition-colors",
+          "ui-chip inline-flex items-center justify-center px-4 rounded-full min-h-[44px] text-sm font-medium transition-colors",
           active
             ? "bg-pink-deep text-white"
             : "bg-white border-[1.5px] border-line text-ink-soft hover:bg-cream",

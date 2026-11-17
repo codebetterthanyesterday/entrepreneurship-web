@@ -16,7 +16,7 @@ export function Toast() {
           // No `whitespace-nowrap`: the longest message in the app ("Yah, <menu>
           // keburu habis...") is well past 375px and used to run off both edges
           // of the screen instead of wrapping.
-          "bg-ink text-white px-4 py-3 rounded-[14px] text-sm font-medium shadow-lg text-center",
+          "ui-toast bg-ink text-white px-4 py-3 rounded-[14px] text-sm font-medium shadow-lg text-center",
           "animate-fade-in motion-reduce:animate-none"
         )}
         role="status"

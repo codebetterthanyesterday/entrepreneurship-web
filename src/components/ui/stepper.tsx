@@ -38,7 +38,7 @@ export function Stepper({ value, onChange, min = 1, max = 99, disabled, label }:
       role="group"
       aria-label={label}
       className={cn(
-        "inline-flex items-stretch overflow-hidden rounded-[12px] border-[1.5px] border-line bg-white",
+        "ui-stepper inline-flex items-stretch overflow-hidden rounded-[12px] border-[1.5px] border-line bg-white",
         disabled && "opacity-70",
       )}
     >

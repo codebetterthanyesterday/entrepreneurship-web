@@ -1,3 +1,4 @@
+import { getActiveBundles } from "@/lib/queries/bundle.query";
 import { getActiveProducts } from "@/lib/queries/product.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { CartView } from "@/components/public/cart-view";
@@ -14,7 +15,11 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
-  const [products, settings] = await Promise.all([getActiveProducts(), getSettings()]);
+  const [products, bundles, settings] = await Promise.all([
+    getActiveProducts(),
+    getActiveBundles(),
+    getSettings(),
+  ]);
 
   const items: PublicProduct[] = products.map((product) => ({
     id: product.id,
@@ -29,5 +34,5 @@ export default async function CartPage() {
 
   // No `PageShell`: the cart brings its own full-bleed bands, so its dark heading
   // can reach the screen edge like the catalogue.
-  return <CartView products={items} preorderOpen={settings.preorderOpen} />;
+  return <CartView products={items} bundles={bundles} preorderOpen={settings.preorderOpen} />;
 }

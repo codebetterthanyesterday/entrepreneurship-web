@@ -9,25 +9,59 @@ import { useToast } from "@/components/ui/use-toast";
 import { submitOnsiteOrderAction } from "@/actions/order.actions";
 import { cn, formatRupiah } from "@/lib/utils";
 import type { PublicProduct } from "@/types/admin";
+import {
+  bundleIdOf,
+  bundleKey,
+  bundlesAvailable,
+  portionsUsed,
+  type BundleComponent,
+  type PublicBundle,
+} from "@/lib/bundle";
 import type { OnsiteOrderReceipt } from "@/types/order-view";
 import { PaymentSheet, type PaymentSubmission } from "./payment-sheet";
 import { OrderConfirmationSheet } from "./order-confirmation-sheet";
 
 const ALL_FILTER = "Semua";
+const BUNDLE_FILTER = "Paket hemat";
+const NO_BUNDLES: PublicBundle[] = [];
 
+/**
+ * One line of the bill. `productId` is the line's key: a product's id, or a
+ * paket's under the `paket:` prefix (`bundleKey`), the same convention the
+ * customer cart uses.
+ */
 export interface BillLine {
   productId: string;
   quantity: number;
 }
 
+/** A bill line with what it is, what it costs, and how far it may go up. */
+interface BillEntry extends BillLine {
+  name: string;
+  price: number;
+  subtotal: number;
+  /** The most this line may hold: what it has plus what the shelf still allows. */
+  max: number;
+  /** A paket's contents, for the cashier to bag. */
+  contents: string | null;
+}
+
 export interface PosScreenProps {
   products: PublicProduct[];
+  /** Pakets on sale; their chip and cards are left out when there are none. */
+  bundles?: PublicBundle[];
   categories: string[];
   boothOpen: boolean;
   qrisImageUrl: string | null;
 }
 
-export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: PosScreenProps) {
+export function PosScreen({
+  products,
+  bundles = NO_BUNDLES,
+  categories,
+  boothOpen,
+  qrisImageUrl,
+}: PosScreenProps) {
   const { toast } = useToast();
 
   // Kept in component memory on purpose — a cashier's transaction always starts
@@ -48,7 +82,13 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
   const ringUp = React.useCallback(
     async (payment: PaymentSubmission) => {
       const result = await submitOnsiteOrderAction({
-        items: bill.map((line) => ({ productId: line.productId, quantity: line.quantity })),
+        items: bill
+          .filter((line) => !bundleIdOf(line.productId))
+          .map((line) => ({ productId: line.productId, quantity: line.quantity })),
+        bundles: bill.flatMap((line) => {
+          const bundleId = bundleIdOf(line.productId);
+          return bundleId ? [{ bundleId, quantity: line.quantity }] : [];
+        }),
         paymentMethod: payment.method,
         cashReceived: payment.cashReceived,
       });
@@ -75,19 +115,98 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
     [products],
   );
 
-  const quantityOf = (productId: string) =>
-    bill.find((line) => line.productId === productId)?.quantity ?? 0;
+  const bundleById = React.useMemo(
+    () => new Map(bundles.map((bundle) => [bundle.id, bundle])),
+    [bundles],
+  );
 
-  const remainingOf = (product: PublicProduct) =>
-    Math.max(0, product.stock - quantityOf(product.id));
+  const quantityOf = (key: string) => bill.find((line) => line.productId === key)?.quantity ?? 0;
 
-  const entries = bill.flatMap((line) => {
+  /**
+   * Portions of each product the bill already takes, loose and inside every
+   * paket on it. A paket and a loose item draw on the same shelf, so every cap
+   * on this screen reads this one figure — the same arithmetic as the
+   * customer cart (`portionsUsed` in `lib/bundle.ts`).
+   */
+  const used = React.useMemo(() => {
+    const loose: { productId: string; quantity: number }[] = [];
+    const inBundles: { quantity: number; components: readonly BundleComponent[] }[] = [];
+
+    for (const line of bill) {
+      const bundleId = bundleIdOf(line.productId);
+      if (!bundleId) {
+        loose.push(line);
+        continue;
+      }
+      const bundle = bundleById.get(bundleId);
+      if (bundle) inBundles.push({ quantity: line.quantity, components: bundle.items });
+    }
+
+    return portionsUsed(loose, inBundles);
+  }, [bill, bundleById]);
+
+  const productLeft = (productId: string) =>
+    Math.max(0, (productById.get(productId)?.stock ?? 0) - (used.get(productId) ?? 0));
+
+  const bundleLeft = (bundleId: string) => {
+    const bundle = bundleById.get(bundleId);
+    return bundle ? bundlesAvailable(bundle.items, productLeft) : 0;
+  };
+
+  /** How many more of a line the shelf allows. */
+  const leftFor = (key: string) => {
+    const bundleId = bundleIdOf(key);
+    return bundleId ? bundleLeft(bundleId) : productLeft(key);
+  };
+
+  const remainingOf = (product: PublicProduct) => productLeft(product.id);
+
+  const entries = bill.flatMap((line): BillEntry[] => {
+    const bundleId = bundleIdOf(line.productId);
+
+    if (bundleId) {
+      const bundle = bundleById.get(bundleId);
+      if (!bundle) return [];
+      return [
+        {
+          ...line,
+          name: bundle.name,
+          price: bundle.price,
+          subtotal: bundle.price * line.quantity,
+          max: line.quantity + bundleLeft(bundleId),
+          contents: bundle.items.map((item) => `${item.quantity}× ${item.name}`).join(", "),
+        },
+      ];
+    }
+
     const product = productById.get(line.productId);
-    return product ? [{ ...line, product, subtotal: product.price * line.quantity }] : [];
+    if (!product) return [];
+    return [
+      {
+        ...line,
+        name: product.name,
+        price: product.price,
+        subtotal: product.price * line.quantity,
+        max: line.quantity + productLeft(product.id),
+        contents: null,
+      },
+    ];
   });
 
   const total = entries.reduce((sum, entry) => sum + entry.subtotal, 0);
   const itemCount = entries.reduce((sum, entry) => sum + entry.quantity, 0);
+
+  /** Adds one of a line, product or paket. */
+  const addLine = (key: string) =>
+    setBill((current) => {
+      const existing = current.find((line) => line.productId === key);
+
+      return existing
+        ? current.map((line) =>
+            line.productId === key ? { ...line, quantity: line.quantity + 1 } : line,
+          )
+        : [...current, { productId: key, quantity: 1 }];
+    });
 
   /** One tap, one item — no detail sheet. Speed is the point of this screen. */
   const addOne = (product: PublicProduct) => {
@@ -96,26 +215,28 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
       return;
     }
 
-    setBill((current) => {
-      const existing = current.find((line) => line.productId === product.id);
-
-      return existing
-        ? current.map((line) =>
-            line.productId === product.id ? { ...line, quantity: line.quantity + 1 } : line,
-          )
-        : [...current, { productId: product.id, quantity: 1 }];
-    });
+    addLine(product.id);
   };
 
-  const step = (productId: string, delta: number) => {
-    const product = productById.get(productId);
-    if (!product) return;
+  const addBundle = (bundle: PublicBundle) => {
+    if (bundleLeft(bundle.id) <= 0) {
+      // Name the product that is short, so the cashier can offer the rest loose.
+      const short = bundle.items.find((item) => productLeft(item.productId) < item.quantity);
+      toast(short ? `${bundle.name} nggak bisa: ${short.name} habis` : `${bundle.name} udah habis`);
+      return;
+    }
+
+    addLine(bundleKey(bundle.id));
+  };
+
+  const step = (key: string, delta: number) => {
+    const cap = quantityOf(key) + leftFor(key);
 
     setBill((current) =>
       current.flatMap((line) => {
-        if (line.productId !== productId) return [line];
+        if (line.productId !== key) return [line];
 
-        const next = Math.min(line.quantity + delta, product.stock);
+        const next = Math.min(line.quantity + delta, cap);
         return next <= 0 ? [] : [{ ...line, quantity: next }];
       }),
     );
@@ -129,7 +250,12 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
   const visible =
     filter === ALL_FILTER
       ? products
-      : products.filter((product) => product.categoryName === filter);
+      : filter === BUNDLE_FILTER
+        ? []
+        : products.filter((product) => product.categoryName === filter);
+
+  const showBundles = bundles.length > 0 && (filter === ALL_FILTER || filter === BUNDLE_FILTER);
+  const filters = [ALL_FILTER, ...categories, ...(bundles.length > 0 ? [BUNDLE_FILTER] : [])];
 
   const payDisabled = bill.length === 0 || !boothOpen;
 
@@ -142,10 +268,18 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
           <li key={entry.productId} className="flex items-center gap-2">
             <span className="flex-1 min-w-0">
               <span className="block text-[13.5px] font-semibold text-ink truncate">
-                {entry.product.name}
+                {entry.contents && (
+                  <span className="mr-1 rounded bg-warn-soft px-1 text-[10px] font-bold uppercase text-warn">
+                    Paket
+                  </span>
+                )}
+                {entry.name}
               </span>
+              {entry.contents && (
+                <span className="block text-xs text-ink-soft">Isi: {entry.contents}</span>
+              )}
               <span className="block text-xs text-ink-soft">
-                {formatRupiah(entry.product.price)} &times; {entry.quantity} ={" "}
+                {formatRupiah(entry.price)} &times; {entry.quantity} ={" "}
                 {formatRupiah(entry.subtotal)}
               </span>
             </span>
@@ -153,7 +287,7 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
             <span className="flex items-center gap-1.5 flex-none">
               <button
                 type="button"
-                aria-label={`Kurangi ${entry.product.name}`}
+                aria-label={`Kurangi ${entry.name}`}
                 onClick={() => step(entry.productId, -1)}
                 className="w-[44px] h-[44px] flex items-center justify-center rounded-xl border-[1.5px] border-line bg-white text-ink-soft hover:bg-cream hover:text-ink transition-colors"
               >
@@ -166,8 +300,8 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
 
               <button
                 type="button"
-                aria-label={`Tambah ${entry.product.name}`}
-                disabled={entry.quantity >= entry.product.stock}
+                aria-label={`Tambah ${entry.name}`}
+                disabled={entry.quantity >= entry.max}
                 onClick={() => step(entry.productId, 1)}
                 className="w-[44px] h-[44px] flex items-center justify-center rounded-xl border-[1.5px] border-line bg-white text-ink hover:bg-cream disabled:opacity-40 disabled:hover:bg-white transition-colors"
               >
@@ -227,9 +361,9 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
 
       <div className="flex gap-5 items-start">
         <div className="flex-1 min-w-0">
-          {categories.length > 0 && (
+          {filters.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1 mb-3 -mx-4 px-4 tablet:mx-0 tablet:px-0 tablet:flex-wrap">
-              {[ALL_FILTER, ...categories].map((name) => (
+              {filters.map((name) => (
                 <Chip
                   key={name}
                   active={filter === name}
@@ -243,9 +377,9 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
             </div>
           )}
 
-          {visible.length === 0 ? (
+          {visible.length === 0 && !showBundles ? (
             <EmptyState emoji="🍽️" title="Nggak ada menu di kategori ini" />
-          ) : (
+          ) : visible.length === 0 ? null : (
             <div className="grid grid-cols-2 tablet:grid-cols-3 gap-2.5">
               {visible.map((product) => {
                 const remaining = remainingOf(product);
@@ -319,6 +453,63 @@ export function PosScreen({ products, categories, boothOpen, qrisImageUrl }: Pos
                 );
               })}
             </div>
+          )}
+
+          {showBundles && (
+            <section aria-labelledby="pos-bundles" className={cn(visible.length > 0 && "mt-5")}>
+              <h2 id="pos-bundles" className="mb-2.5 text-sm font-semibold text-ink">
+                Paket hemat
+              </h2>
+              <div className="grid grid-cols-1 tablet:grid-cols-2 gap-2.5">
+                {bundles.map((bundle) => {
+                  const key = bundleKey(bundle.id);
+                  const left = bundleLeft(bundle.id);
+                  const inBill = quantityOf(key);
+                  const isOut = left <= 0;
+
+                  return (
+                    <button
+                      key={bundle.id}
+                      type="button"
+                      aria-disabled={isOut}
+                      onClick={() => addBundle(bundle)}
+                      aria-label={`Tambah ${bundle.name}`}
+                      className={cn(
+                        "relative flex min-h-[72px] flex-col gap-1 rounded-[16px] border-[1.5px] bg-white p-2.5 text-left transition-colors",
+                        isOut
+                          ? "cursor-not-allowed border-line opacity-50"
+                          : "border-line hover:border-pink active:bg-pink-soft",
+                      )}
+                    >
+                      {inBill > 0 && (
+                        <span className="absolute -top-2 -right-2 flex h-[26px] min-w-[26px] items-center justify-center rounded-full bg-pink-deep px-1.5 text-xs font-bold text-white">
+                          {inBill}
+                        </span>
+                      )}
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="text-[13px] font-semibold leading-tight text-ink">
+                          {bundle.name}
+                        </span>
+                        <span className="flex-none text-xs font-semibold text-pink-deep">
+                          {formatRupiah(bundle.price)}
+                        </span>
+                      </span>
+                      <span className="text-xs leading-snug text-ink-soft">
+                        {bundle.items.map((item) => `${item.quantity}× ${item.name}`).join(", ")}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[11px] font-semibold",
+                          isOut ? "text-hot" : "text-ink-soft",
+                        )}
+                      >
+                        {isOut ? "isinya habis" : `bisa ${left} paket lagi`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           )}
         </div>
 

@@ -13,6 +13,7 @@ export async function findPreorderForPhotobooth(
 ): Promise<OrderWithItems | null> {
   return await db.orm.public.Order.where({ orderNumber, channel: "PREORDER" })
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .first();
 }
 
@@ -43,6 +44,7 @@ export async function listPreordersForPhotobooth(options: {
 
   let ordered = query
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .orderBy([(order) => order.updatedAt.asc(), (order) => order.orderNumber.asc()]);
   if (options.after) {
     ordered = ordered.cursor({

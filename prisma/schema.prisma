@@ -115,6 +115,7 @@ model Product {
   category       Category?       @relation(fields: [categoryId], references: [id])
   orderItems     OrderItem[]
   stockMovements StockMovement[]
+  bundleItems    BundleItem[]
 
   @@index([categoryId])
   @@index([isActive])
@@ -144,6 +145,7 @@ model Order {
   handledById     String?
   handledBy       User?          @relation("HandledOrders", fields: [handledById], references: [id])
   items           OrderItem[]
+  bundles         OrderBundle[]
   stockMovements  StockMovement[]
   externalCharges ExternalCharge[]
 
@@ -163,6 +165,68 @@ model OrderItem {
   order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId    String
   product      Product @relation(fields: [productId], references: [id])
+  // Terisi kalau baris ini isi sebuah paket: produknya tetap dicatat per baris
+  // supaya stok, dapur, dan pembatalan memakai jalur yang sama dengan menu
+  // satuan, tapi harganya 0 — uangnya ada di OrderBundle.
+  orderBundleId String?
+  orderBundle   OrderBundle? @relation(fields: [orderBundleId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([orderBundleId])
+}
+
+// ==========================================
+// PAKET (COMBO)
+// ==========================================
+
+// Paket hemat, misalnya "Little Power Combo". Harganya sendiri; stoknya tidak:
+// sebuah paket bisa dijual selama setiap isinya masih cukup, dan memesannya
+// memotong stok tiap produk di dalamnya.
+model Bundle {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  price        Int
+  imageUrl     String?
+  isActive     Boolean       @default(true)
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    temporal.updatedAt()
+  items        BundleItem[]
+  orderBundles OrderBundle[]
+
+  @@index([isActive])
+  @@check(expression: "price >= 0", name: "bundle_price_non_negative")
+}
+
+// Satu isi paket: produk apa, berapa porsi.
+model BundleItem {
+  id        String  @id @default(uuid())
+  quantity  Int
+  bundleId  String
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([bundleId, productId])
+  @@index([productId])
+  @@check(expression: "quantity > 0", name: "bundle_item_quantity_positive")
+}
+
+// Paket yang dipesan, dengan nama dan harga saat itu sebagai snapshot —
+// seperti priceAtOrder pada OrderItem, supaya paket yang diganti namanya atau
+// harganya tidak mengubah nota lama.
+model OrderBundle {
+  id           String      @id @default(uuid())
+  name         String
+  quantity     Int
+  priceAtOrder Int
+  subtotal     Int
+  orderId      String
+  order        Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bundleId     String
+  bundle       Bundle      @relation(fields: [bundleId], references: [id])
+  items        OrderItem[]
 
   @@index([orderId])
 }

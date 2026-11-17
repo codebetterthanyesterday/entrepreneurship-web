@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn, formatRupiah } from "@/lib/utils";
-import { flavorOf } from "@/lib/flavor";
+import { Button } from "@/components/ui/button";
 import { FlavorArt } from "./flavor-art";
 import type { PublicProduct } from "@/types/admin";
 
@@ -18,14 +18,16 @@ export interface ProductCardProps {
 }
 
 /**
- * One item on the menu: a tile, two to a row on a phone.
+ * One item on the menu, as the design's card: the picture across the top with
+ * its tags, the name beside its price, a line about it, and "Tambah".
  *
- * The picture does the selling, so it takes the tile's full width. What a
- * customer needs to decide stays on the tile with it: the name, the price, the
- * prep type, and how many are left, which turns urgent at three.
+ * Mobile-first. Two cards share a row on a phone, so the phone's card is the
+ * short version — picture, name, price, stock, button — and the description
+ * and the category tag only appear from 640px up, where a card is wide enough
+ * to hold them without pushing the button off the first screen.
  *
- * Two controls, side by side rather than nested: the tile opens the product's
- * sheet, and the round "+" on the picture adds one without opening anything,
+ * Two controls, one after the other rather than nested: the picture and name
+ * open the product's sheet, and "Tambah" adds one without opening anything,
  * which is how most people reorder the thing they already know.
  */
 export function ProductCard({ product, remaining, inCart, onSelect, onQuickAdd }: ProductCardProps) {
@@ -35,53 +37,68 @@ export function ProductCard({ product, remaining, inCart, onSelect, onQuickAdd }
   const fresh = product.prepType === "NEEDS_PREP";
 
   return (
-    <article className="relative">
+    <article className="k-hard flex flex-col bg-white">
       <button
         type="button"
         disabled={isOut}
         onClick={() => onSelect(product)}
         aria-label={isOut ? `${product.name}, habis` : `Lihat ${product.name}`}
-        className={cn("group block w-full text-left", isOut ? "cursor-default" : "cursor-pointer")}
+        className={cn(
+          "group flex w-full flex-1 flex-col text-left",
+          isOut ? "cursor-default" : "cursor-pointer",
+        )}
       >
-        <span className="relative block aspect-square overflow-hidden rounded-[24px]">
-          <ProductVisual product={product} dimmed={isOut} className="h-full w-full p-[14%]" />
+        <span className="relative block aspect-[4/3] w-full overflow-hidden tablet:aspect-[16/10]">
+          <ProductVisual product={product} dimmed={isOut} className="h-full w-full" />
 
-          <span
-            className={cn(
-              "absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-wide",
-              "bg-white/85 backdrop-blur-sm",
-              fresh ? "text-warn" : "text-sky-deep",
-            )}
-          >
+          <span className="k-tag k-tag-yellow absolute left-2 top-2 !text-[9.5px] tablet:!text-[10.5px]">
             {fresh ? "Diracik dadakan" : "Siap ambil"}
           </span>
 
+          {product.categoryName && (
+            // The wrapper does the hiding: `.k-tag` sets its own `display`, and
+            // being unlayered CSS it would win over a `hidden` on the same node.
+            <span className="absolute right-2 top-2 hidden tablet:block">
+              <span className="k-tag">{product.categoryName}</span>
+            </span>
+          )}
+
           {isOut && (
             <span className="absolute inset-0 flex items-center justify-center bg-cream/55">
-              <span className="-rotate-12 rounded-[10px] border-[3px] border-hot px-3 py-1 font-[family-name:var(--font-display)] text-[17px] font-semibold uppercase tracking-wider text-hot">
+              <span className="-rotate-12 border-[3px] border-hot bg-white px-3 py-1 font-[family-name:var(--font-display)] text-[17px] font-extrabold uppercase tracking-wider text-hot">
                 Habis
               </span>
             </span>
           )}
         </span>
 
-        <span className="mt-2.5 block px-0.5">
-          <span
-            className={cn(
-              "block text-[14.5px] font-semibold leading-snug text-ink line-clamp-2 transition-colors tablet:text-[15.5px]",
-              !isOut && "group-hover:text-pink-deep",
-            )}
-          >
-            {product.name}
-          </span>
-          <span className="mt-1 flex items-baseline justify-between gap-2">
-            <span className="font-[family-name:var(--font-display)] text-[17px] font-semibold text-ink tabular-nums">
+        <span className="flex flex-1 flex-col gap-1.5 px-3 pt-3 tablet:px-4 tablet:pt-4">
+          <span className="flex flex-col items-start gap-1.5 tablet:flex-row tablet:justify-between tablet:gap-3">
+            <span
+              className={cn(
+                "font-[family-name:var(--font-display)] text-[14.5px] font-extrabold uppercase leading-tight text-ink line-clamp-2 transition-colors tablet:text-[18px]",
+                !isOut && "group-hover:text-pink-deep",
+              )}
+            >
+              {product.name}
+            </span>
+            <span className="k-price flex-none text-[14px] text-ink tabular-nums tablet:text-[17px]">
+              <span aria-hidden="true" className="k-coin">
+                $
+              </span>
               {formatRupiah(product.price)}
             </span>
           </span>
+
+          {product.description && (
+            <span className="hidden text-[14px] leading-relaxed text-ink-soft tablet:line-clamp-3">
+              {product.description}
+            </span>
+          )}
+
           <span
             className={cn(
-              "mt-0.5 block text-[12px] font-semibold",
+              "mt-auto block pt-1 text-[12px] font-bold",
               isOut || isLow || isCapped ? "text-hot" : "text-ink-soft",
             )}
           >
@@ -96,44 +113,36 @@ export function ProductCard({ product, remaining, inCart, onSelect, onQuickAdd }
         </span>
       </button>
 
-      {!isOut && (
-        // Laid over the picture's corner, but a sibling of the tile's button:
-        // a button inside a button is not a thing a screen reader can use.
-        <span className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
-          <button
-            type="button"
-            disabled={isCapped}
-            onClick={(event) => onQuickAdd(product, event.currentTarget.getBoundingClientRect())}
-            aria-label={`Tambah 1 ${product.name} ke keranjang`}
-            className={cn(
-              "pointer-events-auto absolute bottom-2.5 right-2.5 flex h-11 w-11 items-center justify-center rounded-full",
-              "bg-pink-deep text-white shadow-[0_8px_18px_-8px_var(--color-pink-deep)]",
-              "transition-transform active:scale-90 disabled:bg-ink-soft disabled:shadow-none",
-            )}
-          >
-            {inCart > 0 ? (
-              <span key={inCart} className="nav-count-pop text-[15px] font-bold tabular-nums">
-                {inCart}
-              </span>
-            ) : (
-              <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
-        </span>
-      )}
+      {/* A sibling of the tile's button: a button inside a button is not a
+          thing a screen reader can use. */}
+      <div className="p-3 pt-2.5 tablet:p-4 tablet:pt-3">
+        <Button
+          size="sm"
+          fullWidth
+          disabled={isOut || isCapped}
+          onClick={(event) => onQuickAdd(product, event.currentTarget.getBoundingClientRect())}
+          aria-label={`Tambah 1 ${product.name} ke keranjang`}
+        >
+          Tambah
+          {inCart > 0 && (
+            <span key={inCart} className="nav-count-pop ml-1.5 tabular-nums">
+              · {inCart}
+            </span>
+          )}
+        </Button>
+      </div>
     </article>
   );
 }
 
 /**
- * The picture, or the drawing of it: shared by the menu's tiles, the product's
+ * The picture, or the drawing of it: shared by the menu's cards, the product's
  * sheet and the cart's lines, so a product looks the same wherever it appears.
  *
- * Most products have no `imageUrl` (there is no upload pipeline, only URLs an
- * admin pastes in), so the drawing is the common case: `FlavorArt`, on a tile
- * washed in the colour of what is in it.
+ * A product without an `imageUrl` gets its drawing (`FlavorArt`) standing on
+ * the kingdom's own scenery — sky above, a strip of pixel ground below — which
+ * is the backdrop the team's product photos are shot against, so a drawn item
+ * and a photographed one sit on the same shelf without one looking unfinished.
  */
 export function ProductVisual({
   product,
@@ -169,16 +178,14 @@ export function ProductVisual({
     );
   }
 
-  const { tint } = flavorOf(product);
-
   return (
     <span
       aria-hidden="true"
-      className={cn("flex flex-none items-center justify-center", dimmed && "grayscale-[60%]", className)}
-      style={{
-        // A pool of light behind the item, the way a counter lamp falls.
-        background: `radial-gradient(circle at 50% 38%, #ffffff 0%, ${tint} 62%)`,
-      }}
+      className={cn(
+        "k-scene flex flex-none items-center justify-center",
+        dimmed && "grayscale-[60%]",
+        className,
+      )}
     >
       <FlavorArt product={product} fresh={product.prepType === "NEEDS_PREP"} live={live} />
     </span>

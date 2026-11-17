@@ -3,6 +3,7 @@ import { prisma as db } from "@/lib/prisma";
 import type { OrderWithItems } from "@/lib/services/order.service";
 import type { OrderStatus } from "@/types/order";
 import { lastFourDigits } from "@/lib/remembered-order";
+import { kitchenLineName, pricedLines } from "@/lib/order-lines";
 import type {
   CashierPreorder,
   ExtraChargeLine,
@@ -21,6 +22,7 @@ import type {
 export async function findByNumber(orderNumber: string): Promise<OrderWithItems | null> {
   return await db.orm.public.Order.where({ orderNumber })
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .first();
 }
 
@@ -42,6 +44,7 @@ export async function findForTracking(
 
   const order = await db.orm.public.Order.where({ orderNumber })
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .first();
 
   if (!order) return null;
@@ -74,11 +77,12 @@ export function toTrackedOrder(
     notes: order.notes,
     totalAmount: order.totalAmount,
     needsPrep: order.items.some((item) => item.product.prepType === "NEEDS_PREP"),
-    items: order.items.map((item) => ({
-      name: item.product.name,
-      quantity: item.quantity,
-      priceAtOrder: item.priceAtOrder,
-      subtotal: item.subtotal,
+    items: pricedLines(order).map((line) => ({
+      name: line.name,
+      quantity: line.quantity,
+      priceAtOrder: line.priceAtOrder,
+      subtotal: line.subtotal,
+      contents: line.contents,
     })),
     photobooth: [...photobooth],
   };
@@ -145,6 +149,7 @@ export async function findPreordersForCashier(
 
   return await query
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .orderBy([(order) => order.pickupSlot.asc(), (order) => order.createdAt.asc()])
     .all();
 }
@@ -173,12 +178,13 @@ export function toCashierPreorder(
     totalAmount: order.totalAmount,
     itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
     needsPrep: order.items.some((item) => item.product.prepType === "NEEDS_PREP"),
-    items: order.items.map((item) => ({
-      name: item.product.name,
-      quantity: item.quantity,
-      priceAtOrder: item.priceAtOrder,
-      subtotal: item.subtotal,
-      needsPrep: item.product.prepType === "NEEDS_PREP",
+    items: pricedLines(order).map((line) => ({
+      name: line.name,
+      quantity: line.quantity,
+      priceAtOrder: line.priceAtOrder,
+      subtotal: line.subtotal,
+      contents: line.contents,
+      needsPrep: line.needsPrep,
     })),
     photobooth: [...photobooth],
   };
@@ -200,6 +206,7 @@ const KITCHEN_STATUSES = ["IN_QUEUE", "IN_PROGRESS", "READY"] as const;
 export async function findKitchenQueue(): Promise<OrderWithItems[]> {
   return await db.orm.public.Order.where((order) => order.status.in([...KITCHEN_STATUSES]))
     .include("items", (item) => item.include("product"))
+    .include("bundles")
     .orderBy([(order) => order.queuedAt.asc(), (order) => order.createdAt.asc()])
     .all();
 }
@@ -224,8 +231,10 @@ export function toKitchenTicket(order: OrderWithItems): KitchenTicket {
     queuedAt: order.queuedAt?.toString() ?? null,
     startedAt: order.startedAt?.toString() ?? null,
     createdAt: order.createdAt.toString(),
+    // The kitchen makes products, so it gets every product line, a paket's
+    // contents included, each labelled with the paket it came in.
     items: order.items.map((item) => ({
-      name: item.product.name,
+      name: kitchenLineName(item, order.bundles),
       quantity: item.quantity,
       needsPrep: item.product.prepType === "NEEDS_PREP",
     })),

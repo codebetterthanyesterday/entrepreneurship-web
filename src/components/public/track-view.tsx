@@ -14,7 +14,7 @@ import {
   subscribeRememberedOrder,
 } from "@/lib/remembered-order";
 import { OrderTimeline } from "./order-timeline";
-import { OrderReceipt, SummaryPanel } from "./order-receipt";
+import { OrderTicket } from "./order-ticket";
 import { QrisPayment } from "./qris-payment";
 import { PhotoboothQr } from "./photobooth-qr";
 import { OrderStage, StageArt } from "./order-stage";
@@ -57,11 +57,6 @@ function searchKey(search: Search | null): string | null {
 
   return `/api/lacak?${params.toString()}`;
 }
-
-const PAYMENT_LABEL = {
-  CASH: "Bayar pas ambil",
-  QRIS: "QRIS",
-} as const;
 
 /**
  * What the server snapshot of the remembered order reads as: "not known yet",
@@ -185,8 +180,8 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
       {/* ------------------------------------------------------- heading ---- */}
       <JourneyHero
         step="track"
-        eyebrow="Lacak"
-        title="Pesanan kamu sampai mana?"
+        eyebrow="Radar station"
+        title="Where's your mission?"
         lede="Masukin nomor pesanan dan 4 digit terakhir WhatsApp kamu."
         art={<StageArt id="masuk" />}
       />
@@ -247,24 +242,119 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
           )}
 
           {missed && (
-            <div role="status" className="stage-enter mt-12 max-w-[42ch]">
-              <p className="eyebrow text-hot">Nggak ketemu</p>
-              <p className="display-3 mt-3 text-ink">
-                Nggak ada pesanan yang cocok dengan dua itu.
+            // The design's "quest data not found": said loudly enough to be
+            // noticed, then straight to the two things worth checking.
+            <div role="status" className="k-err stage-enter mt-10">
+              <p className="k-err-bar">
+                <span>Game over alert // 0 targets acquired</span>
+                <span>ERR: W4-404</span>
               </p>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-ink-soft">
-                Cek lagi nomornya, dan pastiin empat digitnya dari nomor WhatsApp yang kamu isi
-                waktu pesan.
-              </p>
+              <div className="grid gap-3.5 p-3.5 tablet:p-5">
+                <div className="k-hard-sm rounded-[10px] bg-white p-4">
+                  <p className="eyebrow text-hot">Nggak ketemu</p>
+                  <p className="k-section-title mt-1 !text-pink-deep">Oops! Quest data not found!</p>
+                  <p className="mt-2 text-[14.5px] leading-relaxed text-ink">
+                    Nggak ada pesanan yang cocok dengan nomor{" "}
+                    <code className="k-code-chip">{submitted?.orderNumber || "—"}</code> dan empat
+                    digit itu. Kemungkinan salah ketik nomornya, atau digitnya bukan dari WhatsApp
+                    yang kamu isi waktu pesan.
+                  </p>
+                </div>
 
-              <ButtonLink href="/" variant="ghost" size="sm" className="mt-6">
-                Lihat menu
-              </ButtonLink>
+                <div className="k-hard-sm rounded-[10px] bg-[#fde7c4] p-4">
+                  <p className="k-mono text-[12px] text-ink">Checklist pemeriksaan petualang:</p>
+                  <ol className="mt-2 grid gap-2.5 text-[14.5px] leading-relaxed text-ink">
+                    <li className="flex gap-2.5">
+                      <span aria-hidden="true" className="k-check-num">
+                        1
+                      </span>
+                      <span>
+                        <b>Format PO-XXXX.</b> Nomor pesanan ada di halaman konfirmasi dan di chat
+                        WhatsApp kami.
+                      </span>
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span aria-hidden="true" className="k-check-num">
+                        2
+                      </span>
+                      <span>
+                        <b>Nomor WhatsApp.</b> Masukin 4 angka terakhir nomor yang kamu daftarin
+                        waktu checkout.
+                      </span>
+                    </li>
+                  </ol>
+                </div>
+
+                <ButtonLink href="/" variant="ghost" size="sm" className="justify-self-start">
+                  Lihat menu
+                </ButtonLink>
+              </div>
             </div>
           )}
+
+          <TrackGuide />
         </div>
       </section>
     </>
+  );
+}
+
+// ------------------------------------------------------------------ guide
+
+const GUIDE = [
+  {
+    tag: "Code: PO-XXXX",
+    title: "1. Dapatkan nomor pesanan",
+    body: "Selesai checkout, kamu dapat nomor pesanan (contoh: PO-0007) di halaman konfirmasi.",
+    tone: "var(--color-pink-deep)",
+  },
+  {
+    tag: "4 digit PIN",
+    title: "2. Masukin 4 digit WhatsApp",
+    body: "Biar pesananmu nggak diintip orang lain, masukin 4 digit terakhir nomor WhatsApp kamu.",
+    tone: "var(--k-gold)",
+  },
+  {
+    tag: "Checkpoints",
+    title: "3. Pantau tiap checkpoint",
+    body: "Lihat posisi pesananmu dari masuk, dikonfirmasi, diracik, sampai siap diambil.",
+    tone: "var(--color-sky-deep)",
+  },
+] as const;
+
+/**
+ * "Bagaimana cara kerja radar pesanan?" — the three steps under the search
+ * form. The design illustrates each with a picture; those are artwork this
+ * repo does not have, so each card carries its number on the step's colour
+ * instead and the words do the explaining.
+ */
+function TrackGuide() {
+  return (
+    <section aria-labelledby="track-guide" className="mt-12">
+      <p className="k-mono text-[11px] text-sky-deep">Guide &amp; mission recovery</p>
+      <h2 id="track-guide" className="k-section-title mt-1.5 !text-[clamp(20px,6vw,32px)]">
+        Gimana cara kerja radar pesanan?
+      </h2>
+
+      <ol className="mt-4 grid gap-5 tablet:grid-cols-3">
+        {GUIDE.map((step, index) => (
+          <li key={step.title} className="k-hard bg-white p-4">
+            <span
+              aria-hidden="true"
+              className="k-hard-sm inline-grid h-9 w-9 place-items-center font-[family-name:var(--font-display)] text-[16px] font-black text-white"
+              style={{ background: step.tone }}
+            >
+              {index + 1}
+            </span>
+            <span className="k-tag ml-3 align-middle">{step.tag}</span>
+            <h3 className="mt-3 font-[family-name:var(--font-display)] text-[17px] font-extrabold uppercase leading-tight text-ink">
+              {step.title}
+            </h3>
+            <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-soft">{step.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -291,20 +381,6 @@ function FoundOrder({
 }) {
   const cancelled = order.status === "CANCELLED";
   const live = !isFinalStatus(order.status);
-
-  const receipt = (
-    <OrderReceipt
-      lines={order.items.map((item, index) => ({
-        key: `${item.name}-${index}`,
-        name: item.name,
-        quantity: item.quantity,
-        subtotal: item.subtotal,
-      }))}
-      total={order.totalAmount}
-      photobooth={order.photobooth}
-      title="Rincian"
-    />
-  );
 
   return (
     <>
@@ -368,8 +444,8 @@ function FoundOrder({
 
       {/* ------------------------------------------------------ details ---- */}
       <section className="band-tight menu-counter">
-        <div className="band-inner flex items-start gap-10">
-          <div className="min-w-0 flex-1">
+        <div className="band-inner">
+          <div className="min-w-0">
             {order.paymentMethod === "QRIS" && !cancelled && (
               <QrisPayment
                 orderNumber={order.orderNumber}
@@ -383,23 +459,17 @@ function FoundOrder({
               />
             )}
 
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-5 tablet:grid-cols-3">
-              {order.pickupSlot && (
-                <Fact label="Jam ambil">
-                  <span className="tabular-nums">{order.pickupSlot}</span>
-                </Fact>
-              )}
-              <Fact label="Pembayaran">{PAYMENT_LABEL[order.paymentMethod]}</Fact>
-              <Fact label="Status bayar">
-                <span className={order.paymentStatus === "PAID" ? "text-ok" : "text-warn"}>
-                  {order.paymentStatus === "PAID" ? "Udah lunas" : "Belum dibayar"}
-                </span>
-              </Fact>
-            </dl>
+            {/* The ticket carries what used to be three loose facts here — the
+                slot, how it is paid, whether it is — and the receipt. */}
+            <OrderTicket order={order} />
 
             {!cancelled && (
-              <div className="mt-9">
-                <h2 className="eyebrow mb-5 text-pink-deep">Perjalanan pesanan</h2>
+              <div className="k-form-card mt-7 bg-white p-4 tablet:p-6">
+                <p className="flex flex-wrap items-center gap-2">
+                  <span className="k-tag k-tag-red k-tag-flat">Overworld radar</span>
+                  <span className="k-mono text-[10.5px] text-sky-deep">Order progression</span>
+                </p>
+                <h2 className="k-section-title mt-2">Perjalanan pesanan</h2>
                 <OrderTimeline status={order.status} needsPrep={order.needsPrep} />
               </div>
             )}
@@ -419,24 +489,18 @@ function FoundOrder({
               />
             )}
 
-            {/* The receipt for the one column a phone has. */}
-            <div className="receipt-paper mt-10 desktop:hidden">{receipt}</div>
+            <div className="mt-8 flex flex-col gap-3 tablet:flex-row">
+              <ButtonLink href="/" variant="primary" className="tablet:flex-none">
+                Play again (pesan lagi)
+              </ButtonLink>
+              <ButtonLink href="/keranjang" variant="ghost" className="tablet:flex-none">
+                Lihat keranjang
+              </ButtonLink>
+            </div>
           </div>
-
-          <SummaryPanel>{receipt}</SummaryPanel>
         </div>
       </section>
     </>
-  );
-}
-
-/** One labelled fact about the order. */
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="eyebrow text-ink-soft">{label}</dt>
-      <dd className="mt-1 text-[14.5px] font-semibold leading-snug text-ink">{children}</dd>
-    </div>
   );
 }
 

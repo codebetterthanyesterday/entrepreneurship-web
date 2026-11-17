@@ -16,7 +16,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <Component
         ref={ref}
         className={cn(
-          "bg-white border-[1.5px] border-line rounded-[18px] p-4",
+          "ui-card bg-white border-[1.5px] border-line rounded-[18px] p-4",
           interactive && "cursor-pointer transition-colors hover:border-pink",
           className
         )}
