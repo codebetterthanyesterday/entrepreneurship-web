@@ -77,6 +77,23 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             </p>
           </div>
 
+          {/*
+            Paying comes before the ticket: it is the one thing left for the
+            customer to do, and the ticket carries a QR code of its own (the
+            order number, for the cashier). With the ticket first, a customer
+            reached for their e-wallet and scanned the wrong one.
+          */}
+          {order.paymentMethod === "QRIS" && !cancelled && (
+            <QrisPayment
+              orderNumber={order.orderNumber}
+              totalAmount={order.totalAmount}
+              qrisImageUrl={settings.qrisImageUrl ?? null}
+              paymentStatus={order.paymentStatus}
+              hasPaymentProof={order.hasPaymentProof}
+              className="mt-5"
+            />
+          )}
+
           <OrderTicket order={order} numberAs="h1" className="mt-5" />
         </div>
       </section>
@@ -85,18 +102,6 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         {/* A narrow measure, left-aligned: the ticket above was for reading across
             a counter, this part is for reading properly. */}
         <div className="band-inner-narrow">
-          {/* Paying comes first: it is the one thing left for the customer to do. */}
-          {order.paymentMethod === "QRIS" && !cancelled && (
-            <QrisPayment
-              orderNumber={order.orderNumber}
-              totalAmount={order.totalAmount}
-              qrisImageUrl={settings.qrisImageUrl ?? null}
-              paymentStatus={order.paymentStatus}
-              hasPaymentProof={order.hasPaymentProof}
-              className="mb-7"
-            />
-          )}
-
           <p
             className={cn(
               "border-l-2 py-3 pl-4 pr-3 text-[14px] leading-relaxed",

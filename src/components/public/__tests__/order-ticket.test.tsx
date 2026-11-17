@@ -73,7 +73,7 @@ describe("OrderTicket", () => {
   it("draws a QR that is described by the number it holds", () => {
     renderTicket(ORDER);
 
-    const qr = screen.getByRole("img", { name: "Kode QR berisi nomor pesanan PO-0007" });
+    const qr = screen.getByRole("img", { name: /^Kode QR nomor pesanan PO-0007, untuk ditunjukkan ke kasir/ });
     expect(qr.querySelector("svg")).toBeTruthy();
   });
 });
