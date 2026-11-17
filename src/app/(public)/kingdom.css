@@ -1005,7 +1005,8 @@ html[data-theme="kingdom"] body > * {
   padding: 4px 8px;
   border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: 6px;
-  background: var(--k-red);
+  /* 10px white text: --k-red manages only 4.3:1 under it, the accessible red 5.2:1. */
+  background: var(--color-pink-deep);
   color: #fff;
   font-family: var(--k-pixel);
   font-size: 10px;
@@ -1202,7 +1203,8 @@ html[data-theme="kingdom"] body > * {
 /* A chosen pickup slot or payment method: "checkpoint active". */
 .k-choice-on {
   border-color: var(--k-navy);
-  background: var(--k-red);
+  /* The accent that carries white text: --k-red manages only 4.3:1 under it. */
+  background: var(--color-pink-deep);
   box-shadow: 3px 3px 0 var(--k-navy);
 }
 

@@ -257,6 +257,10 @@ function ProofUpload({
         ref={input}
         type="file"
         accept="image/png,image/jpeg,image/webp"
+        aria-label="Pilih gambar bukti bayar QRIS"
+        // Opened by the visible button; kept out of the Tab order so a keyboard
+        // user meets one control, not two.
+        tabIndex={-1}
         className="sr-only"
         id={`bukti-${orderNumber}`}
         disabled={busy}

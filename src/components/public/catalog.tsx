@@ -321,7 +321,8 @@ function MenuBoard({
         <div className="band-inner flex items-center justify-between gap-3">
           <p>
             <b className="k-mono block text-[13px]">World 1-1 : {BRAND_NAME} Bazaar</b>
-            <span className="k-mono text-[9.5px] text-[var(--k-yellow)]">
+            {/* White, not the design's yellow: yellow on the dirt band is 4.3:1. */}
+            <span className="k-mono text-[9.5px] text-white">
               {products.length} menu di etalase
             </span>
           </p>

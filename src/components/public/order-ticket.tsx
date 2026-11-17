@@ -123,12 +123,14 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
 
       <div className="k-ticket-pass">
         <p className="k-mono text-[13px] text-pink-deep">Order pass ticket</p>
-        <p className="text-[13px] text-ink-soft">Tunjukin ini pas ambil pesanan</p>
+        <p className="text-[13px] text-ink-soft">
+          Tunjukin ke kasir pas ambil pesanan. <b className="text-ink">Bukan QR buat bayar.</b>
+        </p>
 
         <div className="k-ticket-qr">
           <span
             role="img"
-            aria-label={`Kode QR berisi nomor pesanan ${order.orderNumber}`}
+            aria-label={`Kode QR nomor pesanan ${order.orderNumber}, untuk ditunjukkan ke kasir, bukan untuk pembayaran`}
             className="block [&>svg]:h-auto [&>svg]:w-full"
             dangerouslySetInnerHTML={{ __html: qr }}
           />
