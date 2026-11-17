@@ -108,9 +108,13 @@ function CartBody({
 
           <div className="flex items-start gap-8">
             <div className="min-w-0 flex-1">
-              <h2 className="eyebrow text-pink-deep">
-                {cart.itemCount} item &middot; {lines.length} jenis
+              <h2 className="k-section-title flex items-center gap-2">
+                <span aria-hidden="true" className="h-3 w-3 flex-none bg-[var(--k-gold)]" />
+                Selected treats ({cart.itemCount})
               </h2>
+              <p className="k-mono mt-1 text-[10.5px] text-ink-soft">
+                {cart.itemCount} item &middot; {lines.length} jenis
+              </p>
 
               {/* The tray: each line a card on it, the picture large enough to
                   recognise at a glance, the controls under the name. */}
@@ -118,7 +122,7 @@ function CartBody({
                 {cart.entries.map((entry) => (
                   <li
                     key={entry.productId}
-                    className="flex items-center gap-3 rounded-[20px] bg-white p-2.5 shadow-[0_10px_24px_-18px_rgba(46,33,32,0.5)] tablet:gap-4 tablet:p-3"
+                    className="flex items-center gap-3 k-line bg-white p-3 tablet:gap-4 tablet:p-3.5"
                   >
                     <ProductVisual
                       product={

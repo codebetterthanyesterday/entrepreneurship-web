@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { buildTimeline } from "@/lib/order-timeline";
 import type { OrderStatus } from "@/types/order";
 
@@ -11,70 +10,58 @@ export interface OrderTimelineProps {
 }
 
 /**
- * Where the order has got to.
+ * Where the order has got to, as the design's checkpoints: one square marker
+ * per stage, joined by a rail that turns red up to the stage the order is on.
  *
- * Numbered circles joined by a thick bar is the stock "stepper" look, and it puts
- * the loudest thing on the page — four filled rings — on the part nobody reads.
- * What someone actually wants here is one line: which stage is happening now. So
- * the rule is a hairline, the marks are small dots, and weight is spent on the
- * current step's label instead.
+ * Mobile-first: on a phone the checkpoints run down the page with the rail on
+ * the left, which is the only way five of them fit with their descriptions;
+ * from the desktop breakpoint they sit in a row. The switch is `.k-tl` in
+ * `kingdom.css` — the markup is the same list either way.
  *
- * `position` from `buildTimeline` is deliberately unused: the order of the list
- * already says it, and printing it again inside a dot was the decoration this
- * replaces.
+ * The stage number is printed inside its marker, so a finished stage shows a
+ * tick instead and the current one is the only filled red square. A stage the
+ * order has not reached keeps its title but not its detail: telling someone to
+ * "come to the booth" two stages early is how they turn up early.
  */
 export function OrderTimeline({ status, needsPrep }: OrderTimelineProps) {
   const steps = buildTimeline(status, needsPrep);
 
   return (
-    <ol className="relative">
+    <ol className="k-tl">
       {steps.map((step, index) => {
-        const isLast = index === steps.length - 1;
-        const done = step.state === "done";
         const current = step.state === "current";
 
         return (
           <li
             key={step.id}
+            data-state={step.state}
             aria-current={current ? "step" : undefined}
-            className={cn("relative pl-7", !isLast && "pb-6")}
+            className="k-tl-step"
           >
-            {/* The rule, drawn per item so the colour can change at the step the
-                order has actually reached. */}
-            {!isLast && (
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "absolute left-[4.5px] top-[14px] bottom-0 w-px",
-                  done ? "bg-pink" : "bg-line",
-                )}
-              />
-            )}
-
-            <span
-              aria-hidden="true"
-              className={cn(
-                "absolute left-0 top-[7px] rounded-full transition-colors",
-                current
-                  ? // The one mark that is allowed to be loud, with a ring so it
-                    // reads as "here" rather than just "another dot".
-                    "h-2.5 w-2.5 bg-pink-deep ring-4 ring-pink-soft"
-                  : done
-                    ? "h-2.5 w-2.5 bg-pink"
-                    : "h-2.5 w-2.5 border-[1.5px] border-line bg-white",
+            <span aria-hidden="true" className="k-tl-dot">
+              {step.state === "done" ? (
+                <svg viewBox="0 0 24 24" className="h-5 w-5">
+                  <path
+                    d="M5 12.5l4.5 4.5L19 7.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                index + 1
               )}
-            />
+            </span>
 
-            <span className="block">
-              <b
-                className={cn(
-                  "text-[14.5px] leading-snug",
-                  current ? "text-ink" : done ? "font-semibold text-ink" : "font-semibold text-ink-soft",
-                )}
-              >
-                {step.title}
-              </b>
-              <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-soft">
+            <span className="block min-w-0">
+              <span aria-hidden="true" className="k-tl-label">
+                Stage {String(index + 1).padStart(2, "0")}
+                {current && <span className="k-tag k-tag-yellow k-tag-flat ml-2 !text-[9px]">Aktif</span>}
+              </span>
+              <b className="k-tl-title">{step.title}</b>
+              <span className="k-tl-detail">
                 {step.state === "pending" ? "Belum sampai tahap ini" : step.detail}
               </span>
             </span>

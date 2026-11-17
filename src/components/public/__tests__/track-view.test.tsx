@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { SWRConfig } from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TrackView } from "@/components/public/track-view";
+import { ToastProvider } from "@/components/ui/use-toast";
 import { REMEMBERED_ORDER_KEY } from "@/lib/remembered-order";
 import type { TrackedOrder } from "@/types/order-view";
 
@@ -34,11 +35,15 @@ function stubApi(order: TrackedOrder = ORDER) {
 }
 
 function renderTracker(props: React.ComponentProps<typeof TrackView> = {}) {
-  // A fresh SWR cache per test, or one test's order leaks into the next.
+  // A fresh SWR cache per test, or one test's order leaks into the next. The
+  // toast provider is the root layout's: the ticket's "salin nomor" button
+  // reports through it.
   return render(
-    <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
-      <TrackView {...props} />
-    </SWRConfig>,
+    <ToastProvider>
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <TrackView {...props} />
+      </SWRConfig>
+    </ToastProvider>,
   );
 }
 

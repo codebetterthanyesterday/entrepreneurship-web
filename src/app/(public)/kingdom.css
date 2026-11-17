@@ -1144,3 +1144,337 @@ html[data-theme="kingdom"] body > * {
   text-transform: uppercase;
   text-wrap: balance;
 }
+
+/* =========================================================================
+   Cart, checkout, the ticket and the tracker
+   ========================================================================= */
+
+.k-section-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+/* The cart's lines sit straight on the page, each on its own hard shadow;
+   the sand tray they used to share is gone. */
+[data-theme="kingdom"] .tray {
+  gap: 16px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.k-line {
+  border-radius: 12px;
+  box-shadow: 0 5px 0 var(--k-navy);
+}
+
+/* The summary beside the cart and the checkout form on a wide screen. */
+.k-summary {
+  border-radius: 14px;
+  box-shadow: 6px 6px 0 var(--k-navy);
+}
+
+/* One step of the checkout form, and its number. */
+.k-form-card {
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(29, 45, 85, 0.12);
+}
+
+.k-num {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: var(--color-pink-deep);
+  color: #fff;
+  font-family: var(--k-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* A chosen pickup slot or payment method: "checkpoint active". */
+.k-choice-on {
+  border-color: var(--k-navy);
+  background: var(--k-red);
+  box-shadow: 3px 3px 0 var(--k-navy);
+}
+
+/* ---- "Level complete" ---- */
+
+.k-victory {
+  padding: 22px 18px;
+  border-radius: 10px;
+  background: linear-gradient(120deg, var(--color-pink-deep), var(--k-red) 55%, var(--color-pink-deep));
+  color: #fff;
+}
+
+.k-victory-off {
+  background: var(--k-navy);
+}
+
+.k-victory-title {
+  margin-block: 8px;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 9vw, 50px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+/* ---- the ticket ---- */
+
+.k-ticket {
+  display: grid;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(29, 45, 85, 0.14);
+}
+
+.k-ticket-main {
+  min-width: 0;
+  padding: 18px;
+}
+
+.k-ticket-pass {
+  padding: 18px;
+  border-top: 3px dashed #fff;
+  background: var(--color-line);
+  text-align: center;
+}
+
+.k-codebox {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-block: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-sand);
+}
+
+.k-code {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 11vw, 46px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--color-pink-deep);
+}
+
+.k-ticket-qr {
+  width: 170px;
+  margin: 12px auto;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(29, 45, 85, 0.12);
+}
+
+/* ---- the checkpoints ---- */
+
+.k-tl {
+  margin-top: 16px;
+  padding: 18px 14px;
+  border-top: 8px solid var(--k-grass);
+  border-radius: 10px;
+  background: var(--color-sand);
+}
+
+.k-tl-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  padding-bottom: 20px;
+  color: var(--color-ink-soft);
+}
+
+.k-tl-step:last-child {
+  padding-bottom: 0;
+}
+
+/* The rail from this checkpoint to the next. */
+.k-tl-step::before {
+  content: "";
+  position: absolute;
+  top: 44px;
+  bottom: 0;
+  left: 20px;
+  width: 5px;
+  background: var(--color-line);
+}
+
+.k-tl-step:last-child::before {
+  display: none;
+}
+
+.k-tl-step[data-state="done"]::before {
+  background: var(--color-pink-deep);
+}
+
+.k-tl-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #e6e9ff;
+  font-family: var(--k-mono);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.k-tl-step[data-state="done"] .k-tl-dot {
+  background: var(--k-grass);
+  color: #fff;
+}
+
+.k-tl-step[data-state="current"] .k-tl-dot {
+  background: var(--color-pink-deep);
+  color: #fff;
+  box-shadow: 0 4px 0 #7d0d10;
+}
+
+.k-tl-label {
+  display: flex;
+  align-items: center;
+  font-family: var(--k-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.k-tl-title {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.k-tl-detail {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.k-tl-step[data-state="done"],
+.k-tl-step[data-state="current"] {
+  color: var(--color-ink);
+}
+
+.k-tl-step[data-state="done"] .k-tl-label {
+  color: #2f7a22;
+}
+
+.k-tl-step[data-state="current"] .k-tl-label,
+.k-tl-step[data-state="current"] .k-tl-title {
+  color: var(--color-pink-deep);
+}
+
+/* ---- "quest data not found" ---- */
+
+.k-err {
+  max-width: 44rem;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fdecee;
+  box-shadow: 5px 5px 0 var(--k-navy);
+}
+
+.k-err-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-pink-deep);
+  color: #fff;
+  font-family: var(--k-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.k-code-chip {
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--color-line);
+  color: var(--color-pink-deep);
+  font-family: var(--k-mono);
+  font-size: 0.9em;
+  font-weight: 700;
+}
+
+.k-check-num {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 4px;
+  background: var(--k-gold);
+  font-family: var(--k-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .k-victory {
+    padding: 34px;
+  }
+
+  .k-ticket {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .k-ticket-main,
+  .k-ticket-pass {
+    padding: 26px;
+  }
+
+  .k-ticket-pass {
+    border-top: 0;
+    border-left: 3px dashed #fff;
+  }
+}
+
+@media (min-width: 1040px) {
+  .k-tl {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 22px;
+  }
+
+  .k-tl-step {
+    display: block;
+    padding: 0 14px 0 0;
+  }
+
+  .k-tl-step::before {
+    top: 20px;
+    right: 0;
+    bottom: auto;
+    left: 44px;
+    width: auto;
+    height: 5px;
+  }
+
+  .k-tl-dot {
+    margin-bottom: 10px;
+  }
+}
