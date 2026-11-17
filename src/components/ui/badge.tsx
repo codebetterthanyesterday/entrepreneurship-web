@@ -15,7 +15,7 @@ const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
       <span
         ref={ref}
         className={cn(
-          "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider",
+          "ui-badge inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider",
           variant === "info" && "bg-sky-soft text-sky-deep",
           variant === "prep" && "bg-warn-soft text-warn",
           variant === "ok" && "bg-ok-soft text-ok",

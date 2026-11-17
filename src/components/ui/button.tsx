@@ -17,6 +17,10 @@ export interface ButtonLook {
  */
 export function buttonClasses({ variant = "primary", size = "md", fullWidth }: ButtonLook): string {
   return cn(
+    // `ui-btn` and its variant are plain hooks with no styles of their own here:
+    // the customer theme (`kingdom.css`) reshapes the control through them.
+    "ui-btn",
+    `ui-btn-${variant}`,
     "inline-flex items-center justify-center rounded-xl font-medium transition-colors",
     // Sizes — 44px is the project's touch-target floor.
     size === "sm" && "min-h-[44px] px-4 text-sm",

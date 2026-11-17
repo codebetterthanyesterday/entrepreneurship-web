@@ -38,7 +38,6 @@ export default async function AdminSettingsPage() {
       <StoreToggles
         preorderOpen={settings.preorderOpen}
         boothOpen={settings.boothOpen}
-        accentChoiceEnabled={settings.accentChoiceEnabled}
       />
 
       <PickupSlotManager slots={slotItems} />

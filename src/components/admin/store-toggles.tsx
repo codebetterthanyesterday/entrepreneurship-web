@@ -6,12 +6,11 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { updateSettingsAction } from "@/actions/setting.actions";
 
-type ChannelKey = "preorderOpen" | "boothOpen" | "accentChoiceEnabled";
+type ChannelKey = "preorderOpen" | "boothOpen";
 
 export interface StoreTogglesProps {
   preorderOpen: boolean;
   boothOpen: boolean;
-  accentChoiceEnabled: boolean;
 }
 
 const COPY: Record<
@@ -34,23 +33,15 @@ const COPY: Record<
     toastOff: "Booth ditutup",
     ariaLabel: "Buka atau tutup booth",
   },
-  accentChoiceEnabled: {
-    title: "Warna cewek/cowok",
-    on: "Pengunjung baru ditanya, dan bisa ganti warna di header",
-    off: "Pengunjung baru pakai merah. Yang udah milih tetap pakai pilihannya",
-    toastOn: "Pilihan warna dinyalakan",
-    toastOff: "Pilihan warna dimatikan",
-    ariaLabel: "Nyalakan atau matikan pilihan warna cewek/cowok",
-  },
 };
 
-export function StoreToggles({ preorderOpen, boothOpen, accentChoiceEnabled }: StoreTogglesProps) {
+export function StoreToggles({ preorderOpen, boothOpen }: StoreTogglesProps) {
   const router = useRouter();
   const { toast } = useToast();
 
   // Flip immediately, then roll back if the server refuses — there is no save
   // button, so the switch itself has to read as the confirmation.
-  const [values, setValues] = React.useState({ preorderOpen, boothOpen, accentChoiceEnabled });
+  const [values, setValues] = React.useState({ preorderOpen, boothOpen });
   const [pending, setPending] = React.useState<ChannelKey | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 

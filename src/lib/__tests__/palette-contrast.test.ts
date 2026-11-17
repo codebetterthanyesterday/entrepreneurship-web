@@ -16,16 +16,16 @@ import { describe, expect, it } from "vitest";
 const CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf-8");
 
 /**
- * The two moods a customer can be in — see `src/lib/accent.ts`. "pink" is the
+ * The two palettes the app paints in. "pink" is the
  * `@theme` block (the name is the mood's id and the tokens' role name; the
- * colour behind it is now the brand red); blue is the `[data-accent="blue"]` block that redefines its
+ * colour behind it is now the brand red); "kingdom" is the `[data-theme="kingdom"]` block the customer pages wear, which redefines its
  * identity roles. Every screen a customer sees is drawn in one or the other, so
  * every pair below has to hold in both.
  */
-type Palette = "pink" | "blue";
-const PALETTES: readonly Palette[] = ["pink", "blue"];
+type Palette = "pink" | "kingdom";
+const PALETTES: readonly Palette[] = ["pink", "kingdom"];
 
-const BLUE_BLOCK = CSS.match(/\[data-accent="blue"\]\s*\{([^}]*)\}/)?.[1] ?? "";
+const KINGDOM_BLOCK = CSS.match(/\[data-theme="kingdom"\]\s*\{([^}]*)\}/)?.[1] ?? "";
 
 /** The identity block's text: the roles a mood has to redefine. */
 const IDENTITY_BLOCK = CSS.slice(
@@ -48,10 +48,10 @@ function colourNames(block: string): string[] {
  * below is what keeps the indirection out.
  */
 function token(name: string, palette: Palette = "pink"): string {
-  // The blue mood only redefines the identity roles; the status colours it
-  // leaves alone are read from the theme like the pink mood's.
+  // The kingdom theme only redefines the identity roles; the status colours it
+  // leaves alone are read from the theme like the base palette's.
   const pattern = new RegExp(`--color-${name}:\\s*([^;]+);`);
-  const declared = (palette === "blue" && BLUE_BLOCK.match(pattern)) || CSS.match(pattern);
+  const declared = (palette === "kingdom" && KINGDOM_BLOCK.match(pattern)) || CSS.match(pattern);
   if (!declared) throw new Error(`--color-${name} is not defined in globals.css`);
 
   const value = declared[1]!.trim();
@@ -265,15 +265,10 @@ describe("colour tokens stay resolvable", () => {
   });
 });
 
-describe("the blue mood", () => {
-  it("redefines every identity role, so blue mode is never half pink", () => {
+describe("the kingdom theme", () => {
+  it("redefines every identity role, so the customer side is never half themed", () => {
     expect(colourNames(IDENTITY_BLOCK).length).toBe(11);
-    expect(colourNames(BLUE_BLOCK)).toEqual(colourNames(IDENTITY_BLOCK));
-  });
-
-  it("keeps the header switch's pinned swatches equal to each mood's accent", () => {
-    expect(token("mood-pink")).toBe(token("pink", "pink"));
-    expect(token("mood-blue")).toBe(token("pink", "blue"));
+    expect(colourNames(KINGDOM_BLOCK)).toEqual(colourNames(IDENTITY_BLOCK));
   });
 });
 
