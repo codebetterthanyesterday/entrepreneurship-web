@@ -3,7 +3,6 @@ import * as React from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { JourneyRail } from "@/components/public/journey";
-import { foodKindOf } from "@/components/public/journey-art";
 import { flyToCart } from "@/lib/fly-to-cart";
 
 afterEach(() => {
@@ -33,27 +32,6 @@ describe("JourneyRail", () => {
     // The current stop and the one after it are not links.
     expect(within(rail).queryByRole("link", { name: "Isi data" })).toBeNull();
     expect(within(rail).queryByRole("link", { name: "Lacak" })).toBeNull();
-  });
-});
-
-describe("foodKindOf", () => {
-  it.each([
-    ["Es Kopi Susu Gula Aren", null],
-    ["Lemonade Butterfly Pea", null],
-    ["Matcha Latte", null],
-    ["Spesial Rumah", "Minuman"],
-  ])("gives %s (%s) a cup", (name, categoryName) => {
-    expect(foodKindOf({ name, categoryName })).toBe("drink");
-  });
-
-  it.each([
-    ["Risoles Mayo", "Makanan"],
-    ["Pisang Goreng", null],
-    ["Donat Gula", null],
-    // "es" only as a word, so a snack whose name merely contains it stays a snack.
-    ["Pastel Keju", null],
-  ])("gives %s (%s) a doughnut", (name, categoryName) => {
-    expect(foodKindOf({ name, categoryName })).toBe("snack");
   });
 });
 

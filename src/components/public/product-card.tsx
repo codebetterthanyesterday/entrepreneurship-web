@@ -2,110 +2,159 @@
 
 import * as React from "react";
 import { cn, formatRupiah } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { FoodArt, foodKindOf } from "./journey-art";
+import { flavorOf } from "@/lib/flavor";
+import { FlavorArt } from "./flavor-art";
 import type { PublicProduct } from "@/types/admin";
 
 export interface ProductCardProps {
   product: PublicProduct;
   /** Stock left after what is already in the cart. */
   remaining: number;
+  /** How many of it are in the cart already. */
+  inCart: number;
   onSelect: (product: PublicProduct) => void;
+  /** One more straight into the cart; `origin` is the button, for the flight. */
+  onQuickAdd: (product: PublicProduct, origin: DOMRect) => void;
 }
 
 /**
- * One line of the menu.
+ * One item on the menu: a tile, two to a row on a phone.
  *
- * It used to be a bordered white card, and a column of those is the pattern that
- * made the whole site read as a template. It is a row on a hairline now, with
- * the price set against the name, which is how a printed menu does it and how
- * prices are actually scanned.
+ * The picture does the selling, so it takes the tile's full width. What a
+ * customer needs to decide stays on the tile with it: the name, the price, the
+ * prep type, and how many are left, which turns urgent at three.
  *
- * The horizontal shape stays. A photo grid would look better and work worse: a
- * menu where stock runs out during the event has to show the name, the price, the
- * prep type and what is left, and that is a row, not a tile.
+ * Two controls, side by side rather than nested: the tile opens the product's
+ * sheet, and the round "+" on the picture adds one without opening anything,
+ * which is how most people reorder the thing they already know.
  */
-export function ProductCard({ product, remaining, onSelect }: ProductCardProps) {
-  const isOut = remaining <= 0;
-  const isLow = !isOut && remaining <= 3;
+export function ProductCard({ product, remaining, inCart, onSelect, onQuickAdd }: ProductCardProps) {
+  const isOut = product.stock <= 0;
+  const isCapped = !isOut && remaining <= 0;
+  const isLow = !isOut && remaining > 0 && remaining <= 3;
+  const fresh = product.prepType === "NEEDS_PREP";
 
   return (
-    <button
-      type="button"
-      disabled={isOut}
-      onClick={() => onSelect(product)}
-      aria-label={isOut ? `${product.name}, habis` : `Lihat ${product.name}`}
-      className={cn(
-        "group flex w-full items-start gap-4 border-t border-line py-4 text-left",
-        isOut ? "cursor-default opacity-50" : "cursor-pointer",
-      )}
-    >
-      <ProductVisual
-        product={product}
-        dimmed={isOut}
-        className="h-[84px] w-[84px] rounded-[18px]"
-      />
+    <article className="relative">
+      <button
+        type="button"
+        disabled={isOut}
+        onClick={() => onSelect(product)}
+        aria-label={isOut ? `${product.name}, habis` : `Lihat ${product.name}`}
+        className={cn("group block w-full text-left", isOut ? "cursor-default" : "cursor-pointer")}
+      >
+        <span className="relative block aspect-square overflow-hidden rounded-[24px]">
+          <ProductVisual product={product} dimmed={isOut} className="h-full w-full p-[14%]" />
 
-      <span className="flex-1 min-w-0">
-        <span className="flex items-baseline gap-3">
           <span
             className={cn(
-              "flex-1 min-w-0 truncate text-[16px] font-semibold text-ink transition-colors",
+              "absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[10.5px] font-bold tracking-wide",
+              "bg-white/85 backdrop-blur-sm",
+              fresh ? "text-warn" : "text-sky-deep",
+            )}
+          >
+            {fresh ? "Diracik dadakan" : "Siap ambil"}
+          </span>
+
+          {isOut && (
+            <span className="absolute inset-0 flex items-center justify-center bg-cream/55">
+              <span className="-rotate-12 rounded-[10px] border-[3px] border-hot px-3 py-1 font-[family-name:var(--font-display)] text-[17px] font-semibold uppercase tracking-wider text-hot">
+                Habis
+              </span>
+            </span>
+          )}
+        </span>
+
+        <span className="mt-2.5 block px-0.5">
+          <span
+            className={cn(
+              "block text-[14.5px] font-semibold leading-snug text-ink line-clamp-2 transition-colors tablet:text-[15.5px]",
               !isOut && "group-hover:text-pink-deep",
             )}
           >
             {product.name}
           </span>
-          {/* Tabular figures so a column of prices lines up on the decimal. */}
-          <span className="flex-none text-[15px] font-semibold text-ink tabular-nums">
-            {formatRupiah(product.price)}
+          <span className="mt-1 flex items-baseline justify-between gap-2">
+            <span className="font-[family-name:var(--font-display)] text-[17px] font-semibold text-ink tabular-nums">
+              {formatRupiah(product.price)}
+            </span>
+          </span>
+          <span
+            className={cn(
+              "mt-0.5 block text-[12px] font-semibold",
+              isOut || isLow || isCapped ? "text-hot" : "text-ink-soft",
+            )}
+          >
+            {isOut
+              ? "Habis, maaf ya"
+              : isCapped
+                ? "Semua sisanya udah di keranjang"
+                : isLow
+                  ? `Tinggal ${remaining} lagi!`
+                  : `Sisa ${remaining} porsi`}
           </span>
         </span>
+      </button>
 
-        {product.description && (
-          <span className="mt-1 block text-[13px] leading-snug text-ink-soft line-clamp-2">
-            {product.description}
-          </span>
-        )}
-
-        <span className="mt-2.5 flex flex-wrap items-center gap-2.5">
-          <Badge variant={product.prepType === "NEEDS_PREP" ? "prep" : "info"}>
-            {product.prepType === "NEEDS_PREP" ? "Diracik dadakan" : "Siap ambil"}
-          </Badge>
-          <span className={cn("eyebrow", isOut || isLow ? "text-hot" : "text-ink-soft")}>
-            {isOut ? "Habis, maaf ya" : `Sisa ${remaining} porsi`}
-          </span>
+      {!isOut && (
+        // Laid over the picture's corner, but a sibling of the tile's button:
+        // a button inside a button is not a thing a screen reader can use.
+        <span className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+          <button
+            type="button"
+            disabled={isCapped}
+            onClick={(event) => onQuickAdd(product, event.currentTarget.getBoundingClientRect())}
+            aria-label={`Tambah 1 ${product.name} ke keranjang`}
+            className={cn(
+              "pointer-events-auto absolute bottom-2.5 right-2.5 flex h-11 w-11 items-center justify-center rounded-full",
+              "bg-pink-deep text-white shadow-[0_8px_18px_-8px_var(--color-pink-deep)]",
+              "transition-transform active:scale-90 disabled:bg-ink-soft disabled:shadow-none",
+            )}
+          >
+            {inCart > 0 ? (
+              <span key={inCart} className="nav-count-pop text-[15px] font-bold tabular-nums">
+                {inCart}
+              </span>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
         </span>
-      </span>
-    </button>
+      )}
+    </article>
   );
 }
 
 /**
- * The picture, or a stand-in for it — shared by the menu row, the product sheet
- * and the cart's lines, so a product looks the same wherever it appears.
+ * The picture, or the drawing of it: shared by the menu's tiles, the product's
+ * sheet and the cart's lines, so a product looks the same wherever it appears.
  *
- * Most products have no `imageUrl` — there is no upload pipeline in this project,
- * only URLs an admin pastes in — so the no-image case is the common one and has
- * to look deliberate. It is drawn: a cup for a drink, a doughnut for the rest,
- * on the soft accent (see `foodKindOf`).
+ * Most products have no `imageUrl` (there is no upload pipeline, only URLs an
+ * admin pastes in), so the drawing is the common case: `FlavorArt`, on a tile
+ * washed in the colour of what is in it.
  */
 export function ProductVisual({
   product,
   className,
   dimmed,
+  live,
 }: {
-  product: Pick<PublicProduct, "name" | "imageUrl" | "categoryName">;
+  product: Pick<PublicProduct, "name" | "imageUrl" | "categoryName"> &
+    Partial<Pick<PublicProduct, "prepType">>;
   className?: string;
-  /** Sold out: the picture goes quiet with the rest of the row. */
+  /** Sold out: the picture goes quiet. */
   dimmed?: boolean;
+  /** The product's own sheet: ice bobs, steam rises. */
+  live?: boolean;
 }) {
   if (product.imageUrl) {
     return (
       // The frame clips; the image inside it is what scales. Putting
       // `overflow-hidden` and `scale` on the same element clips nothing, because
       // an element's own overflow never contains its own transform.
-      <span className={cn("block flex-none overflow-hidden", className)}>
+      <span className={cn("block flex-none overflow-hidden !p-0", className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.imageUrl}
@@ -113,24 +162,25 @@ export function ProductVisual({
           loading="lazy"
           className={cn(
             "h-full w-full object-cover transition-transform duration-500 motion-reduce:transition-none",
-            !dimmed && "group-hover:scale-[1.04]",
+            dimmed ? "grayscale-[60%]" : "group-hover:scale-[1.05]",
           )}
         />
       </span>
     );
   }
 
+  const { tint } = flavorOf(product);
+
   return (
     <span
       aria-hidden="true"
-      className={cn(
-        // Padding in fixed units: a percentage resolves against the *parent's*
-        // width, which on a wide row ate the whole tile and left the art 0×0.
-        "food-tile flex flex-none items-center justify-center bg-pink-soft p-3",
-        className,
-      )}
+      className={cn("flex flex-none items-center justify-center", dimmed && "grayscale-[60%]", className)}
+      style={{
+        // A pool of light behind the item, the way a counter lamp falls.
+        background: `radial-gradient(circle at 50% 38%, #ffffff 0%, ${tint} 62%)`,
+      }}
     >
-      <FoodArt kind={foodKindOf(product)} />
+      <FlavorArt product={product} fresh={product.prepType === "NEEDS_PREP"} live={live} />
     </span>
   );
 }

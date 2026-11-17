@@ -333,13 +333,13 @@ html {
   --lede: clamp(1rem, 1.5vw, 1.1875rem);
 
   /*
-   * The catalogue's sticky category bar: `py-3` around a 44px chip plus its 1px
+   * The catalogue's sticky category bar: `py-2.5` around a 44px chip plus its 1px
    * border. The desktop cart panel sticks below it, so the number has to be
    * written down rather than guessed — an overlap here covers the panel's own
    * heading. `Catalog` sets `--filter-bar` to this or to 0px depending on whether
-   * there are any categories to filter by.
+   * there is more than one shelf to jump between.
    */
-  --filter-bar-height: 69px;
+  --filter-bar-height: 65px;
 
   /* Band padding. The vertical rhythm of the whole page comes from this pair. */
   --band-y: clamp(3.5rem, 9vw, 7rem);
@@ -1070,13 +1070,192 @@ html:has(.accent-welcome) {
   }
 }
 
-/* A product's picture tilts when the pointer finds it. */
-.food-tile svg {
-  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+/* ==========================================================================
+   Flavour art — the drawn menu items (`FlavorArt`)
+   --------------------------------------------------------------------------
+   Still on the menu's tiles, except for a tilt when the pointer finds one;
+   alive in the product's own sheet (`.is-live`): ice bobs, bubbles rise,
+   steam drifts off what is made to order, chocolate runs. The global
+   reduced-motion rule stops all of it.
+   ========================================================================== */
+.flavor-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.group:hover .food-tile svg {
-  transform: rotate(-6deg) scale(1.06);
+.group:hover .flavor-body,
+.group:focus-visible .flavor-body {
+  transform: rotate(-5deg) scale(1.05);
+}
+
+.flavor-art.is-live .flavor-body {
+  animation: flavor-float 4.4s ease-in-out infinite;
+}
+
+.flavor-art.is-live .flavor-ice {
+  animation: flavor-bob 2.6s ease-in-out infinite;
+}
+
+.flavor-bubbles circle {
+  opacity: 0;
+}
+
+.flavor-art.is-live .flavor-bubbles circle {
+  animation: flavor-rise 2.6s ease-in infinite;
+}
+
+.flavor-steam path {
+  opacity: 0;
+}
+
+.flavor-art.is-live .flavor-steam path,
+.group:hover .flavor-steam path {
+  animation: flavor-steam 2.4s ease-out infinite;
+}
+
+.flavor-art.is-live .flavor-drip {
+  animation: flavor-drip 3.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+
+@keyframes flavor-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-1.5deg);
+  }
+}
+
+@keyframes flavor-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2.5px);
+  }
+}
+
+@keyframes flavor-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-46px);
+  }
+}
+
+@keyframes flavor-steam {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes flavor-drip {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.08);
+  }
+}
+
+/* The board's "preorder is open" dot breathes, like a sign that is switched on. */
+.board-live {
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ok-soft) 70%, transparent);
+  animation: board-live 2.2s ease-out infinite;
+}
+
+@keyframes board-live {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ok-soft) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 9px transparent;
+  }
+}
+
+/* The day's menu on the board, each item bobbing out of step with the next. */
+.board-item {
+  animation: stage-float 4.6s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -1.4s);
+}
+
+/* A shelf jumped to from the category bar lands below the header and the bar. */
+.shelf {
+  scroll-margin-top: calc(var(--page-top) + var(--filter-bar-height) + 12px);
+}
+
+/* The cart's tray: the quiet field with a lip, the lines set on it as cards. */
+.tray {
+  background: var(--color-sand);
+  box-shadow: inset 0 0 0 1.5px var(--color-sand-line);
+}
+
+/*
+ * A strip of receipt paper: white, a little lift, and a torn zigzag along the
+ * bottom edge. The teeth are a pseudo-element, so the shadow follows them.
+ */
+.receipt-paper {
+  --tooth: 9px;
+  position: relative;
+  margin-bottom: var(--tooth);
+  padding: 20px 18px 16px;
+  background: #ffffff;
+  border-radius: 18px 18px 0 0;
+  filter: drop-shadow(0 10px 14px rgba(46, 33, 32, 0.12));
+}
+
+.receipt-paper::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--tooth));
+  height: var(--tooth);
+  background:
+    linear-gradient(135deg, #ffffff 50%, transparent 50%) 0 0 / calc(2 * var(--tooth)) 100% repeat-x,
+    linear-gradient(-135deg, #ffffff 50%, transparent 50%) 0 0 / calc(2 * var(--tooth)) 100% repeat-x;
+}
+
+/* The menu's backdrop: crumbs and sprinkles, barely there, so the cream reads as
+   a counter rather than as an empty page. One tile, drawn once, repeated. */
+.menu-counter {
+  background-color: var(--color-cream);
+  background-image: radial-gradient(
+      circle at 12px 14px,
+      color-mix(in srgb, var(--color-pink) 16%, transparent) 1.6px,
+      transparent 2.2px
+    ),
+    radial-gradient(
+      circle at 46px 38px,
+      color-mix(in srgb, var(--color-sand-line) 70%, transparent) 1.4px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 30px 58px,
+      color-mix(in srgb, var(--color-ink) 7%, transparent) 1.2px,
+      transparent 1.8px
+    );
+  background-size: 64px 72px;
 }
 
 /* The navigation's count pops each time it changes. */

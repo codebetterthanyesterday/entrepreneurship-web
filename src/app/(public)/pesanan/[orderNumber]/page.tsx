@@ -101,7 +101,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="band-tight band-cream">
+      <section className="band-tight menu-counter">
         {/* A narrow measure, left-aligned: the number above was for reading across
             a counter, this part is for reading properly. */}
         <div className="band-inner-narrow">
@@ -116,7 +116,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             {instruction.text}
           </p>
 
-          <div className="mt-9">
+          <div className="receipt-paper mt-9">
             <OrderReceipt
               lines={order.items.map((item, index) => ({
                 key: `${item.name}-${index}`,

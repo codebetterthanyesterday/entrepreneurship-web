@@ -4,6 +4,8 @@ import * as React from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
 import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/components/ui/use-toast";
+import { flyToCart } from "@/lib/fly-to-cart";
 import { formatRupiah } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
 import { JourneyEmpty, JourneyHero } from "./journey";
@@ -54,7 +56,7 @@ function CartBody({
   // is full.
   if (!cart.isReady) {
     return (
-      <section className="band-tight band-cream">
+      <section className="band-tight menu-counter">
         <div className="band-inner">
           <p className="text-sm text-ink-soft" aria-busy="true">
             Lagi ngambil keranjang kamu…
@@ -66,7 +68,7 @@ function CartBody({
 
   if (cart.entries.length === 0) {
     return (
-      <section className="band band-cream">
+      <section className="band menu-counter">
         <div className="band-inner">
           {/*
             Written for this page rather than taken from the shared "no data"
@@ -92,7 +94,7 @@ function CartBody({
 
   return (
     <>
-      <section className="band-tight band-cream">
+      <section className="band-tight menu-counter">
         <div className="band-inner">
           {!preorderOpen && (
             <p
@@ -109,14 +111,13 @@ function CartBody({
                 {cart.itemCount} item &middot; {lines.length} jenis
               </h2>
 
-              {/* Receipt lines you can still change: name and price on the top
-                  line, the controls beneath on a phone and beside them from
-                  tablet up, all on hairlines rather than in cards. */}
-              <ul className="mt-3 flex flex-col">
+              {/* The tray: each line a card on it, the picture large enough to
+                  recognise at a glance, the controls under the name. */}
+              <ul className="tray mt-3 flex flex-col gap-2.5 rounded-[26px] p-2.5 tablet:p-3">
                 {cart.entries.map((entry) => (
                   <li
                     key={entry.productId}
-                    className="flex items-start gap-3.5 border-t border-line py-4 last:border-b tablet:items-center"
+                    className="flex items-center gap-3 rounded-[20px] bg-white p-2.5 shadow-[0_10px_24px_-18px_rgba(46,33,32,0.5)] tablet:gap-4 tablet:p-3"
                   >
                     <ProductVisual
                       product={
@@ -126,21 +127,21 @@ function CartBody({
                           categoryName: null,
                         }
                       }
-                      className="h-14 w-14 rounded-[14px] p-2 tablet:h-16 tablet:w-16"
+                      className="h-[76px] w-[76px] rounded-[16px] p-2 tablet:h-20 tablet:w-20"
                     />
 
-                    <span className="flex min-w-0 flex-1 flex-col gap-3 tablet:flex-row tablet:items-center tablet:gap-4">
+                    <span className="flex min-w-0 flex-1 flex-col gap-2 tablet:flex-row tablet:items-center tablet:gap-4">
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-baseline gap-3">
-                          <span className="min-w-0 flex-1 truncate text-[15.5px] font-semibold text-ink">
-                            {entry.product.name}
-                          </span>
-                          <span className="flex-none text-[15px] font-semibold text-ink tabular-nums">
+                        <span className="block text-[15px] font-semibold leading-snug text-ink line-clamp-2">
+                          {entry.product.name}
+                        </span>
+                        <span className="mt-0.5 flex items-baseline gap-2">
+                          <span className="font-[family-name:var(--font-display)] text-[16px] font-semibold text-ink tabular-nums">
                             {formatRupiah(entry.subtotal)}
                           </span>
-                        </span>
-                        <span className="eyebrow mt-1 block text-ink-soft">
-                          {formatRupiah(entry.product.price)} per porsi
+                          <span className="text-[11.5px] font-semibold text-ink-soft tabular-nums">
+                            @{formatRupiah(entry.product.price)}
+                          </span>
                         </span>
                       </span>
 
@@ -184,18 +185,20 @@ function CartBody({
                 ))}
               </ul>
 
-              {/* The total, for the single column a phone has. The panel carries
-                  it on a wide screen, where this one is hidden. */}
-              <div className="mt-6 flex items-baseline justify-between desktop:hidden">
-                <span className="eyebrow text-ink-soft">Total</span>
-                <span className="font-[family-name:var(--font-display)] text-3xl font-semibold text-ink tabular-nums">
-                  {formatRupiah(cart.total)}
-                </span>
-              </div>
+              <AlsoGood cart={cart} products={products} />
+
+              {/* The bill, for the single column a phone has: a strip of
+                  receipt paper. The panel carries it on a wide screen. */}
+              <OrderReceipt
+                lines={lines}
+                total={cart.total}
+                title="Struk sementara"
+                className="receipt-paper mt-8 desktop:hidden"
+              />
             </div>
 
             <SummaryPanel>
-              <OrderReceipt lines={lines} total={cart.total} title="Ringkasan" />
+              <OrderReceipt lines={lines} total={cart.total} title="Struk sementara" />
 
               <div className="mt-5">
                 {preorderOpen ? (
@@ -225,5 +228,62 @@ function CartBody({
         )}
       </ActionBar>
     </>
+  );
+}
+
+/**
+ * "Sekalian?": the rest of the menu, one tap from the tray. A short row of what
+ * is not in the cart yet and still in stock, the way a counter keeps the small
+ * things by the till.
+ */
+function AlsoGood({
+  cart,
+  products,
+}: {
+  cart: ReturnType<typeof useCart>;
+  products: PublicProduct[];
+}) {
+  const { toast } = useToast();
+  const others = products
+    .filter((product) => cart.quantityOf(product.id) === 0 && product.stock > 0)
+    .slice(0, 6);
+
+  if (others.length === 0) return null;
+
+  return (
+    <section aria-labelledby="sekalian" className="mt-7">
+      <h2 id="sekalian" className="display-3 text-ink">
+        Sekalian?
+      </h2>
+      <ul className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-2 tablet:mx-0 tablet:px-0">
+        {others.map((product) => (
+          <li key={product.id} className="w-[132px] flex-none snap-start">
+            <div className="relative">
+              <ProductVisual product={product} className="aspect-square w-full rounded-[20px] p-4" />
+              <button
+                type="button"
+                aria-label={`Tambah 1 ${product.name} ke keranjang`}
+                onClick={(event) => {
+                  cart.addItem(product.id, 1);
+                  flyToCart(event.currentTarget.getBoundingClientRect());
+                  toast(`${product.name} masuk keranjang!`);
+                }}
+                className="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-pink-deep text-white shadow-[0_8px_18px_-8px_var(--color-pink-deep)] transition-transform active:scale-90"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <p className="mt-2 text-[13px] font-semibold leading-snug text-ink line-clamp-2">
+              {product.name}
+            </p>
+            <p className="text-[12.5px] font-semibold text-ink-soft tabular-nums">
+              {formatRupiah(product.price)}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
