@@ -175,8 +175,8 @@ describe("HourlySalesCard", () => {
 
     expect(bars.map((bar) => bar.style.height)).toEqual(["50%", "100%"]);
     // The peak hour is the only one drawn in the solid colour.
-    expect(bars.map((bar) => bar.classList.contains("bg-pink"))).toEqual([false, true]);
-    expect(bars.map((bar) => bar.classList.contains("bg-pink-soft"))).toEqual([true, false]);
+    expect(bars.map((bar) => bar.classList.contains("s-hour-bar-peak"))).toEqual([false, true]);
+    expect(bars.every((bar) => bar.classList.contains("s-hour-bar"))).toBe(true);
   });
 
   it("keeps a quiet hour in the middle of the day visible as a gap", () => {

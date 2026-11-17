@@ -9,7 +9,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { KingdomRoot } from "@/components/site/kingdom-root";
 import { SplashScreen } from "@/components/site/splash-screen";
 import { SPLASH_COOKIE, shouldShowSplash } from "@/lib/splash";
-import "./kingdom.css";
+import "../kingdom.css";
 
 export default async function PublicLayout({
   children,
@@ -36,8 +36,7 @@ export default async function PublicLayout({
   return (
     // `KingdomRoot` is what makes these pages the Snack Kingdom: it sets
     // `data-theme="kingdom"`, which `globals.css` and `kingdom.css` answer. The
-    // staff layout does not render it, so /admin, /kasir and /dapur keep the
-    // base palette.
+    // staff layout renders it too, with its own work-mode chrome (`staff.css`).
     <KingdomRoot className="min-h-screen flex flex-col bg-cream">
       {showSplash && <SplashScreen brandName={identity.brandName} tagline={identity.tagline} />}
 

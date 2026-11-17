@@ -61,7 +61,7 @@ export function HourlySalesCard({ hours }: HourlySalesCardProps) {
           Belum ada pesanan masuk hari ini. Grafiknya muncul begitu transaksi pertama jalan.
         </p>
       ) : (
-        <ul className="flex items-end gap-[7px] h-[132px] desktop:h-[172px] pt-2">
+        <ul className="flex items-end gap-1.5 h-[140px] desktop:h-[172px] pt-2">
           {rows.map((row, index) => {
             // A quiet hour still shows as a sliver rather than nothing, so the
             // gap in trade is visible instead of just being empty space.
@@ -77,13 +77,14 @@ export function HourlySalesCard({ hours }: HourlySalesCardProps) {
               >
                 <span
                   aria-hidden="true"
+                  // The peak hour is the one drawn in the solid crimson.
                   className={cn(
-                    "w-full block rounded-t-[7px] rounded-b-[3px] min-h-[3px]",
-                    isPeak ? "bg-pink" : "bg-pink-soft",
+                    "s-hour-bar w-full block min-h-[3px]",
+                    isPeak && "s-hour-bar-peak",
                   )}
                   style={{ height: `${height}%` }}
                 />
-                <span aria-hidden="true" className="text-[10.5px] font-bold text-ink-soft">
+                <span aria-hidden="true" className="font-[family-name:var(--k-mono)] text-[9.5px] font-bold text-ink-soft">
                   {index % labelStep === 0 ? formatHour(row.hour) : " "}
                 </span>
               </li>

@@ -25,37 +25,34 @@ export function TopProductsCard({ products }: TopProductsCardProps) {
           {products.map((product) => (
             <li
               key={product.productId}
-              className="flex items-center gap-[11px] py-2.5 border-b border-dashed border-line last:border-b-0"
+              className="flex items-center gap-3 py-2.5 border-b-2 border-dashed border-line last:border-b-0"
             >
               {product.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={product.imageUrl}
                   alt=""
-                  className="w-[38px] h-[38px] rounded-xl object-cover flex-none"
+                  className="w-[40px] h-[40px] rounded-[10px] object-cover flex-none"
                 />
               ) : (
-                <span
-                  aria-hidden="true"
-                  className="w-[38px] h-[38px] rounded-xl bg-pink-soft text-pink-deep flex items-center justify-center text-lg font-semibold flex-none"
-                >
-                  {product.name.charAt(0).toUpperCase()}
+                <span aria-hidden="true" className="s-thumb w-[40px] h-[40px] text-[17px]">
+                  <span>{product.name.charAt(0).toUpperCase()}</span>
                 </span>
               )}
 
               <span className="flex-1 min-w-0">
-                <span className="block font-bold text-[13.5px] text-ink truncate">
+                <span className="block font-extrabold text-[14px] text-ink truncate">
                   {product.name}
                 </span>
-                <span className="block h-1.5 rounded-full bg-cream mt-[5px] overflow-hidden">
+                <span className="s-meter mt-1.5">
                   <span
-                    className="block h-full rounded-full bg-pink"
+                    className="bg-pink-deep"
                     style={{ width: `${leader === 0 ? 0 : (product.quantitySold / leader) * 100}%` }}
                   />
                 </span>
               </span>
 
-              <span className="font-[family-name:var(--font-display)] text-[15px] text-ink flex-none tabular-nums">
+              <span className="font-[family-name:var(--font-display)] text-[19px] font-black text-ink flex-none tabular-nums">
                 {product.quantitySold}
                 <span className="sr-only"> porsi</span>
               </span>

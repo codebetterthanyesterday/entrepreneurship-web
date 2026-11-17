@@ -82,6 +82,13 @@ const PATHS: Record<NavIcon, React.ReactNode> = {
       <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
     </>
   ),
+  // A head and shoulders: the signed-in person's own account.
+  akun: (
+    <>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </>
+  ),
   // A map pin.
   lacak: (
     <>

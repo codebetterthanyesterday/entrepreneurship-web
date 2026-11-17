@@ -68,12 +68,12 @@ export function StoreToggles({ preorderOpen, boothOpen }: StoreTogglesProps) {
 
   return (
     <section className="flex flex-col gap-2.5">
-      <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-ink">
+      <h2 className="s-h2">
         Atur toko
       </h2>
 
       {error && (
-        <div className="bg-hot-soft text-hot text-sm font-medium p-3 rounded-[12px] border border-hot/20">
+        <div className="s-alert text-sm font-semibold">
           {error}
         </div>
       )}
@@ -81,10 +81,10 @@ export function StoreToggles({ preorderOpen, boothOpen }: StoreTogglesProps) {
       {(Object.keys(COPY) as ChannelKey[]).map((key) => (
         <div
           key={key}
-          className="flex items-center justify-between gap-3 bg-white border-[1.5px] border-line rounded-[16px] p-3.5"
+          className="flex items-center justify-between gap-3 s-slab p-3.5"
         >
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">{COPY[key].title}</p>
+            <p className="text-[15px] font-extrabold text-ink">{COPY[key].title}</p>
             <p className="text-xs font-medium text-ink-soft">
               {values[key] ? COPY[key].on : COPY[key].off}
             </p>

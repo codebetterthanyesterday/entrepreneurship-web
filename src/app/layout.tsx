@@ -35,7 +35,7 @@ const bodyFont = Plus_Jakarta_Sans({
  * THE SNACK KINGDOM TYPEFACES — the customer side only.
  *
  * The retro-game theme the customer pages wear (`[data-theme="kingdom"]` in
- * `globals.css`, shapes in `(public)/kingdom.css`) sets its own four faces:
+ * `globals.css`, shapes in `kingdom.css`) sets its own four faces:
  * a heavy display, a rounded body, a mono for labels and a pixel face for the
  * splash screen. They are declared here rather than in the public layout
  * because sheets and the toast are portalled into <body>, outside that layout's

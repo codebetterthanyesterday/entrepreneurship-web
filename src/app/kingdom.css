@@ -6,8 +6,10 @@
    to *shape* — hard offset shadows instead of soft ones, square buttons, mono
    uppercase labels — and the scenery (ground, clouds, blocks, the splash).
 
-   Everything here is scoped to `[data-theme="kingdom"]`, which only the public
-   layout sets, so nothing reaches the staff screens. The shared primitives in
+   Everything here is scoped to `[data-theme="kingdom"]`, which `KingdomRoot`
+   sets. Both sides render it: the customer layout, and the staff layout and
+   the login screen, which add their own chrome in `staff.css`. The shared
+   primitives in
    `src/components/ui` carry bare hook classes (`ui-btn`, `ui-card`, …) with no
    styles of their own; this file is the only place that gives them any.
 
@@ -15,7 +17,7 @@
    `min-width` blocks, 640px (tablet) and 1040px (desktop) — the same two
    breakpoints `globals.css` declares for Tailwind.
 
-   Plain CSS on purpose (no `@apply`): it is imported by the public layout, not
+   Plain CSS on purpose (no `@apply`): it is imported by the layouts, not
    through Tailwind's entry file, and being unlayered it wins over utilities
    without needing `!important`.
    ========================================================================== */
@@ -159,6 +161,33 @@ html[data-theme="kingdom"] body > * {
 [data-theme="kingdom"] .ui-field {
   border-radius: 8px;
   border-width: 2px;
+}
+
+/* The switch: a navy-rimmed track that goes grass-green when on, and a knob
+   with a navy rim — the same outline everything else in the kingdom has.
+   `translate` rather than `transform`, because that is the property the
+   knob's Tailwind classes move it with. */
+[data-theme="kingdom"] .ui-switch {
+  border: 2px solid var(--k-navy);
+  background: var(--color-sand-line);
+}
+
+[data-theme="kingdom"] .ui-switch[aria-checked="true"] {
+  background: var(--k-grass);
+}
+
+[data-theme="kingdom"] .ui-switch-knob {
+  top: 1px;
+  left: 1px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--k-navy);
+  box-shadow: none;
+  translate: 0 0;
+}
+
+[data-theme="kingdom"] .ui-switch[aria-checked="true"] .ui-switch-knob {
+  translate: 28px 0;
 }
 
 [data-theme="kingdom"] .ui-sheet {

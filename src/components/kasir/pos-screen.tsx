@@ -267,9 +267,9 @@ export function PosScreen({
         {entries.map((entry) => (
           <li key={entry.productId} className="flex items-center gap-2">
             <span className="flex-1 min-w-0">
-              <span className="block text-[13.5px] font-semibold text-ink truncate">
+              <span className="block text-[14px] font-extrabold text-ink truncate">
                 {entry.contents && (
-                  <span className="mr-1 rounded bg-warn-soft px-1 text-[10px] font-bold uppercase text-warn">
+                  <span className="mr-1 bg-[var(--k-yellow)] px-1 font-[family-name:var(--k-mono)] text-[9.5px] font-bold uppercase tracking-wider text-ink">
                     Paket
                   </span>
                 )}
@@ -289,12 +289,12 @@ export function PosScreen({
                 type="button"
                 aria-label={`Kurangi ${entry.name}`}
                 onClick={() => step(entry.productId, -1)}
-                className="w-[44px] h-[44px] flex items-center justify-center rounded-xl border-[1.5px] border-line bg-white text-ink-soft hover:bg-cream hover:text-ink transition-colors"
+                className="w-[40px] h-[40px] flex items-center justify-center rounded-[6px] bg-white font-[family-name:var(--k-mono)] text-[17px] font-bold text-ink shadow-[2px_2px_0_var(--k-navy)] hover:bg-pink-soft active:translate-x-px active:translate-y-px active:shadow-none"
               >
                 &minus;
               </button>
 
-              <span className="min-w-[24px] text-center text-sm font-semibold text-ink tabular-nums">
+              <span className="min-w-[24px] text-center font-[family-name:var(--k-mono)] text-[15px] font-bold text-ink tabular-nums">
                 {entry.quantity}
               </span>
 
@@ -303,7 +303,7 @@ export function PosScreen({
                 aria-label={`Tambah ${entry.name}`}
                 disabled={entry.quantity >= entry.max}
                 onClick={() => step(entry.productId, 1)}
-                className="w-[44px] h-[44px] flex items-center justify-center rounded-xl border-[1.5px] border-line bg-white text-ink hover:bg-cream disabled:opacity-40 disabled:hover:bg-white transition-colors"
+                className="w-[40px] h-[40px] flex items-center justify-center rounded-[6px] bg-white font-[family-name:var(--k-mono)] text-[17px] font-bold text-ink shadow-[2px_2px_0_var(--k-navy)] hover:bg-pink-soft disabled:opacity-35 disabled:shadow-none disabled:hover:bg-white active:translate-x-px active:translate-y-px active:shadow-none"
               >
                 +
               </button>
@@ -315,9 +315,9 @@ export function PosScreen({
 
   const billFooter = (
     <>
-      <div className="flex justify-between items-baseline border-t-[1.5px] border-dashed border-line mt-3 pt-3">
-        <span className="font-bold text-[15.5px] text-ink">Total</span>
-        <span className="font-bold text-[15.5px] text-ink">{formatRupiah(total)}</span>
+      <div className="flex justify-between items-baseline border-t-2 border-dashed border-sand-line mt-3 pt-3">
+        <span className="s-eyebrow">Total</span>
+        <span className="s-total text-[24px] tabular-nums">{formatRupiah(total)}</span>
       </div>
 
       <div className="flex gap-2 mt-3.5">
@@ -353,7 +353,7 @@ export function PosScreen({
       {!boothOpen && (
         <div
           role="status"
-          className="bg-warn-soft text-warn text-sm font-medium p-3 rounded-[14px] border border-warn/20 mb-4"
+          className="s-alert s-alert-warn text-sm font-semibold mb-4"
         >
           Booth ditutup admin. Kasir belum bisa simpan pesanan baru.
         </div>
@@ -362,7 +362,7 @@ export function PosScreen({
       <div className="flex gap-5 items-start">
         <div className="flex-1 min-w-0">
           {filters.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 mb-3 -mx-4 px-4 tablet:mx-0 tablet:px-0 tablet:flex-wrap">
+            <div className="flex gap-2 overflow-x-auto pt-1 pb-2.5 mb-2 -mx-3.5 px-3.5 [scrollbar-width:none] tablet:mx-0 tablet:px-0 tablet:flex-wrap">
               {filters.map((name) => (
                 <Chip
                   key={name}
@@ -380,7 +380,7 @@ export function PosScreen({
           {visible.length === 0 && !showBundles ? (
             <EmptyState emoji="🍽️" title="Nggak ada menu di kategori ini" />
           ) : visible.length === 0 ? null : (
-            <div className="grid grid-cols-2 tablet:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 tablet:grid-cols-3 min-[1240px]:grid-cols-4 gap-3">
               {visible.map((product) => {
                 const remaining = remainingOf(product);
                 const inBill = quantityOf(product.id);
@@ -397,14 +397,13 @@ export function PosScreen({
                     onClick={() => addOne(product)}
                     aria-label={`Tambah ${product.name}`}
                     className={cn(
-                      "relative flex items-center gap-2.5 min-h-[72px] p-2.5 rounded-[16px] border-[1.5px] bg-white text-left transition-colors",
-                      isOut
-                        ? "opacity-50 cursor-not-allowed border-line"
-                        : "border-line hover:border-pink active:bg-pink-soft",
+                      // `.s-tile`: a white slip on a hard shadow that presses in.
+                      "s-tile flex items-center gap-2.5 min-h-[76px] p-2.5 text-left",
+                      isOut ? "opacity-50 cursor-not-allowed" : "hover:bg-pink-soft/40",
                     )}
                   >
                     {inBill > 0 ? (
-                      <span className="absolute -top-2 -right-2 min-w-[26px] h-[26px] px-1.5 rounded-full bg-pink-deep text-white text-xs font-bold flex items-center justify-center">
+                      <span className="s-tile-count">
                         {inBill}
                       </span>
                     ) : (
@@ -412,7 +411,7 @@ export function PosScreen({
                         <span
                           aria-hidden="true"
                           title="Perlu diracik"
-                          className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-warn"
+                          className="s-tile-prep"
                         />
                       )
                     )}
@@ -422,19 +421,16 @@ export function PosScreen({
                       <img
                         src={product.imageUrl}
                         alt=""
-                        className="w-[42px] h-[42px] rounded-[11px] object-cover flex-none"
+                        className="w-[44px] h-[44px] rounded-[10px] object-cover flex-none"
                       />
                     ) : (
-                      <span
-                        aria-hidden="true"
-                        className="w-[42px] h-[42px] rounded-[11px] bg-pink-soft text-pink-deep flex items-center justify-center text-base font-semibold flex-none"
-                      >
-                        {product.name.charAt(0).toUpperCase()}
+                      <span aria-hidden="true" className="s-thumb w-[44px] h-[44px] text-[17px]">
+                        <span>{product.name.charAt(0).toUpperCase()}</span>
                       </span>
                     )}
 
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[13px] font-semibold text-ink leading-tight line-clamp-2">
+                      <span className="block text-[13.5px] font-extrabold text-ink leading-tight line-clamp-2 pr-2">
                         {product.name}
                       </span>
                       <span className="block text-xs text-ink-soft mt-0.5">
@@ -442,7 +438,7 @@ export function PosScreen({
                       </span>
                       <span
                         className={cn(
-                          "block text-[11px] font-semibold",
+                          "block font-[family-name:var(--k-mono)] text-[10px] font-bold uppercase tracking-wide",
                           isOut ? "text-hot" : "text-ink-soft",
                         )}
                       >
@@ -457,10 +453,10 @@ export function PosScreen({
 
           {showBundles && (
             <section aria-labelledby="pos-bundles" className={cn(visible.length > 0 && "mt-5")}>
-              <h2 id="pos-bundles" className="mb-2.5 text-sm font-semibold text-ink">
+              <h2 id="pos-bundles" className="s-h2 mb-3 text-[16px]">
                 Paket hemat
               </h2>
-              <div className="grid grid-cols-1 tablet:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 tablet:grid-cols-2 gap-3">
                 {bundles.map((bundle) => {
                   const key = bundleKey(bundle.id);
                   const left = bundleLeft(bundle.id);
@@ -475,22 +471,21 @@ export function PosScreen({
                       onClick={() => addBundle(bundle)}
                       aria-label={`Tambah ${bundle.name}`}
                       className={cn(
-                        "relative flex min-h-[72px] flex-col gap-1 rounded-[16px] border-[1.5px] bg-white p-2.5 text-left transition-colors",
-                        isOut
-                          ? "cursor-not-allowed border-line opacity-50"
-                          : "border-line hover:border-pink active:bg-pink-soft",
+                        // The yellow lid marks a paket here as on the menu screen.
+                        "s-tile s-bundle flex min-h-[76px] flex-col gap-1 p-2.5 text-left",
+                        isOut ? "cursor-not-allowed opacity-50" : "hover:bg-pink-soft/40",
                       )}
                     >
                       {inBill > 0 && (
-                        <span className="absolute -top-2 -right-2 flex h-[26px] min-w-[26px] items-center justify-center rounded-full bg-pink-deep px-1.5 text-xs font-bold text-white">
+                        <span className="s-tile-count">
                           {inBill}
                         </span>
                       )}
                       <span className="flex items-baseline justify-between gap-2">
-                        <span className="text-[13px] font-semibold leading-tight text-ink">
+                        <span className="text-[14px] font-extrabold leading-tight text-ink">
                           {bundle.name}
                         </span>
-                        <span className="flex-none text-xs font-semibold text-pink-deep">
+                        <span className="flex-none text-[13px] font-extrabold text-pink-deep">
                           {formatRupiah(bundle.price)}
                         </span>
                       </span>
@@ -499,7 +494,7 @@ export function PosScreen({
                       </span>
                       <span
                         className={cn(
-                          "text-[11px] font-semibold",
+                          "font-[family-name:var(--k-mono)] text-[10px] font-bold uppercase tracking-wide",
                           isOut ? "text-hot" : "text-ink-soft",
                         )}
                       >
@@ -513,9 +508,9 @@ export function PosScreen({
           )}
         </div>
 
-        <aside className="hidden desktop:block sticky top-[calc(var(--page-top)+1rem)] self-start w-[300px] flex-none">
-          <div className="bg-white border-[1.5px] border-line rounded-[18px] p-4">
-            <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-ink mb-3">
+        <aside className="hidden desktop:block sticky top-[calc(var(--page-top)+1rem)] self-start w-[340px] flex-none">
+          <div className="s-bill p-4">
+            <h2 className="s-h2 mb-3">
               Bill sekarang
             </h2>
             {billRows}
@@ -524,13 +519,13 @@ export function PosScreen({
         </aside>
       </div>
 
-      <div className="desktop:hidden sticky bottom-[var(--nav-bar-height)] -mx-4 mt-4 px-4 pt-3 pb-[var(--action-bar-inset)] bg-white border-t border-line z-10">
+      <div className="s-dock desktop:hidden sticky bottom-[var(--nav-bar-height)] -mx-3.5 tablet:-mx-6 mt-4 px-3.5 tablet:px-6 pt-3 pb-[var(--action-bar-inset)] z-10">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-ink-soft">
+            <div className="font-[family-name:var(--k-mono)] text-[10px] font-bold uppercase tracking-[0.08em] text-warn">
               {itemCount === 0 ? "Belum ada item" : `${itemCount} item`}
             </div>
-            <b className="text-[15px] text-ink">{formatRupiah(total)}</b>
+            <b className="s-total block text-[21px] leading-tight tabular-nums">{formatRupiah(total)}</b>
           </div>
 
           <Button

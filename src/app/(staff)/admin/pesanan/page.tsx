@@ -8,6 +8,7 @@ import { cn, formatRupiah } from "@/lib/utils";
 import { pricedLines } from "@/lib/order-lines";
 import type { AdminOrder } from "@/types/order-view";
 import { pageTitle } from "@/lib/brand";
+import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
   title: pageTitle("Pesanan"),
@@ -28,10 +29,9 @@ function FilterChip({ label, href, active }: { label: string; href: string; acti
       aria-current={active ? "page" : undefined}
       className={cn(
         // 44px matches the Chip primitive and the project's touch-target floor.
-        "inline-flex items-center justify-center px-4 rounded-full min-h-[44px] text-sm font-medium transition-colors",
-        active
-          ? "bg-pink-deep text-white"
-          : "bg-white border-[1.5px] border-line text-ink-soft hover:bg-cream",
+        // `ui-chip` is what gives it the theme's square, mono, hard-shadowed shape.
+        "ui-chip inline-flex flex-none items-center justify-center px-3.5 min-h-[44px] transition-colors",
+        active ? "bg-pink-deep text-white" : "bg-sand text-ink-soft hover:bg-pink-soft",
       )}
     >
       {label}
@@ -96,16 +96,19 @@ export default async function AdminOrdersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-          Pesanan
-        </h1>
-        <p className="text-sm text-ink-soft">
-          {total} pesanan · total {formatRupiah(totalAmount)}
-        </p>
-      </div>
+      <PageHead
+        className="mb-0"
+        tag="Quest log"
+        title="Pesanan"
+        lede={`${total} pesanan · total ${formatRupiah(totalAmount)}`}
+      />
 
-      <nav aria-label="Filter pesanan" className="flex gap-2 flex-wrap">
+      <nav
+        aria-label="Filter pesanan"
+        // One scrolling row on a phone rather than three wrapped ones; the
+        // padding leaves room for the chips' hard shadows.
+        className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2.5 pt-1 [scrollbar-width:none] tablet:flex-wrap"
+      >
         {ORDER_FILTERS.map((option) => (
           <FilterChip
             key={option.id}
@@ -129,7 +132,7 @@ export default async function AdminOrdersPage({
             ← Sebelumnya
           </PageLink>
 
-          <span className="text-[13px] font-semibold text-ink-soft tabular-nums">
+          <span className="s-eyebrow tabular-nums">
             Halaman {page} dari {pageCount}
           </span>
 
@@ -156,16 +159,16 @@ function PageLink({
   disabled: boolean;
   children: React.ReactNode;
 }) {
-  const shared = "inline-flex items-center min-h-[44px] px-4 rounded-xl text-sm font-medium";
+  const shared = "ui-btn inline-flex items-center min-h-[44px] px-4 text-sm";
 
   if (disabled) {
-    return <span className={cn(shared, "text-ink-soft")}>{children}</span>;
+    return <span className={cn(shared, "bg-sand text-ink-soft opacity-60 shadow-none")}>{children}</span>;
   }
 
   return (
     <Link
       href={href}
-      className={cn(shared, "bg-white border-[1.5px] border-line text-ink hover:bg-cream")}
+      className={cn(shared, "bg-white text-ink hover:bg-pink-soft")}
     >
       {children}
     </Link>

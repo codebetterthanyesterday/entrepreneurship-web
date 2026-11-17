@@ -81,12 +81,12 @@ export function QrisUploader({ qrisImageUrl }: QrisUploaderProps) {
 
   return (
     <section className="flex flex-col gap-2.5" aria-labelledby="qris-title">
-      <h2 id="qris-title" className="font-[family-name:var(--font-display)] text-lg font-semibold text-ink">
+      <h2 id="qris-title" className="s-h2">
         QRIS pembayaran
       </h2>
 
-      <div className="flex flex-col gap-4 rounded-[16px] border-[1.5px] border-line bg-white p-3.5 tablet:flex-row tablet:items-start">
-        <div className="flex h-[200px] w-[200px] flex-none items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-line bg-cream">
+      <div className="flex flex-col gap-4 s-slab p-3.5 tablet:flex-row tablet:items-start">
+        <div className="flex h-[200px] w-[200px] flex-none items-center justify-center overflow-hidden border-2 border-dashed border-sand-line bg-sand">
           {qrisImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={qrisImageUrl} alt="QRIS yang sedang dipakai" className="h-full w-full object-contain" />
@@ -104,7 +104,7 @@ export function QrisUploader({ qrisImageUrl }: QrisUploaderProps) {
           </p>
 
           {error && (
-            <p role="alert" className="rounded-[12px] border border-hot/20 bg-hot-soft p-3 text-sm font-medium text-hot">
+            <p role="alert" className="s-alert text-sm font-semibold">
               {error}
             </p>
           )}

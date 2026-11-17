@@ -10,7 +10,7 @@
 
 const DURATION_MS = 720;
 
-/** The cart's navigation item, carrying `data-nav-badge="cart"` in `NavBar`. */
+/** The cart's navigation item, carrying `data-nav-badge="cart"` in `PublicNav`. */
 function visibleCartTarget(): HTMLElement | null {
   const candidates = document.querySelectorAll<HTMLElement>('[data-nav-badge="cart"]');
   for (const element of candidates) {

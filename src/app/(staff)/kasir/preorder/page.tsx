@@ -4,6 +4,7 @@ import { findPreordersForCashier, toCashierPreorder } from "@/lib/queries/order.
 import { getSettings } from "@/lib/services/setting.service";
 import { PreorderScreen } from "@/components/kasir/preorder-screen";
 import { pageTitle } from "@/lib/brand";
+import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
   title: pageTitle("Preorder"),
@@ -29,14 +30,12 @@ export default async function CashierPreorderPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-          Preorder
-        </h1>
-        <p className="text-sm text-ink-soft">
-          Cari pesanannya pas pelanggan datang, terus ikuti satu tombol yang muncul
-        </p>
-      </div>
+      <PageHead
+        className="mb-0"
+        tag="Pickup gate"
+        title="Preorder"
+        lede="Cari pesanannya pas pelanggan datang, terus ikuti satu tombol yang muncul"
+      />
 
       <PreorderScreen preorders={preorders} qrisImageUrl={settings.qrisImageUrl ?? null} />
     </div>

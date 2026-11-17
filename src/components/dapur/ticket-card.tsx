@@ -39,17 +39,20 @@ export const TICKET_ACTIONS: Readonly<Record<KitchenStatus, readonly TicketActio
   ],
 };
 
-/** The left edge says at a glance what this ticket is. */
-const STATUS_EDGE: Readonly<Record<KitchenStatus, string>> = {
-  IN_QUEUE: "border-l-sky",
-  IN_PROGRESS: "border-l-warn",
-  READY: "border-l-ok",
+/**
+ * The top edge says at a glance what this ticket is: the same colour as its
+ * column's dot and its tab (`--col` in `staff.css`).
+ */
+export const STATUS_COLOR: Readonly<Record<KitchenStatus, string>> = {
+  IN_QUEUE: "var(--s-sky-deep)",
+  IN_PROGRESS: "var(--k-gold)",
+  READY: "var(--k-grass)",
 };
 
 const TIMER_TONE_CLASS: Readonly<Record<TimerTone, string>> = {
-  neutral: "bg-cream text-ink-soft",
-  warn: "bg-warn-soft text-warn",
-  late: "bg-hot-soft text-hot",
+  neutral: "",
+  warn: "s-timer-warn",
+  late: "s-timer-hot",
 };
 
 const CHANNEL_LABEL = {
@@ -73,7 +76,7 @@ export function TicketCard({ ticket, now, canAct, pendingTo, onAction }: TicketC
 
   // Only lateness overrides the status colour, and only for a ticket the
   // kitchen still owes — see `timerTone`.
-  const edge = tone === "late" ? "border-l-hot" : STATUS_EDGE[ticket.status];
+  const edge = tone === "late" ? "var(--s-hot)" : STATUS_COLOR[ticket.status];
 
   const cooking = ticket.items.filter((item) => item.needsPrep);
   const alreadyMade = ticket.items.filter((item) => !item.needsPrep);
@@ -81,23 +84,13 @@ export function TicketCard({ ticket, now, canAct, pendingTo, onAction }: TicketC
 
   return (
     <article
-      className={cn(
-        "bg-white border-[1.5px] border-line border-l-[5px] rounded-[16px] p-3.5 flex flex-col gap-2.5",
-        "motion-safe:animate-fade-in",
-        edge,
-      )}
+      className="s-ticket p-3 flex flex-col gap-2.5 motion-safe:animate-fade-in"
+      style={{ "--col": edge } as React.CSSProperties}
     >
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="font-[family-name:var(--font-display)] text-[21px] font-semibold text-ink leading-none">
-          {ticket.orderNumber}
-        </span>
+      <div className="flex items-start justify-between gap-2">
+        <span className="s-ticket-no">{ticket.orderNumber}</span>
 
-        <span
-          className={cn(
-            "flex-none text-[12px] font-bold px-2 py-1 rounded-full tabular-nums",
-            TIMER_TONE_CLASS[tone],
-          )}
-        >
+        <span className={cn("s-timer flex-none tabular-nums", TIMER_TONE_CLASS[tone])}>
           {formatWaiting(minutes)}
         </span>
       </div>
@@ -114,10 +107,10 @@ export function TicketCard({ ticket, now, canAct, pendingTo, onAction }: TicketC
       <ul className="flex flex-col gap-1.5">
         {cooking.map((item, index) => (
           <li key={`${item.name}-${index}`} className="flex items-baseline gap-2">
-            <span className="font-[family-name:var(--font-display)] text-[21px] font-semibold text-pink leading-none tabular-nums flex-none">
+            <span className="s-ticket-qty text-[22px] leading-none tabular-nums flex-none min-w-[2.1ch]">
               {item.quantity}&times;
             </span>
-            <span className="text-[16.5px] font-semibold text-ink leading-snug">{item.name}</span>
+            <span className="text-[17px] font-extrabold text-ink leading-snug">{item.name}</span>
           </li>
         ))}
       </ul>
@@ -125,14 +118,14 @@ export function TicketCard({ ticket, now, canAct, pendingTo, onAction }: TicketC
       {alreadyMade.length > 0 && (
         // Demoted on purpose: these are not the kitchen's work, and mixing them
         // in with the cooking lines is how the wrong thing gets made.
-        <p className="text-[12px] text-ink-soft border-t border-dashed border-line pt-2">
+        <p className="text-[12.5px] text-ink-soft border-t-2 border-dashed border-line pt-2">
           Tanpa racik, kasir yang siapkan:{" "}
           {alreadyMade.map((item) => `${item.quantity}× ${item.name}`).join(", ")}
         </p>
       )}
 
       {ticket.notes && (
-        <p className="text-[13px] font-medium bg-warn-soft text-warn border border-warn/20 rounded-[12px] p-2.5">
+        <p className="s-ticket-note">
           {ticket.notes}
         </p>
       )}

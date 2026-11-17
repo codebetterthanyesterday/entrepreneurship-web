@@ -2,6 +2,8 @@ import { pageTitle } from "@/lib/brand";
 import { requireAuth } from "@/lib/session";
 import { needsPasswordChange } from "@/lib/services/account.service";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
+import { PageHead } from "@/components/staff/page-head";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export const metadata = {
   title: pageTitle("Akun"),
@@ -25,15 +27,28 @@ export default async function AccountPage() {
   const displayRole = user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
 
   return (
-    <div className="max-w-[34rem] mx-auto">
-      <p className="eyebrow text-pink-deep">Akun</p>
-      <h1 className="display-3 mt-3 text-ink">{user.name}</h1>
-      <p className="mt-1.5 text-[13.5px] text-ink-soft">
-        {user.email} &middot; {displayRole}
-      </p>
+    <div className="max-w-[36rem]">
+      <PageHead
+        tag="Player profile"
+        title={`Akun ${user.name}`}
+        lede={
+          <>
+            {user.email} &middot; {displayRole}
+          </>
+        }
+      />
 
-      <div className="mt-8 border-t border-line pt-8">
-        <ChangePasswordForm mustChange={mustChange} />
+      <div className="flex flex-col gap-5">
+        <div className="s-card">
+          <ChangePasswordForm mustChange={mustChange} />
+        </div>
+
+        {/* Signing out lives here rather than in the header: the header on a
+            phone is the brand and the avatar, and the avatar leads here. */}
+        <div className="flex items-center justify-between gap-3 s-slab p-3.5">
+          <span className="text-sm text-ink-soft">Selesai jaga? Keluar biar akun nggak dipakai orang lain.</span>
+          <LogoutButton />
+        </div>
       </div>
     </div>
   );

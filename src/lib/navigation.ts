@@ -25,7 +25,8 @@ export type NavIcon =
   | "dapur"
   | "katalog"
   | "keranjang"
-  | "lacak";
+  | "lacak"
+  | "akun";
 
 /** Which counter an item shows, when it shows one. */
 export type NavBadge = "preorder" | "cart";
@@ -104,10 +105,9 @@ const AREAS = {
     base: "/dapur",
     label: "Dapur",
     icon: "dapur",
-    // One screen. On its own that is a label rather than navigation, so a
-    // kitchen phone signed in as DAPUR gets no bar at all and keeps the height
-    // — see `roleHasNav`. An admin standing at the pass still gets one, because
-    // for them this item comes with links back out.
+    // One screen. On its own that is a label rather than navigation; the
+    // kitchen's bar is this plus the account tab (`staffTabsFor`). An admin
+    // standing at the pass gets links back out instead.
     items: [{ href: "/dapur", label: "Dapur", icon: "dapur" }],
   },
 } as const satisfies Record<string, NavArea>;
@@ -161,17 +161,31 @@ export function staffNavFor(role: string, pathname: string): readonly NavItem[] 
   ];
 }
 
-/**
- * Whether this role ever gets a bar.
- *
- * The staff layout has to reserve the page's bottom padding before a pathname is
- * available to it, so this answers from the role alone: DAPUR never gets one,
- * every other staff role always does.
- */
-export function roleHasNav(role: string): boolean {
-  const keys = AREAS_BY_ROLE[role] ?? [];
+/** The signed-in person's own account. Every role has one. */
+export const STAFF_ACCOUNT_ITEM: NavItem = { href: "/akun", label: "Akun", icon: "akun" };
 
-  return keys.length > 1 || (keys.length === 1 && AREAS[keys[0]!].items.length > 1);
+/** Below this many items, the phone's bar has room for the account as a tab too. */
+const ACCOUNT_TAB_ROOM = 4;
+
+/**
+ * The staff bar as the Snack Kingdom shell draws it: the screens `staffNavFor`
+ * gives, then — when the bar is short enough to have the room — the account.
+ *
+ * The account is always one tap away through the avatar in the header; the tab
+ * is the bigger target for the till and the kitchen, whose bars are otherwise
+ * two items or one. An admin's bar is already six wide on a phone, so it gets
+ * the avatar only. With the tab added, every role now has a bar, the kitchen
+ * included, which is why the staff layout pads every page for it without
+ * asking which role it is.
+ *
+ * Only the bottom bar shows the tab: on a desktop the avatar sits right there
+ * in the same header, so `staff.css` hides it from the header's row of links.
+ */
+export function staffTabsFor(role: string, pathname: string): readonly NavItem[] {
+  const items = staffNavFor(role, pathname);
+  if (items.length === 0) return [];
+
+  return items.length < ACCOUNT_TAB_ROOM ? [...items, STAFF_ACCOUNT_ITEM] : items;
 }
 
 /** Whether this role's own area holds the preorder counter the badge needs. */

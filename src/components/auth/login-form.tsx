@@ -61,7 +61,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="bg-hot-soft text-hot text-sm font-medium p-3 rounded-[12px] border border-hot/20">
+        <div role="alert" className="s-alert text-sm font-semibold">
           {error}
         </div>
       )}

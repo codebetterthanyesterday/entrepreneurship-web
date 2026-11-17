@@ -88,7 +88,7 @@ export function PickupSlotManager({ slots }: PickupSlotManagerProps) {
   return (
     <section className="flex flex-col gap-2.5">
       <div>
-        <h2 className="font-[family-name:var(--font-display)] text-lg font-semibold text-ink">
+        <h2 className="s-h2">
           Slot pengambilan
         </h2>
         <p className="text-sm text-ink-soft">
@@ -97,13 +97,13 @@ export function PickupSlotManager({ slots }: PickupSlotManagerProps) {
       </div>
 
       {error && (
-        <div className="bg-hot-soft text-hot text-sm font-medium p-3 rounded-[12px] border border-hot/20">
+        <div className="s-alert text-sm font-semibold">
           {error}
         </div>
       )}
 
       {slots.length === 0 && (
-        <p className="text-sm text-ink-soft bg-white border-[1.5px] border-line rounded-[16px] p-4 text-center">
+        <p className="text-sm text-ink-soft s-slab p-4 text-center">
           Belum ada slot pengambilan. Tambah di bawah ya.
         </p>
       )}
@@ -115,12 +115,19 @@ export function PickupSlotManager({ slots }: PickupSlotManagerProps) {
         return (
           <div
             key={slot.id}
-            className="flex items-center gap-2.5 bg-white border-[1.5px] border-line rounded-[16px] p-3"
+            className="flex items-center gap-2.5 s-slab p-3"
           >
             <span className="flex-1 min-w-0">
-              <span className="block text-sm font-semibold text-ink truncate">{slot.label}</span>
+              <span className="block text-[14.5px] font-extrabold text-ink truncate">{slot.label}</span>
               <span className="block text-xs font-medium text-ink-soft">
                 {slot.booked > 0 ? `${slot.booked} dari ${slot.quota} terisi` : "Masih kosong"}
+              </span>
+              {/* How full the slot is, at a glance. */}
+              <span aria-hidden="true" className="s-meter mt-1.5 h-1.5">
+                <span
+                  className={slot.booked >= slot.quota ? "bg-[var(--s-hot)]" : "bg-[var(--s-sky-deep)]"}
+                  style={{ width: `${slot.quota === 0 ? 0 : Math.min(100, (slot.booked / slot.quota) * 100)}%` }}
+                />
               </span>
             </span>
 
@@ -135,7 +142,7 @@ export function PickupSlotManager({ slots }: PickupSlotManagerProps) {
                   [slot.id]: event.target.value.replace(/\D/g, ""),
                 }))
               }
-              className="w-[68px] min-h-[44px] text-center bg-cream border-[1.5px] border-line rounded-[12px] text-ink text-[16px] focus:border-pink"
+              className="ui-field w-[68px] min-h-[44px] text-center bg-white border-[1.5px] border-line rounded-[12px] text-ink text-[16px] focus:border-pink"
             />
 
             <Button
@@ -171,7 +178,7 @@ export function PickupSlotManager({ slots }: PickupSlotManagerProps) {
 
       <form
         onSubmit={handleAdd}
-        className="flex flex-col gap-3 bg-white border-[1.5px] border-dashed border-line rounded-[16px] p-3.5"
+        className="flex flex-col gap-3 bg-white border-2 border-dashed border-sand-line p-3.5"
       >
         <div className="flex flex-col tablet:flex-row gap-3">
           <Input

@@ -21,9 +21,8 @@ export function ProductCard({ product, lowStockThreshold, onSelect }: ProductCar
       onClick={() => onSelect(product)}
       aria-label={`Ubah ${product.name}`}
       className={cn(
-        "flex items-center gap-3 w-full text-left bg-white border-[1.5px] border-line rounded-[18px] p-3",
-        "transition-colors hover:border-pink focus:border-pink",
-        !product.isActive && "opacity-55",
+        "s-slab flex items-center gap-3 w-full text-left p-2.5 transition-transform hover:-translate-y-0.5",
+        !product.isActive && "opacity-60",
       )}
     >
       {product.imageUrl ? (
@@ -31,20 +30,17 @@ export function ProductCard({ product, lowStockThreshold, onSelect }: ProductCar
         <img
           src={product.imageUrl}
           alt=""
-          className="w-[46px] h-[46px] rounded-[13px] object-cover flex-none"
+          className="w-[54px] h-[54px] rounded-[10px] object-cover flex-none"
         />
       ) : (
-        <span
-          aria-hidden="true"
-          className="w-[46px] h-[46px] rounded-[13px] bg-pink-soft text-pink-deep flex items-center justify-center text-lg font-semibold flex-none"
-        >
-          {product.name.charAt(0).toUpperCase()}
+        <span aria-hidden="true" className="s-thumb w-[54px] h-[54px] text-[22px]">
+          <span>{product.name.charAt(0).toUpperCase()}</span>
         </span>
       )}
 
       <span className="flex-1 min-w-0">
-        <span className="block font-semibold text-sm text-ink truncate">{product.name}</span>
-        <span className="block text-xs font-medium text-ink-soft">
+        <span className="block font-extrabold text-[15px] text-ink truncate">{product.name}</span>
+        <span className="block text-[12.5px] font-medium text-ink-soft">
           {formatRupiah(product.price)} &middot; terjual {product.sold}
         </span>
         <span className="flex gap-1.5 mt-1.5 flex-wrap">
@@ -59,11 +55,13 @@ export function ProductCard({ product, lowStockThreshold, onSelect }: ProductCar
 
       <span
         className={cn(
-          "text-2xl font-semibold tabular-nums flex-none",
-          isOut ? "text-hot" : isLow ? "text-warn" : "text-ink",
+          "s-stock tabular-nums flex-none pr-1",
+          isOut && "s-stock-out",
+          isLow && "s-stock-low",
         )}
       >
         {product.stock}
+        <small aria-hidden="true">STOK</small>
       </span>
     </button>
   );

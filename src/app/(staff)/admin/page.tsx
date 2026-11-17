@@ -16,6 +16,7 @@ import { LowStockAlert } from "@/components/admin/low-stock-alert";
 import { PipelineCard } from "@/components/admin/pipeline-card";
 import { TopProductsCard } from "@/components/admin/top-products-card";
 import { pageTitle } from "@/lib/brand";
+import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
   title: pageTitle("Ringkasan"),
@@ -43,15 +44,15 @@ export default async function AdminDashboardPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <AutoRefresh intervalMs={REFRESH_INTERVAL_MS} />
 
-      <div>
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-ink">
-          Ringkasan {user.name}
-        </h1>
-        <p className="text-sm text-ink-soft">Angkanya kebarui sendiri tiap setengah menit</p>
-      </div>
+      <PageHead
+        className="mb-0"
+        tag="Stage report"
+        title={`Ringkasan ${user.name}`}
+        lede="Angkanya kebarui sendiri tiap setengah menit"
+      />
 
       <DashboardStats summary={summary} channels={channels} />
 
@@ -64,13 +65,13 @@ export default async function AdminDashboardPage() {
       />
 
       {/* Two columns from the desktop breakpoint up; one on phone and tablet. */}
-      <div className="grid desktop:grid-cols-2 gap-4 items-start">
-        <div className="flex flex-col gap-5">
+      <div className="grid desktop:grid-cols-[1.2fr_1fr] gap-6 items-start">
+        <div className="flex flex-col gap-6">
           <ChannelSplitCard channels={channels} />
           <HourlySalesCard hours={hourly} />
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
           <TopProductsCard products={topProducts} />
           <PipelineCard pipeline={pipeline} />
         </div>

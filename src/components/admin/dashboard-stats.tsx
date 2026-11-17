@@ -14,23 +14,11 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, highlight, extra }: StatCardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-[16px] border-[1.5px] p-3.5 desktop:p-[18px]",
-        highlight ? "bg-pink-soft border-pink" : "bg-white border-line",
-      )}
-    >
-      <div className="text-xs font-semibold text-ink-soft">{label}</div>
-      <div
-        className={cn(
-          "font-[family-name:var(--font-display)] text-[23px] desktop:text-[27px] leading-tight tabular-nums",
-          highlight ? "text-pink-deep" : "text-ink",
-        )}
-      >
-        {value}
-      </div>
-      <div className="text-[11.5px] font-semibold text-ink-soft">{sub}</div>
-      {extra && <div className="text-[11.5px] font-semibold text-sky-deep">{extra}</div>}
+    <div className={cn("s-stat desktop:p-4", highlight && "s-stat-hero")}>
+      <div className="s-eyebrow">{label}</div>
+      <div className="s-stat-value tabular-nums">{value}</div>
+      <div className="s-stat-sub">{sub}</div>
+      {extra && <div className="mt-1 text-[11.5px] font-bold text-sky">{extra}</div>}
     </div>
   );
 }
@@ -43,7 +31,7 @@ export interface DashboardStatsProps {
 /** The four headline numbers: two columns on a phone, four on a desktop. */
 export function DashboardStats({ summary, channels }: DashboardStatsProps) {
   return (
-    <div className="grid grid-cols-2 desktop:grid-cols-4 gap-2.5">
+    <div className="grid grid-cols-2 tablet:grid-cols-4 gap-3">
       <StatCard
         highlight
         label="Uang masuk"

@@ -25,7 +25,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         disabled={disabled}
         onClick={() => onCheckedChange(!checked)}
         className={cn(
-          "relative w-[56px] h-[32px] rounded-full flex-none transition-colors duration-200",
+          "ui-switch relative w-[56px] h-[32px] rounded-full flex-none transition-colors duration-200",
           checked ? "bg-ok" : "bg-line",
           disabled && "opacity-60 cursor-not-allowed",
           className,
@@ -35,7 +35,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-[3px] left-[3px] w-[26px] h-[26px] rounded-full bg-white shadow-sm",
+            "ui-switch-knob absolute top-[3px] left-[3px] w-[26px] h-[26px] rounded-full bg-white shadow-sm",
             "transition-transform duration-200 motion-reduce:transition-none",
             checked ? "translate-x-[24px]" : "translate-x-0",
           )}

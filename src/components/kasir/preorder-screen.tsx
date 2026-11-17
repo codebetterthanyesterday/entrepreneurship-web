@@ -131,10 +131,10 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
         onChange={(event) => setSearch(event.target.value)}
         placeholder="Cari nomor pesanan atau nama pelanggan"
         aria-label="Cari nomor pesanan atau nama pelanggan"
-        className="bg-white border-[1.5px] border-line rounded-[14px] min-h-[50px] px-4 text-ink text-[16px] placeholder:text-ink-soft/60 transition-colors focus:border-pink"
+        className="ui-field bg-white border-[1.5px] border-line rounded-[14px] min-h-[50px] px-4 text-ink text-[16px] placeholder:text-ink-soft/60 transition-colors focus:border-pink"
       />
 
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 tablet:mx-0 tablet:px-0 tablet:flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pt-1 pb-2.5 -mx-3.5 px-3.5 [scrollbar-width:none] tablet:mx-0 tablet:px-0 tablet:flex-wrap">
         {PREORDER_FILTERS.map((filter) => (
           <Chip
             key={filter.key}
@@ -155,7 +155,7 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
           description="Coba kata kunci lain, atau ganti filternya ya."
         />
       ) : (
-        <ul className="flex flex-col gap-2.5">
+        <ul className="flex flex-col gap-3 desktop:grid desktop:grid-cols-2">
           {visible.map((order) => {
             const status = PREORDER_STATUS[order.status];
 
@@ -164,16 +164,16 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                 <button
                   type="button"
                   onClick={() => setSelectedId(order.id)}
-                  className="w-full flex items-center gap-3 text-left bg-white border-[1.5px] border-line rounded-[18px] p-3.5 hover:border-pink transition-colors"
+                  className="s-slab w-full flex items-center gap-3.5 text-left p-3.5 transition-transform hover:-translate-y-0.5"
                 >
                   {/* Just the digits: the cashier is matching what the customer
                       reads off their phone, and the "PO-" is on every one. */}
-                  <span className="flex-none font-[family-name:var(--font-display)] text-[19px] font-semibold text-pink-deep tabular-nums">
+                  <span className="s-big-no flex-none min-w-[2.2ch] text-[26px] tabular-nums">
                     {order.orderNumber.split("-").at(-1)}
                   </span>
 
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[14.5px] font-bold text-ink truncate">
+                    <span className="block text-[15px] font-extrabold text-ink truncate">
                       {order.customerName}
                     </span>
                     <span className="block text-[12.5px] text-ink-soft truncate">
@@ -211,10 +211,10 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
           <div className="flex flex-col gap-3 pb-2">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
+                <div className="s-eyebrow">
                   Nomor pesanan
                 </div>
-                <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold text-pink-deep">
+                <h2 className="s-big-no text-[34px]">
                   {selected.orderNumber}
                 </h2>
               </div>
@@ -233,7 +233,7 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
               {PAYMENT_LABEL[selected.paymentMethod]}
             </p>
 
-            <ul className="bg-cream rounded-[14px] p-3 flex flex-col gap-2">
+            <ul className="bg-sand rounded-[10px] p-3 flex flex-col gap-2">
               {selected.items.map((item, index) => (
                 <li key={`${item.name}-${index}`} className="flex justify-between gap-3 text-sm">
                   <span className="text-ink">
@@ -255,7 +255,7 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                 </li>
               ))}
 
-              <li className="flex justify-between gap-3 border-t-[1.5px] border-dashed border-line pt-2 mt-1 font-bold text-ink">
+              <li className="flex justify-between gap-3 border-t-2 border-dashed border-sand-line pt-2 mt-1 font-extrabold text-ink">
                 <span>Total</span>
                 <span className="tabular-nums">{formatRupiah(selected.totalAmount)}</span>
               </li>
@@ -266,7 +266,7 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
               // for the record, never part of what is collected here.
               <section
                 aria-labelledby="preorder-photobooth"
-                className="rounded-[14px] border border-line p-3 flex flex-col gap-2"
+                className="s-slab p-3 flex flex-col gap-2"
               >
                 <h3
                   id="preorder-photobooth"
@@ -317,14 +317,14 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
 
             {selected.paymentMethod === "QRIS" && selected.paymentProofUrl && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
+                <span className="s-eyebrow">
                   Bukti bayar QRIS dari pelanggan
                 </span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selected.paymentProofUrl}
                   alt={`Bukti bayar QRIS pesanan ${selected.orderNumber}`}
-                  className="w-full max-h-[280px] object-contain rounded-[14px] border border-line bg-white"
+                  className="w-full max-h-[280px] object-contain border-4 border-ink-deep bg-white"
                 />
               </div>
             )}

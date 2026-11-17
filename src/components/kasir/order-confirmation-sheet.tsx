@@ -24,10 +24,10 @@ export function OrderConfirmationSheet({ receipt, onNext }: OrderConfirmationShe
     <Sheet open onClose={onNext} title="Transaksi tersimpan">
       <div className="flex flex-col gap-4 pb-2">
         <div className="text-center py-1">
-          <div className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
+          <div className="s-eyebrow">
             Nomor pesanan
           </div>
-          <div className="font-[family-name:var(--font-display)] text-[44px] leading-tight font-semibold text-pink-deep tabular-nums">
+          <div className="s-big-no my-1.5 text-[52px] tabular-nums">
             {receipt.orderNumber}
           </div>
         </div>
@@ -50,7 +50,7 @@ export function OrderConfirmationSheet({ receipt, onNext }: OrderConfirmationShe
         </dl>
 
         {receipt.change !== null && (
-          <div className="flex justify-between items-baseline p-3 rounded-[14px] border bg-ok-soft text-ok border-ok/20">
+          <div className="s-change flex justify-between items-baseline p-3">
             <span className="text-sm font-semibold">Kembalian</span>
             <b className="font-[family-name:var(--font-display)] text-2xl tabular-nums">
               {formatRupiah(receipt.change)}

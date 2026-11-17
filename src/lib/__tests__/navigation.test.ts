@@ -5,9 +5,10 @@ import {
   hasSomewhereToGo,
   isNavItemActive,
   PUBLIC_NAV,
-  roleHasNav,
   roleNeedsPreorderCount,
+  STAFF_ACCOUNT_ITEM,
   staffNavFor,
+  staffTabsFor,
 } from "@/lib/navigation";
 import { mayReach, PROTECTED_ROUTES } from "@/lib/routes";
 
@@ -99,34 +100,47 @@ describe("staff navigation follows the area, not only the role", () => {
 
   it("gives an unknown role nothing at all", () => {
     expect(staffNavFor("PELANGGAN", "/kasir")).toEqual([]);
-    expect(roleHasNav("PELANGGAN")).toBe(false);
+    expect(staffTabsFor("PELANGGAN", "/kasir")).toEqual([]);
   });
 });
 
 describe("whether a bar is drawn", () => {
-  it("leaves the kitchen phone alone, because DAPUR has one screen", () => {
+  it("gives the kitchen phone a bar too, its one screen and the account", () => {
     expect(hasSomewhereToGo(staffNavFor("DAPUR", "/dapur"))).toBe(false);
-    expect(roleHasNav("DAPUR")).toBe(false);
+    expect(staffTabsFor("DAPUR", "/dapur").map((item) => item.href)).toEqual(["/dapur", "/akun"]);
   });
 
-  it("still gives an admin at the pass a bar, because they have somewhere to go", () => {
-    expect(hasSomewhereToGo(staffNavFor("ADMIN", "/dapur"))).toBe(true);
+  it("adds the account tab to the till, whose bar has room for it", () => {
+    expect(staffTabsFor("KASIR", "/kasir").map((item) => item.href)).toEqual([
+      "/kasir",
+      "/kasir/preorder",
+      "/akun",
+    ]);
+  });
+
+  it("leaves an admin's six-wide bar alone; the avatar is their way to Akun", () => {
+    const tabs = staffTabsFor("ADMIN", "/admin");
+    expect(tabs).toHaveLength(6);
+    expect(tabs).not.toContain(STAFF_ACCOUNT_ITEM);
   });
 
   /**
-   * The layout reserves the page's bottom padding from `roleHasNav`, before a
-   * pathname exists, while `StaffNav` hides the bar from `hasSomewhereToGo`. If
-   * those two ever disagree the page keeps padding for a bar that is not there,
-   * or ends underneath one that is.
+   * The staff layout pads every page for the bar without knowing the role or
+   * the URL. That is only right while every role, everywhere it may stand, is
+   * actually given one.
    */
-  it.each(STAFF_ROLES)("keeps the padding and the bar in agreement for %s", (role) => {
+  it.each(STAFF_ROLES)("gives %s a bar on every screen it can reach", (role) => {
     const everywhere = ["/admin", "/admin/pesanan", "/kasir", "/kasir/preorder", "/dapur"];
     const reachable = everywhere.filter((pathname) => mayReach(role, pathname));
 
     for (const pathname of reachable) {
-      expect(hasSomewhereToGo(staffNavFor(role, pathname)), `${role} at ${pathname}`).toBe(
-        roleHasNav(role),
-      );
+      expect(hasSomewhereToGo(staffTabsFor(role, pathname)), `${role} at ${pathname}`).toBe(true);
+    }
+  });
+
+  it("only ever offers the account a route every role may open", () => {
+    for (const role of STAFF_ROLES) {
+      expect(mayReach(role, STAFF_ACCOUNT_ITEM.href), role).toBe(true);
     }
   });
 
