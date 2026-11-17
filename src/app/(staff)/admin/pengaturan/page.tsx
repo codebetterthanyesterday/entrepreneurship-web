@@ -3,6 +3,7 @@ import { getPickupSlots, getSettings } from "@/lib/services/setting.service";
 import { StoreToggles } from "@/components/admin/store-toggles";
 import { PickupSlotManager } from "@/components/admin/pickup-slot-manager";
 import { MiscSettingsForm } from "@/components/admin/misc-settings-form";
+import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
 import type { AdminPickupSlot } from "@/types/admin";
 import { pageTitle } from "@/lib/brand";
@@ -42,10 +43,11 @@ export default async function AdminSettingsPage() {
 
       <PickupSlotManager slots={slotItems} />
 
+      <QrisUploader qrisImageUrl={settings.qrisImageUrl ?? null} />
+
       <MiscSettingsForm
         lowStockThreshold={settings.lowStockThreshold}
         adminWhatsapp={settings.adminWhatsapp}
-        qrisImageUrl={settings.qrisImageUrl}
       />
 
       <ExportPanel />

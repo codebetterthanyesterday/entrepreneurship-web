@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'fda68e9b77942f2d636305e0efcfc8f0ddbeaad862d45febab3e6e625dac6e1b'>;
+  StorageHashBase<'8a0b0b891be08cd97981339b4303ce1fae155468bf2595390f82511dc1e91bd9'>;
 export type ExecutionHash =
-  ExecutionHashBase<'d920af95d02e507e6e3b82bfeead9b378633a7af8416c8a8c849d69990474208'>;
+  ExecutionHashBase<'fe0874382010911df90448fade3cb0d17f2aab858d217604daac74453dfee4c5'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -336,6 +336,14 @@ export type FieldOutputTypes = {
       readonly orderId: CodecTypes['pg/text@1']['output'] | null;
       readonly actorId: CodecTypes['pg/text@1']['output'] | null;
     };
+    readonly StoredImage: {
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly mimeType: CodecTypes['pg/text@1']['output'];
+      readonly data: CodecTypes['pg/bytea@1']['output'];
+      readonly byteSize: CodecTypes['pg/int4@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly StoreSetting: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly preorderOpen: CodecTypes['pg/bool@1']['output'];
@@ -453,6 +461,14 @@ export type FieldInputTypes = {
       readonly productId: CodecTypes['pg/text@1']['input'];
       readonly orderId: CodecTypes['pg/text@1']['input'] | null;
       readonly actorId: CodecTypes['pg/text@1']['input'] | null;
+    };
+    readonly StoredImage: {
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly mimeType: CodecTypes['pg/text@1']['input'];
+      readonly data: CodecTypes['pg/bytea@1']['input'];
+      readonly byteSize: CodecTypes['pg/int4@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly StoreSetting: {
       readonly id: CodecTypes['pg/int4@1']['input'];
@@ -572,6 +588,14 @@ export type StorageColumnTypes = {
       readonly reason:
         'INITIAL_STOCK' | 'ORDER_CONFIRMED' | 'ORDER_CANCELLED' | 'MANUAL_ADJUST' | 'WASTE';
     };
+    readonly storedImage: {
+      readonly byteSize: CodecTypes['pg/int4@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly data: CodecTypes['pg/bytea@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly mimeType: CodecTypes['pg/text@1']['output'];
+    };
     readonly storeSetting: {
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
       readonly adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
@@ -689,6 +713,14 @@ export type StorageColumnInputTypes = {
       readonly quantity: CodecTypes['pg/int4@1']['input'];
       readonly reason:
         'INITIAL_STOCK' | 'ORDER_CONFIRMED' | 'ORDER_CANCELLED' | 'MANUAL_ADJUST' | 'WASTE';
+    };
+    readonly storedImage: {
+      readonly byteSize: CodecTypes['pg/int4@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly data: CodecTypes['pg/bytea@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly mimeType: CodecTypes['pg/text@1']['input'];
     };
     readonly storeSetting: {
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['input'];
@@ -826,6 +858,15 @@ export namespace Models {
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     readonly [RelationKeys]?: never;
   };
+  export type public_StoredImage = {
+    id: CodecTypes['pg/text@1']['output'];
+    kind: 'QRIS' | 'PAYMENT_PROOF';
+    mimeType: CodecTypes['pg/text@1']['output'];
+    data: CodecTypes['pg/bytea@1']['output'];
+    byteSize: CodecTypes['pg/int4@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_PickupSlot = {
     id: CodecTypes['pg/text@1']['output'];
     label: CodecTypes['pg/text@1']['output'];
@@ -866,6 +907,7 @@ export declare const models: {
     ExternalCharge: Models.public_ExternalCharge;
     StockMovement: Models.public_StockMovement;
     StoreSetting: Models.public_StoreSetting;
+    StoredImage: Models.public_StoredImage;
     PickupSlot: Models.public_PickupSlot;
     SiteText: Models.public_SiteText;
     SiteListItem: Models.public_SiteListItem;
@@ -1568,6 +1610,45 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly storedImage: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly kind: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly mimeType: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly data: {
+                  readonly nativeType: 'bytea';
+                  readonly codecId: 'pg/bytea@1';
+                  readonly nullable: false;
+                };
+                readonly byteSize: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
             readonly storeSetting: {
               columns: {
                 readonly id: {
@@ -1736,6 +1817,10 @@ type ContractBase = Omit<
                 'WASTE',
               ];
             };
+            readonly StoredImageKind: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['QRIS', 'PAYMENT_PROOF'];
+            };
             readonly UserRole: {
               readonly kind: 'valueSet';
               readonly values: readonly ['ADMIN', 'KASIR', 'DAPUR'];
@@ -1767,6 +1852,10 @@ type ContractBase = Omit<
     readonly storeSetting: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'StoreSetting';
+    };
+    readonly storedImage: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'StoredImage';
     };
     readonly pickupSlot: {
       readonly namespace: 'public' & NamespaceId;
@@ -2460,6 +2549,50 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly StoredImage: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly kind: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly mimeType: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly data: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bytea@1' };
+              };
+              readonly byteSize: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'storedImage';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly kind: { readonly column: 'kind' };
+                readonly mimeType: { readonly column: 'mimeType' };
+                readonly data: { readonly column: 'data' };
+                readonly byteSize: { readonly column: 'byteSize' };
+                readonly createdAt: { readonly column: 'createdAt' };
+              };
+            };
+          };
           readonly StoreSetting: {
             readonly fields: {
               readonly id: {
@@ -2640,6 +2773,13 @@ type ContractBase = Omit<
               { readonly name: 'QRIS'; readonly value: 'QRIS' },
             ];
           };
+          readonly StoredImageKind: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'QRIS'; readonly value: 'QRIS' },
+              { readonly name: 'PAYMENT_PROOF'; readonly value: 'PAYMENT_PROOF' },
+            ];
+          };
           readonly ChargeSource: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -2779,6 +2919,14 @@ type ContractBase = Omit<
           readonly ref: {
             readonly namespace: 'public';
             readonly table: 'stockMovement';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'storedImage';
             readonly column: 'id';
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };

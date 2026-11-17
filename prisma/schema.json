@@ -44,6 +44,10 @@
       "model": "StoreSetting",
       "namespace": "public"
     },
+    "storedImage": {
+      "model": "StoredImage",
+      "namespace": "public"
+    },
     "user": {
       "model": "User",
       "namespace": "public"
@@ -165,6 +169,19 @@
               {
                 "name": "WASTE",
                 "value": "WASTE"
+              }
+            ]
+          },
+          "StoredImageKind": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "QRIS",
+                "value": "QRIS"
+              },
+              {
+                "name": "PAYMENT_PROOF",
+                "value": "PAYMENT_PROOF"
               }
             ]
           },
@@ -1393,6 +1410,83 @@
               "table": "storeSetting"
             }
           },
+          "StoredImage": {
+            "fields": {
+              "byteSize": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "data": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bytea@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "kind": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "StoredImageKind",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "mimeType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "byteSize": {
+                  "column": "byteSize"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "data": {
+                  "column": "data"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "kind": {
+                  "column": "kind"
+                },
+                "mimeType": {
+                  "column": "mimeType"
+                }
+              },
+              "namespaceId": "public",
+              "table": "storedImage"
+            }
+          },
           "User": {
             "fields": {
               "createdAt": {
@@ -2511,6 +2605,70 @@
               },
               "uniques": []
             },
+            "storedImage": {
+              "checks": [
+                {
+                  "expression": "\"kind\" IN ('QRIS', 'PAYMENT_PROOF')",
+                  "name": "storedImage_kind_check_f11fda7f",
+                  "prefix": "storedImage_kind_check"
+                },
+                {
+                  "expression": "octet_length(data) BETWEEN 1 AND 3145728",
+                  "name": "stored_image_size_limit_0abf31e1",
+                  "prefix": "stored_image_size_limit"
+                }
+              ],
+              "columns": {
+                "byteSize": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "data": {
+                  "codecId": "pg/bytea@1",
+                  "nativeType": "bytea",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "kind": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "StoredImageKind",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "mimeType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "user": {
               "checks": [
                 {
@@ -2651,6 +2809,13 @@
                 "WASTE"
               ]
             },
+            "StoredImageKind": {
+              "kind": "valueSet",
+              "values": [
+                "QRIS",
+                "PAYMENT_PROOF"
+              ]
+            },
             "UserRole": {
               "kind": "valueSet",
               "values": [
@@ -2665,10 +2830,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "fda68e9b77942f2d636305e0efcfc8f0ddbeaad862d45febab3e6e625dac6e1b"
+    "storageHash": "8a0b0b891be08cd97981339b4303ce1fae155468bf2595390f82511dc1e91bd9"
   },
   "execution": {
-    "executionHash": "d920af95d02e507e6e3b82bfeead9b378633a7af8416c8a8c849d69990474208",
+    "executionHash": "fe0874382010911df90448fade3cb0d17f2aab858d217604daac74453dfee4c5",
     "mutations": {
       "defaults": [
         {
@@ -2817,6 +2982,17 @@
             "column": "id",
             "namespace": "public",
             "table": "stockMovement"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "storedImage"
           }
         },
         {

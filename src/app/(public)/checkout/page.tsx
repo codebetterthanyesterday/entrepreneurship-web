@@ -33,5 +33,12 @@ export default async function CheckoutPage() {
   }));
 
   // No `PageShell`: the checkout brings its own full-bleed bands.
-  return <CheckoutForm products={items} slots={slots} preorderOpen={settings.preorderOpen} />;
+  return (
+    <CheckoutForm
+      products={items}
+      slots={slots}
+      preorderOpen={settings.preorderOpen}
+      qrisAvailable={Boolean(settings.qrisImageUrl)}
+    />
+  );
 }

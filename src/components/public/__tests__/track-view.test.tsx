@@ -13,6 +13,7 @@ const ORDER: TrackedOrder = {
   pickupSlot: "10:30",
   paymentMethod: "CASH",
   paymentStatus: "UNPAID",
+  hasPaymentProof: false,
   status: "IN_PROGRESS",
   notes: null,
   totalAmount: 36000,

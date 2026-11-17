@@ -18,14 +18,16 @@ import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
 type PaymentMethod = "CASH" | "QRIS";
 
 const PAYMENT_NOTE: Record<PaymentMethod, string> = {
-  CASH: "Bayarnya pas ambil aja, siapkan uang pas ya kalau bisa",
-  QRIS: "Nanti kami kirim QRIS lewat WhatsApp. Pesanan dikunci setelah transfer masuk.",
+  CASH: "Bayarnya tunai pas ambil di booth. Siapin uang pas ya kalau bisa.",
+  QRIS: "Habis kirim pesanan, QRIS-nya langsung muncul. Scan pakai e-wallet atau m-banking, bayar sesuai total, lalu unggah bukti bayarnya di situ.",
 };
 
 export interface CheckoutFormProps {
   products: PublicProduct[];
   slots: PublicPickupSlot[];
   preorderOpen: boolean;
+  /** Whether the admin has uploaded a QRIS; without one only cash is offered. */
+  qrisAvailable: boolean;
 }
 
 interface FieldError {
@@ -33,7 +35,7 @@ interface FieldError {
   field?: string;
 }
 
-export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProps) {
+export function CheckoutForm({ products, slots, preorderOpen, qrisAvailable }: CheckoutFormProps) {
   const router = useRouter();
   const cart = useCart(products);
 
@@ -287,17 +289,19 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
                         key={method}
                         type="button"
                         aria-pressed={paymentMethod === method}
+                        disabled={method === "QRIS" && !qrisAvailable}
                         onClick={() => setPaymentMethod(method)}
                         className={cn(
                           "min-h-[52px] rounded-[14px] border-[1.5px] px-3 text-[14.5px] font-semibold transition-colors",
                           paymentMethod === method
                             ? "border-ink bg-ink text-white"
                             : "border-line bg-white text-ink hover:border-pink",
+                          "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-line",
                         )}
                       >
                         <span className="flex items-center justify-center gap-2">
                           <PaymentIcon method={method} />
-                          {method === "CASH" ? "Bayar pas ambil" : "Transfer / QRIS"}
+                          {method === "CASH" ? "Tunai pas ambil" : "QRIS"}
                         </span>
                       </button>
                     ))}
@@ -306,6 +310,11 @@ export function CheckoutForm({ products, slots, preorderOpen }: CheckoutFormProp
                   <p className="mt-3 text-[13.5px] leading-relaxed text-ink-soft">
                     {PAYMENT_NOTE[paymentMethod]}
                   </p>
+                  {!qrisAvailable && (
+                    <p className="mt-2 text-[12.5px] text-ink-soft">
+                      QRIS lagi belum tersedia, jadi bayarnya tunai dulu ya.
+                    </p>
+                  )}
                   {fieldError("paymentMethod") && (
                     <p className="mt-2 text-sm text-hot">{fieldError("paymentMethod")}</p>
                   )}

@@ -14,6 +14,7 @@ import {
   markAsPaid,
   transitionStatus,
 } from "@/lib/services/order.service";
+import { getSettings } from "@/lib/services/setting.service";
 import {
   closeDatabase,
   db,
@@ -180,6 +181,11 @@ describe("findPreordersForCashier", () => {
     });
     await makePickupSlot("09.00 - 10.00", 20);
     await makePickupSlot("10.00 - 11.00", 20);
+    // A QRIS preorder needs a QRIS on show.
+    await getSettings();
+    await db.orm.public.StoreSetting.where({ id: 1 }).update({
+      qrisImageUrl: "/gambar/00000000-0000-4000-8000-000000000000",
+    });
 
     const salsa = await createOrder({
       channel: "PREORDER",

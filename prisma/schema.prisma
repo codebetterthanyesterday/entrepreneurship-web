@@ -45,6 +45,12 @@ enum PaymentMethod {
   QRIS = "QRIS"
 }
 
+enum StoredImageKind {
+  @@type("pg/text@1")
+  QRIS = "QRIS"
+  PAYMENT_PROOF = "PAYMENT_PROOF"
+}
+
 // Layanan lain yang boleh menagih ke nota pesanan (BPB-098, keputusan K-05).
 enum ChargeSource {
   @@type("pg/text@1")
@@ -212,6 +218,22 @@ model StoreSetting {
   // tetap memakai pilihannya (cookie `accent`), hanya tidak bisa menggantinya.
   accentChoiceEnabled Boolean @default(true)
   updatedAt         temporal.updatedAt()
+}
+
+// Gambar yang diunggah lewat aplikasi: QRIS booth (oleh admin) dan bukti bayar
+// QRIS (oleh pelanggan). Disimpan di database supaya tidak butuh layanan
+// penyimpanan terpisah. Kolom lain cukup menyimpan alamatnya, "/gambar/<id>"
+// (`StoreSetting.qrisImageUrl`, `Order.paymentProofUrl`), dan id baru tiap
+// unggahan membuat alamat itu aman di-cache selamanya.
+model StoredImage {
+  id        String          @id @default(uuid())
+  kind      StoredImageKind
+  mimeType  String
+  data      Bytes
+  byteSize  Int
+  createdAt DateTime        @default(now())
+
+  @@check(expression: "octet_length(data) BETWEEN 1 AND 3145728", name: "stored_image_size_limit")
 }
 
 model PickupSlot {

@@ -288,6 +288,13 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     if (input.channel === "PREORDER" && settings?.preorderOpen !== true) {
       throw new ValidationError("Preorder lagi ditutup, beli langsung di booth ya");
     }
+
+    // A customer can only be asked to pay by QRIS once there is a QRIS to show
+    // them. At the booth the cashier has the printed one, so on-site is not held
+    // to this.
+    if (input.channel === "PREORDER" && input.paymentMethod === "QRIS" && !settings?.qrisImageUrl) {
+      throw new ValidationError("QRIS lagi belum tersedia. Pilih bayar tunai pas ambil ya", "paymentMethod");
+    }
     if (input.channel === "ONSITE" && settings?.boothOpen !== true) {
       throw new ValidationError("Booth lagi tutup, belum bisa terima pesanan");
     }

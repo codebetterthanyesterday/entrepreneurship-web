@@ -33,7 +33,7 @@ const REFRESH_INTERVAL_MS = 8_000;
 
 const PAYMENT_LABEL = {
   CASH: "Bayar di tempat",
-  QRIS: "Transfer / QRIS",
+  QRIS: "QRIS",
 } as const;
 
 export interface PreorderScreenProps {
@@ -179,9 +179,13 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                     <span className="block text-[12.5px] text-ink-soft truncate">
                       {order.pickupSlot ? `ambil ${order.pickupSlot} · ` : ""}
                       {order.itemCount} item · {formatRupiah(order.totalAmount)}
-                      {order.paymentStatus === "UNPAID" && (
-                        <span className="text-hot font-semibold"> · belum bayar</span>
-                      )}
+                      {order.paymentStatus === "UNPAID" &&
+                        (order.paymentMethod === "QRIS" && order.paymentProofUrl ? (
+                          // A proof waiting to be checked against the merchant app.
+                          <span className="text-sky-deep font-semibold"> · bukti QRIS masuk, cek</span>
+                        ) : (
+                          <span className="text-hot font-semibold"> · belum bayar</span>
+                        ))}
                     </span>
                   </span>
 
@@ -309,12 +313,12 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
             {selected.paymentMethod === "QRIS" && selected.paymentProofUrl && (
               <div className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-semibold text-ink-soft uppercase tracking-wider">
-                  Bukti transfer pelanggan
+                  Bukti bayar QRIS dari pelanggan
                 </span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selected.paymentProofUrl}
-                  alt={`Bukti transfer pesanan ${selected.orderNumber}`}
+                  alt={`Bukti bayar QRIS pesanan ${selected.orderNumber}`}
                   className="w-full max-h-[280px] object-contain rounded-[14px] border border-line bg-white"
                 />
               </div>
@@ -349,7 +353,7 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
           title={`Pembayaran ${selected.orderNumber}`}
           submitLabels={{
             CASH: "Pembayaran diterima",
-            QRIS: "Transfer masuk, tandai lunas",
+            QRIS: "QRIS masuk, tandai lunas",
           }}
           onClose={closePayment}
           onSubmit={takePayment}

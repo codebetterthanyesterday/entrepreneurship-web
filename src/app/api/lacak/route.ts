@@ -2,6 +2,7 @@ import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { findForTracking, toTrackedOrder } from "@/lib/queries/order.query";
 import type { TrackedOrder } from "@/types/order-view";
 import { photoboothLink } from "@/lib/photobooth-link";
+import { getSettings } from "@/lib/services/setting.service";
 
 export interface TrackingResponse {
   order: TrackedOrder | null;
@@ -10,6 +11,8 @@ export interface TrackingResponse {
    * this caller has just proven them. Absent when there is no order.
    */
   photoLink?: string | null;
+  /** The booth's QRIS, for an order paid by QRIS; it is public anyway. */
+  qrisImageUrl?: string | null;
 }
 
 /**
@@ -33,10 +36,13 @@ export async function GET(request: Request): Promise<Response> {
 
   const order = await findForTracking(orderNumber, phoneLast4);
   const charges = order ? await findActiveCharges([order.id]) : null;
+  const qrisImageUrl =
+    order?.paymentMethod === "QRIS" ? ((await getSettings()).qrisImageUrl ?? null) : null;
   const body: TrackingResponse = order
     ? {
         order: toTrackedOrder(order, charges?.get(order.id)),
         photoLink: photoboothLink(order, { withToken: true }),
+        qrisImageUrl,
       }
     : { order: null };
 

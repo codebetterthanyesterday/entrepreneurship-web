@@ -69,6 +69,7 @@ export function toTrackedOrder(
     pickupSlot: order.pickupSlot,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
+    hasPaymentProof: order.paymentProofUrl !== null,
     status: order.status,
     notes: order.notes,
     totalAmount: order.totalAmount,
