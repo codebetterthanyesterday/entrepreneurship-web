@@ -40,6 +40,14 @@
       "model": "Product",
       "namespace": "public"
     },
+    "serviceDay": {
+      "model": "ServiceDay",
+      "namespace": "public"
+    },
+    "serviceWindow": {
+      "model": "ServiceWindow",
+      "namespace": "public"
+    },
     "siteListItem": {
       "model": "SiteListItem",
       "namespace": "public"
@@ -75,6 +83,27 @@
               {
                 "name": "PHOTOBOOTH",
                 "value": "PHOTOBOOTH"
+              }
+            ]
+          },
+          "HandoverLocation": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "CAMPUS_B",
+                "value": "CAMPUS_B"
+              },
+              {
+                "name": "CAMPUS_C",
+                "value": "CAMPUS_C"
+              },
+              {
+                "name": "MARKET_DAY",
+                "value": "MARKET_DAY"
+              },
+              {
+                "name": "OTHER",
+                "value": "OTHER"
               }
             ]
           },
@@ -670,10 +699,37 @@
                   "kind": "scalar"
                 }
               },
+              "handoverDetail": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "handoverLocation": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "HandoverLocation",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "locationReviewedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
                   "kind": "scalar"
                 }
               },
@@ -742,6 +798,20 @@
                 "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "serviceDate": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "serviceWindowId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -842,6 +912,22 @@
                   "namespace": "public"
                 }
               },
+              "serviceWindow": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "serviceWindowId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "ServiceWindow",
+                  "namespace": "public"
+                }
+              },
               "stockMovements": {
                 "cardinality": "1:N",
                 "on": {
@@ -881,8 +967,17 @@
                 "handledById": {
                   "column": "handledById"
                 },
+                "handoverDetail": {
+                  "column": "handoverDetail"
+                },
+                "handoverLocation": {
+                  "column": "handoverLocation"
+                },
                 "id": {
                   "column": "id"
+                },
+                "locationReviewedAt": {
+                  "column": "locationReviewedAt"
                 },
                 "notes": {
                   "column": "notes"
@@ -907,6 +1002,12 @@
                 },
                 "readyAt": {
                   "column": "readyAt"
+                },
+                "serviceDate": {
+                  "column": "serviceDate"
+                },
+                "serviceWindowId": {
+                  "column": "serviceWindowId"
                 },
                 "startedAt": {
                   "column": "startedAt"
@@ -1444,6 +1545,187 @@
               "table": "product"
             }
           },
+          "ServiceDay": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "date": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "isOpen": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "locations": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "windows": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "dayId"
+                  ]
+                },
+                "to": {
+                  "model": "ServiceWindow",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "date": {
+                  "column": "date"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "isOpen": {
+                  "column": "isOpen"
+                },
+                "locations": {
+                  "column": "locations"
+                }
+              },
+              "namespaceId": "public",
+              "table": "serviceDay"
+            }
+          },
+          "ServiceWindow": {
+            "fields": {
+              "booked": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "dayId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "endMinute": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "quota": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "startMinute": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "day": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "dayId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "ServiceDay",
+                  "namespace": "public"
+                }
+              },
+              "orders": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "serviceWindowId"
+                  ]
+                },
+                "to": {
+                  "model": "Order",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "booked": {
+                  "column": "booked"
+                },
+                "dayId": {
+                  "column": "dayId"
+                },
+                "endMinute": {
+                  "column": "endMinute"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "quota": {
+                  "column": "quota"
+                },
+                "startMinute": {
+                  "column": "startMinute"
+                }
+              },
+              "namespaceId": "public",
+              "table": "serviceWindow"
+            }
+          },
           "SiteListItem": {
             "fields": {
               "body": {
@@ -1769,6 +2051,13 @@
                   "kind": "scalar"
                 }
               },
+              "orderCutoffMinute": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "preorderOpen": {
                 "nullable": false,
                 "type": {
@@ -1808,6 +2097,9 @@
                 },
                 "lowStockThreshold": {
                   "column": "lowStockThreshold"
+                },
+                "orderCutoffMinute": {
+                  "column": "orderCutoffMinute"
                 },
                 "preorderOpen": {
                   "column": "preorderOpen"
@@ -2370,6 +2662,11 @@
                   "prefix": "order_channel_check"
                 },
                 {
+                  "expression": "\"handoverLocation\" IN ('CAMPUS_B', 'CAMPUS_C', 'MARKET_DAY', 'OTHER')",
+                  "name": "order_handoverLocation_check_12f575fe",
+                  "prefix": "order_handoverLocation_check"
+                },
+                {
                   "expression": "\"paymentMethod\" IN ('CASH', 'QRIS')",
                   "name": "order_paymentMethod_check_6fab299a",
                   "prefix": "order_paymentMethod_check"
@@ -2431,10 +2728,31 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "handoverDetail": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "handoverLocation": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "HandoverLocation",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "locationReviewedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
                 },
                 "notes": {
                   "codecId": "pg/text@1",
@@ -2492,6 +2810,16 @@
                   "nativeType": "timestamptz",
                   "nullable": true
                 },
+                "serviceDate": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "serviceWindowId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "startedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
                   "nativeType": "timestamptz",
@@ -2524,6 +2852,22 @@
                 }
               },
               "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "serviceWindowId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "order"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "serviceWindow"
+                  }
+                },
                 {
                   "source": {
                     "columns": [
@@ -2573,6 +2917,22 @@
                   ],
                   "name": "order_handledById_idx_7b411288",
                   "prefix": "order_handledById_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "serviceDate"
+                  ],
+                  "name": "order_serviceDate_idx_478ae72f",
+                  "prefix": "order_serviceDate_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "serviceWindowId"
+                  ],
+                  "name": "order_serviceWindowId_idx_4768b9c5",
+                  "prefix": "order_serviceWindowId_idx",
                   "unique": false
                 },
                 {
@@ -3011,6 +3371,157 @@
               },
               "uniques": []
             },
+            "serviceDay": {
+              "checks": [
+                {
+                  "expression": "array_position(\"locations\", NULL) IS NULL",
+                  "name": "serviceDay_locations_elem_not_null_35aec250",
+                  "prefix": "serviceDay_locations_elem_not_null"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "date": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "isOpen": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": true
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
+                "locations": {
+                  "codecId": "pg/text@1",
+                  "many": true,
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "date"
+                  ]
+                }
+              ]
+            },
+            "serviceWindow": {
+              "checks": [
+                {
+                  "expression": "booked >= 0",
+                  "name": "service_window_booked_non_negative_d907661a",
+                  "prefix": "service_window_booked_non_negative"
+                },
+                {
+                  "expression": "booked <= quota",
+                  "name": "service_window_booked_within_quota_8c716e51",
+                  "prefix": "service_window_booked_within_quota"
+                }
+              ],
+              "columns": {
+                "booked": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "dayId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "endMinute": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "quota": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "startMinute": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "dayId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "serviceWindow"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "serviceDay"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "dayId"
+                  ],
+                  "name": "serviceWindow_dayId_idx_0ba48a31",
+                  "prefix": "serviceWindow_dayId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "dayId",
+                    "startMinute"
+                  ]
+                }
+              ]
+            },
             "siteListItem": {
               "columns": {
                 "body": {
@@ -3299,6 +3810,15 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "orderCutoffMinute": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1260
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
                 "preorderOpen": {
                   "codecId": "pg/bool@1",
                   "default": {
@@ -3483,6 +4003,15 @@
                 "PHOTOBOOTH"
               ]
             },
+            "HandoverLocation": {
+              "kind": "valueSet",
+              "values": [
+                "CAMPUS_B",
+                "CAMPUS_C",
+                "MARKET_DAY",
+                "OTHER"
+              ]
+            },
             "OrderChannel": {
               "kind": "valueSet",
               "values": [
@@ -3553,10 +4082,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "816aba2a0a05ed95e7f92ffe1f4985371eb35df343c42ffd7c218b4533c717d9"
+    "storageHash": "01ca04f9fbab679444d309d8fec8b9bc39a0b8962a1e8dfff59c5f13170a687a"
   },
   "execution": {
-    "executionHash": "84074a4f1aa8b2a8b20abc0f599315024ec5a0cc874c46e75ea1a0e9394a3b07",
+    "executionHash": "2237e05b4e45077ca9d3cde4b5ce91bacce3c0621a9e066f075cdf7bbf1ebed3",
     "mutations": {
       "defaults": [
         {
@@ -3701,6 +4230,28 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "product"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "serviceDay"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "serviceWindow"
           }
         },
         {

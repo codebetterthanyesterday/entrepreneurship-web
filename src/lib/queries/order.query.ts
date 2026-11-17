@@ -1,5 +1,6 @@
 import { or } from "@prisma/orm-postgres/orm-client";
 import { prisma as db } from "@/lib/prisma";
+import { needsLocationReview } from "@/lib/schedule";
 import type { OrderWithItems } from "@/lib/services/order.service";
 import type { OrderStatus } from "@/types/order";
 import { lastFourDigits } from "@/lib/remembered-order";
@@ -19,6 +20,27 @@ import type {
  * number is the only thing the customer has; anything that needs to be private
  * belongs on the tracking page instead.
  */
+/** The handover fields every order view carries; see `TrackedOrder`. */
+export function handoverView(order: {
+  serviceDate: string | null;
+  handoverLocation: string | null;
+  handoverDetail: string | null;
+  locationReviewedAt: unknown;
+  status: string;
+}) {
+  return {
+    serviceDate: order.serviceDate ?? null,
+    handoverLocation: order.handoverLocation ?? null,
+    handoverDetail: order.handoverDetail ?? null,
+    awaitingLocationCheck: needsLocationReview(order),
+  };
+}
+
+/** One order's own row, by id: no items, for a quick check before acting on it. */
+export async function findOrderById(id: string) {
+  return await db.orm.public.Order.where({ id }).first();
+}
+
 export async function findByNumber(orderNumber: string): Promise<OrderWithItems | null> {
   return await db.orm.public.Order.where({ orderNumber })
     .include("items", (item) => item.include("product"))
@@ -70,6 +92,7 @@ export function toTrackedOrder(
     orderNumber: order.orderNumber,
     customerName: order.customerName,
     pickupSlot: order.pickupSlot,
+    ...handoverView(order),
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     hasPaymentProof: order.paymentProofUrl !== null,
@@ -150,7 +173,11 @@ export async function findPreordersForCashier(
   return await query
     .include("items", (item) => item.include("product"))
     .include("bundles")
-    .orderBy([(order) => order.pickupSlot.asc(), (order) => order.createdAt.asc()])
+    .orderBy([
+      (order) => order.serviceDate.asc(),
+      (order) => order.pickupSlot.asc(),
+      (order) => order.createdAt.asc(),
+    ])
     .all();
 }
 
@@ -170,6 +197,7 @@ export function toCashierPreorder(
     orderNumber: order.orderNumber,
     customerName: order.customerName,
     pickupSlot: order.pickupSlot,
+    ...handoverView(order),
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     paymentProofUrl: order.paymentProofUrl,

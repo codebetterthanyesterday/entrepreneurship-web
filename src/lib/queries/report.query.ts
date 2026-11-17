@@ -545,6 +545,9 @@ export interface OrderExportRow {
   customerName: string;
   customerPhone: string;
   pickupSlot: string;
+  serviceDate: string;
+  handoverLocation: string;
+  handoverDetail: string;
   paymentMethod: string;
   paymentStatus: PaymentStatus;
   totalAmount: number;
@@ -583,6 +586,9 @@ export async function getOrdersForExport(): Promise<OrderExportRow[]> {
     customerName: order.customerName,
     customerPhone: order.customerPhone ?? "",
     pickupSlot: order.pickupSlot ?? "",
+    serviceDate: order.serviceDate ?? "",
+    handoverLocation: order.handoverLocation ?? "",
+    handoverDetail: order.handoverDetail ?? "",
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     totalAmount: order.totalAmount,

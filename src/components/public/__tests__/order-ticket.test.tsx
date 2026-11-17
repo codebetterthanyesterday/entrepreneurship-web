@@ -12,6 +12,10 @@ const ORDER: TrackedOrder = {
   orderNumber: "PO-0007",
   customerName: "Amanda Larasati",
   pickupSlot: "21.00 - 22.00",
+  serviceDate: null,
+  handoverLocation: null,
+  handoverDetail: null,
+  awaitingLocationCheck: false,
   paymentMethod: "QRIS",
   paymentStatus: "PAID",
   hasPaymentProof: true,
@@ -51,7 +55,7 @@ describe("OrderTicket", () => {
     renderTicket(ORDER);
 
     expect(screen.getByText("Amanda Larasati")).toBeTruthy();
-    expect(screen.getByText("Slot: 21.00 - 22.00")).toBeTruthy();
+    expect(screen.getByText("Jam: 21.00 - 22.00")).toBeTruthy();
     expect(screen.getByText("Milk Tea Bean Curd")).toBeTruthy();
     expect(screen.getByText(/Rp\s?25\.000/)).toBeTruthy();
   });

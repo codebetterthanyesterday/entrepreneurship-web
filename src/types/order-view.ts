@@ -33,6 +33,15 @@ export interface TrackedOrder {
   orderNumber: string;
   customerName: string;
   pickupSlot: string | null;
+  /**
+   * The preorder's handover: date ("2026-11-24"), place, meeting-point note,
+   * and whether a "Lainnya" place still waits for staff. Null for walk-ins and
+   * for orders from before the schedule. `describeHandover` writes it as one line.
+   */
+  serviceDate: string | null;
+  handoverLocation: string | null;
+  handoverDetail: string | null;
+  awaitingLocationCheck: boolean;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   /**
@@ -89,6 +98,15 @@ export interface CashierPreorder {
   orderNumber: string;
   customerName: string;
   pickupSlot: string | null;
+  /**
+   * The preorder's handover: date ("2026-11-24"), place, meeting-point note,
+   * and whether a "Lainnya" place still waits for staff. Null for walk-ins and
+   * for orders from before the schedule. `describeHandover` writes it as one line.
+   */
+  serviceDate: string | null;
+  handoverLocation: string | null;
+  handoverDetail: string | null;
+  awaitingLocationCheck: boolean;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   /** The QRIS payment proof the customer uploaded, for the cashier to check (staff only). */
@@ -186,6 +204,15 @@ export interface AdminOrder {
   customerName: string;
   customerPhone: string | null;
   pickupSlot: string | null;
+  /**
+   * The preorder's handover: date ("2026-11-24"), place, meeting-point note,
+   * and whether a "Lainnya" place still waits for staff. Null for walk-ins and
+   * for orders from before the schedule. `describeHandover` writes it as one line.
+   */
+  serviceDate: string | null;
+  handoverLocation: string | null;
+  handoverDetail: string | null;
+  awaitingLocationCheck: boolean;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   notes: string | null;

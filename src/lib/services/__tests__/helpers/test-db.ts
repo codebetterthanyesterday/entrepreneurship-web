@@ -19,6 +19,8 @@ function assertTestDatabase(): void {
 const TABLES = [
   "externalCharge",
   "storedImage",
+  "serviceWindow",
+  "serviceDay",
   "stockMovement",
   "orderItem",
   "orderBundle",

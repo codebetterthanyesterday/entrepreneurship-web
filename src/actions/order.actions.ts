@@ -44,7 +44,11 @@ export async function submitPreorderAction(
       bundles: data.bundles ?? [],
       customerName: data.customerName,
       customerPhone: data.customerPhone,
-      pickupSlot: data.pickupSlot,
+      schedule: {
+        location: data.handoverLocation,
+        detail: data.handoverDetail ?? null,
+        serviceWindowId: data.serviceWindowId,
+      },
       paymentMethod: data.paymentMethod,
       notes: data.notes ?? null,
     });

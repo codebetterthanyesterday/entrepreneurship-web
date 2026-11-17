@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { bundleOrderLineSchema } from "./bundle.schema";
+import { HANDOVER_DETAIL_MAX, HANDOVER_LOCATIONS, OTHER_DETAIL_MIN } from "@/lib/schedule";
 
 export const orderLineSchema = z.object({
   productId: z.string().min(1, "Menunya nggak valid"),
@@ -47,10 +48,29 @@ export const createPreorderSchema = orderBaseSchema
       .string()
       .trim()
       .regex(/^0\d{8,13}$/, "Nomor WhatsApp-nya belum betul"),
-    pickupSlot: z.string().trim().min(1, "Pilih jam ambil dulu ya"),
+    handoverLocation: z.enum(HANDOVER_LOCATIONS, { message: "Pilih lokasi serah terimanya dulu ya" }),
+    handoverDetail: z
+      .string()
+      .trim()
+      .max(HANDOVER_DETAIL_MAX, "Detail lokasinya kepanjangan")
+      .optional()
+      .nullable(),
+    serviceWindowId: z
+      .string({ message: "Pilih tanggal dan jamnya dulu ya" })
+      .min(1, "Pilih tanggal dan jamnya dulu ya"),
     paymentMethod: z.enum(["CASH", "QRIS"], { message: "Pilih cara bayarnya ya" }),
   })
-  .superRefine(basketNotEmpty);
+  .superRefine(basketNotEmpty)
+  .superRefine((data, ctx) => {
+    // "Lainnya" is a place we have to find, so it has to be written down.
+    if (data.handoverLocation === "OTHER" && (data.handoverDetail?.length ?? 0) < OTHER_DETAIL_MIN) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["handoverDetail"],
+        message: "Tulis lokasinya lengkap ya, biar kami bisa cek jangkauannya",
+      });
+    }
+  });
 
 export type CreatePreorderInput = z.infer<typeof createPreorderSchema>;
 

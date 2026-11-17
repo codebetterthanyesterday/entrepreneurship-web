@@ -12,6 +12,7 @@ import {
   type ProductExportRow,
 } from "@/lib/queries/report.query";
 import { requireRole } from "@/lib/session";
+import { HANDOVER_LABEL, isHandoverLocation } from "@/lib/schedule";
 
 /** The report is dated in the timezone the event ran in, not the server's. */
 const EVENT_TIME_ZONE = "Asia/Jakarta";
@@ -59,7 +60,13 @@ const ORDER_COLUMNS: readonly CsvColumn<OrderExportRow>[] = [
   { header: "Status", value: (row) => label(STATUS_LABEL, row.status) },
   { header: "Nama Pelanggan", value: (row) => row.customerName },
   { header: "Nomor WhatsApp", value: (row) => row.customerPhone },
+  { header: "Tanggal Serah Terima", value: (row) => row.serviceDate },
   { header: "Slot Ambil", value: (row) => row.pickupSlot },
+  {
+    header: "Lokasi Serah Terima",
+    value: (row) => (isHandoverLocation(row.handoverLocation) ? HANDOVER_LABEL[row.handoverLocation] : ""),
+  },
+  { header: "Detail Lokasi", value: (row) => row.handoverDetail },
   { header: "Metode Bayar", value: (row) => row.paymentMethod },
   { header: "Status Bayar", value: (row) => label(PAYMENT_STATUS_LABEL, row.paymentStatus) },
   { header: "Total", value: (row) => row.totalAmount },

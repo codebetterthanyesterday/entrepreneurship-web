@@ -1,0 +1,659 @@
+[
+  {
+    "id": "table.serviceDay",
+    "label": "Create table \"serviceDay\"",
+    "summary": "Creates table \"serviceDay\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "serviceDay"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"serviceDay\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"serviceDay\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"serviceDay\"",
+        "sql": "CREATE TABLE \"public\".\"serviceDay\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"date\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"isOpen\" bool DEFAULT true NOT NULL,\n  \"locations\" text[] NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"serviceDay_locations_elem_not_null_35aec250\" CHECK (array_position(\"locations\", NULL) IS NULL)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"serviceDay\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"serviceDay\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.serviceWindow",
+    "label": "Create table \"serviceWindow\"",
+    "summary": "Creates table \"serviceWindow\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "serviceWindow"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"serviceWindow\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"serviceWindow\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"serviceWindow\"",
+        "sql": "CREATE TABLE \"public\".\"serviceWindow\" (\n  \"booked\" int4 DEFAULT 0 NOT NULL,\n  \"dayId\" text NOT NULL,\n  \"endMinute\" int4 NOT NULL,\n  \"id\" text NOT NULL,\n  \"quota\" int4 NOT NULL,\n  \"startMinute\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"service_window_booked_non_negative_d907661a\" CHECK (booked >= 0),\n  CONSTRAINT \"service_window_booked_within_quota_8c716e51\" CHECK (booked <= quota)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"serviceWindow\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"serviceWindow\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.order.handoverDetail",
+    "label": "Add column \"handoverDetail\" to \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "handoverDetail",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"handoverDetail\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "handoverDetail"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"handoverDetail\"",
+        "sql": "ALTER TABLE \"public\".\"order\" ADD COLUMN \"handoverDetail\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"handoverDetail\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "handoverDetail"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.order.handoverLocation",
+    "label": "Add column \"handoverLocation\" to \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "handoverLocation",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"handoverLocation\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "handoverLocation"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"handoverLocation\"",
+        "sql": "ALTER TABLE \"public\".\"order\" ADD COLUMN \"handoverLocation\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"handoverLocation\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "handoverLocation"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.order.locationReviewedAt",
+    "label": "Add column \"locationReviewedAt\" to \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "locationReviewedAt",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"locationReviewedAt\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "locationReviewedAt"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"locationReviewedAt\"",
+        "sql": "ALTER TABLE \"public\".\"order\" ADD COLUMN \"locationReviewedAt\" timestamptz"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"locationReviewedAt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "locationReviewedAt"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.order.serviceDate",
+    "label": "Add column \"serviceDate\" to \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "serviceDate",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"serviceDate\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "serviceDate"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"serviceDate\"",
+        "sql": "ALTER TABLE \"public\".\"order\" ADD COLUMN \"serviceDate\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"serviceDate\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "serviceDate"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.order.serviceWindowId",
+    "label": "Add column \"serviceWindowId\" to \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "serviceWindowId",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"serviceWindowId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "serviceWindowId"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"serviceWindowId\"",
+        "sql": "ALTER TABLE \"public\".\"order\" ADD COLUMN \"serviceWindowId\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"serviceWindowId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "order",
+          "serviceWindowId"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.storeSetting.orderCutoffMinute",
+    "label": "Add column \"orderCutoffMinute\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "orderCutoffMinute",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"orderCutoffMinute\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "orderCutoffMinute"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"orderCutoffMinute\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"orderCutoffMinute\" int4 DEFAULT 1260 NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"orderCutoffMinute\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "orderCutoffMinute"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.order.order_handoverLocation_check_12f575fe",
+    "label": "Add check constraint \"order_handoverLocation_check_12f575fe\" on \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "order_handoverLocation_check_12f575fe",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"order_handoverLocation_check_12f575fe\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "order_handoverLocation_check_12f575fe",
+          "public",
+          "\"public\".\"order\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"order_handoverLocation_check_12f575fe\"",
+        "sql": "ALTER TABLE \"public\".\"order\" ADD CONSTRAINT \"order_handoverLocation_check_12f575fe\" CHECK (\"handoverLocation\" IN ('CAMPUS_B', 'CAMPUS_C', 'MARKET_DAY', 'OTHER'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"order_handoverLocation_check_12f575fe\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "order_handoverLocation_check_12f575fe",
+          "public",
+          "\"public\".\"order\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.serviceDay.serviceDay_date_key",
+    "label": "Add unique constraint on \"serviceDay\" (date)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "serviceDay_date_key",
+        "table": "serviceDay"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"serviceDay_date_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "serviceDay_date_key",
+          "public",
+          "\"public\".\"serviceDay\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"serviceDay_date_key\"",
+        "sql": "ALTER TABLE \"public\".\"serviceDay\" ADD CONSTRAINT \"serviceDay_date_key\" UNIQUE (\"date\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"serviceDay_date_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "serviceDay_date_key",
+          "public",
+          "\"public\".\"serviceDay\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.serviceWindow.serviceWindow_dayId_startMinute_key",
+    "label": "Add unique constraint on \"serviceWindow\" (dayId, startMinute)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "serviceWindow_dayId_startMinute_key",
+        "table": "serviceWindow"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"serviceWindow_dayId_startMinute_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "serviceWindow_dayId_startMinute_key",
+          "public",
+          "\"public\".\"serviceWindow\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"serviceWindow_dayId_startMinute_key\"",
+        "sql": "ALTER TABLE \"public\".\"serviceWindow\" ADD CONSTRAINT \"serviceWindow_dayId_startMinute_key\" UNIQUE (\"dayId\", \"startMinute\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"serviceWindow_dayId_startMinute_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "serviceWindow_dayId_startMinute_key",
+          "public",
+          "\"public\".\"serviceWindow\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.order.order_serviceDate_idx_478ae72f",
+    "label": "Create index \"order_serviceDate_idx_478ae72f\" on \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "order_serviceDate_idx_478ae72f",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"order_serviceDate_idx_478ae72f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"order_serviceDate_idx_478ae72f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"order_serviceDate_idx_478ae72f\"",
+        "sql": "CREATE INDEX \"order_serviceDate_idx_478ae72f\" ON \"public\".\"order\" (\"serviceDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"order_serviceDate_idx_478ae72f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"order_serviceDate_idx_478ae72f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.order.order_serviceWindowId_idx_4768b9c5",
+    "label": "Create index \"order_serviceWindowId_idx_4768b9c5\" on \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "order_serviceWindowId_idx_4768b9c5",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"order_serviceWindowId_idx_4768b9c5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"order_serviceWindowId_idx_4768b9c5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"order_serviceWindowId_idx_4768b9c5\"",
+        "sql": "CREATE INDEX \"order_serviceWindowId_idx_4768b9c5\" ON \"public\".\"order\" (\"serviceWindowId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"order_serviceWindowId_idx_4768b9c5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"order_serviceWindowId_idx_4768b9c5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.serviceWindow.serviceWindow_dayId_idx_0ba48a31",
+    "label": "Create index \"serviceWindow_dayId_idx_0ba48a31\" on \"serviceWindow\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "serviceWindow_dayId_idx_0ba48a31",
+        "table": "serviceWindow"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"serviceWindow_dayId_idx_0ba48a31\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"serviceWindow_dayId_idx_0ba48a31\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"serviceWindow_dayId_idx_0ba48a31\"",
+        "sql": "CREATE INDEX \"serviceWindow_dayId_idx_0ba48a31\" ON \"public\".\"serviceWindow\" (\"dayId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"serviceWindow_dayId_idx_0ba48a31\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"serviceWindow_dayId_idx_0ba48a31\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.serviceWindow.serviceWindow_dayId_fkey",
+    "label": "Add foreign key \"serviceWindow_dayId_fkey\" on \"serviceWindow\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "serviceWindow_dayId_fkey",
+        "table": "serviceWindow"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"serviceWindow_dayId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "serviceWindow_dayId_fkey",
+          "public",
+          "\"public\".\"serviceWindow\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"serviceWindow_dayId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"serviceWindow\"\nADD CONSTRAINT \"serviceWindow_dayId_fkey\"\nFOREIGN KEY (\"dayId\")\nREFERENCES \"public\".\"serviceDay\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"serviceWindow_dayId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "serviceWindow_dayId_fkey",
+          "public",
+          "\"public\".\"serviceWindow\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.order.order_serviceWindowId_fkey",
+    "label": "Add foreign key \"order_serviceWindowId_fkey\" on \"order\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "order_serviceWindowId_fkey",
+        "table": "order"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"order_serviceWindowId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "order_serviceWindowId_fkey",
+          "public",
+          "\"public\".\"order\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"order_serviceWindowId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"order\"\nADD CONSTRAINT \"order_serviceWindowId_fkey\"\nFOREIGN KEY (\"serviceWindowId\")\nREFERENCES \"public\".\"serviceWindow\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"order_serviceWindowId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "order_serviceWindowId_fkey",
+          "public",
+          "\"public\".\"order\""
+        ]
+      }
+    ]
+  }
+]

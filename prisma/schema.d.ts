@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'816aba2a0a05ed95e7f92ffe1f4985371eb35df343c42ffd7c218b4533c717d9'>;
+  StorageHashBase<'01ca04f9fbab679444d309d8fec8b9bc39a0b8962a1e8dfff59c5f13170a687a'>;
 export type ExecutionHash =
-  ExecutionHashBase<'84074a4f1aa8b2a8b20abc0f599315024ec5a0cc874c46e75ea1a0e9394a3b07'>;
+  ExecutionHashBase<'2237e05b4e45077ca9d3cde4b5ce91bacce3c0621a9e066f075cdf7bbf1ebed3'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -286,6 +286,11 @@ export type FieldOutputTypes = {
       readonly paymentMethod: 'CASH' | 'QRIS';
       readonly paymentStatus: 'UNPAID' | 'PAID';
       readonly paymentProofUrl: CodecTypes['pg/text@1']['output'] | null;
+      readonly serviceDate: CodecTypes['pg/text@1']['output'] | null;
+      readonly handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
+      readonly handoverDetail: CodecTypes['pg/text@1']['output'] | null;
+      readonly serviceWindowId: CodecTypes['pg/text@1']['output'] | null;
+      readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly cashReceived: CodecTypes['pg/int4@1']['output'] | null;
       readonly totalAmount: CodecTypes['pg/int4@1']['output'];
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
@@ -336,6 +341,21 @@ export type FieldOutputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly categoryId: CodecTypes['pg/text@1']['output'] | null;
     };
+    readonly ServiceDay: {
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly date: CodecTypes['pg/text@1']['output'];
+      readonly isOpen: CodecTypes['pg/bool@1']['output'];
+      readonly locations: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
+    readonly ServiceWindow: {
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly dayId: CodecTypes['pg/text@1']['output'];
+      readonly startMinute: CodecTypes['pg/int4@1']['output'];
+      readonly endMinute: CodecTypes['pg/int4@1']['output'];
+      readonly quota: CodecTypes['pg/int4@1']['output'];
+      readonly booked: CodecTypes['pg/int4@1']['output'];
+    };
     readonly SiteListItem: {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly section: CodecTypes['pg/text@1']['output'];
@@ -379,6 +399,7 @@ export type FieldOutputTypes = {
       readonly qrisImageUrl: CodecTypes['pg/text@1']['output'] | null;
       readonly adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
+      readonly orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly User: {
@@ -439,6 +460,11 @@ export type FieldInputTypes = {
       readonly paymentMethod: 'CASH' | 'QRIS';
       readonly paymentStatus: 'UNPAID' | 'PAID';
       readonly paymentProofUrl: CodecTypes['pg/text@1']['input'] | null;
+      readonly serviceDate: CodecTypes['pg/text@1']['input'] | null;
+      readonly handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
+      readonly handoverDetail: CodecTypes['pg/text@1']['input'] | null;
+      readonly serviceWindowId: CodecTypes['pg/text@1']['input'] | null;
+      readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly cashReceived: CodecTypes['pg/int4@1']['input'] | null;
       readonly totalAmount: CodecTypes['pg/int4@1']['input'];
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
@@ -489,6 +515,21 @@ export type FieldInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly categoryId: CodecTypes['pg/text@1']['input'] | null;
     };
+    readonly ServiceDay: {
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly date: CodecTypes['pg/text@1']['input'];
+      readonly isOpen: CodecTypes['pg/bool@1']['input'];
+      readonly locations: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
+    readonly ServiceWindow: {
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly dayId: CodecTypes['pg/text@1']['input'];
+      readonly startMinute: CodecTypes['pg/int4@1']['input'];
+      readonly endMinute: CodecTypes['pg/int4@1']['input'];
+      readonly quota: CodecTypes['pg/int4@1']['input'];
+      readonly booked: CodecTypes['pg/int4@1']['input'];
+    };
     readonly SiteListItem: {
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly section: CodecTypes['pg/text@1']['input'];
@@ -532,6 +573,7 @@ export type FieldInputTypes = {
       readonly qrisImageUrl: CodecTypes['pg/text@1']['input'] | null;
       readonly adminWhatsapp: CodecTypes['pg/text@1']['input'] | null;
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['input'];
+      readonly orderCutoffMinute: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly User: {
@@ -589,7 +631,10 @@ export type StorageColumnTypes = {
       readonly customerName: CodecTypes['pg/text@1']['output'];
       readonly customerPhone: CodecTypes['pg/text@1']['output'] | null;
       readonly handledById: CodecTypes['pg/text@1']['output'] | null;
+      readonly handoverDetail: CodecTypes['pg/text@1']['output'] | null;
+      readonly handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
       readonly id: CodecTypes['pg/text@1']['output'];
+      readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
       readonly orderNumber: CodecTypes['pg/text@1']['output'];
       readonly paymentMethod: 'CASH' | 'QRIS';
@@ -598,6 +643,8 @@ export type StorageColumnTypes = {
       readonly pickupSlot: CodecTypes['pg/text@1']['output'] | null;
       readonly queuedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly readyAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+      readonly serviceDate: CodecTypes['pg/text@1']['output'] | null;
+      readonly serviceWindowId: CodecTypes['pg/text@1']['output'] | null;
       readonly startedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly status: 'CONFIRMED' | 'IN_QUEUE' | 'IN_PROGRESS' | 'READY' | 'DONE' | 'CANCELLED';
       readonly totalAmount: CodecTypes['pg/int4@1']['output'];
@@ -642,6 +689,21 @@ export type StorageColumnTypes = {
       readonly stock: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
+    readonly serviceDay: {
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly date: CodecTypes['pg/text@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly isOpen: CodecTypes['pg/bool@1']['output'];
+      readonly locations: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
+    };
+    readonly serviceWindow: {
+      readonly booked: CodecTypes['pg/int4@1']['output'];
+      readonly dayId: CodecTypes['pg/text@1']['output'];
+      readonly endMinute: CodecTypes['pg/int4@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly quota: CodecTypes['pg/int4@1']['output'];
+      readonly startMinute: CodecTypes['pg/int4@1']['output'];
+    };
     readonly siteListItem: {
       readonly body: CodecTypes['pg/text@1']['output'] | null;
       readonly icon: CodecTypes['pg/text@1']['output'] | null;
@@ -683,6 +745,7 @@ export type StorageColumnTypes = {
       readonly boothOpen: CodecTypes['pg/bool@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly lowStockThreshold: CodecTypes['pg/int4@1']['output'];
+      readonly orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
       readonly preorderOpen: CodecTypes['pg/bool@1']['output'];
       readonly qrisImageUrl: CodecTypes['pg/text@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -742,7 +805,10 @@ export type StorageColumnInputTypes = {
       readonly customerName: CodecTypes['pg/text@1']['input'];
       readonly customerPhone: CodecTypes['pg/text@1']['input'] | null;
       readonly handledById: CodecTypes['pg/text@1']['input'] | null;
+      readonly handoverDetail: CodecTypes['pg/text@1']['input'] | null;
+      readonly handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
       readonly id: CodecTypes['pg/text@1']['input'];
+      readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
       readonly orderNumber: CodecTypes['pg/text@1']['input'];
       readonly paymentMethod: 'CASH' | 'QRIS';
@@ -751,6 +817,8 @@ export type StorageColumnInputTypes = {
       readonly pickupSlot: CodecTypes['pg/text@1']['input'] | null;
       readonly queuedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly readyAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
+      readonly serviceDate: CodecTypes['pg/text@1']['input'] | null;
+      readonly serviceWindowId: CodecTypes['pg/text@1']['input'] | null;
       readonly startedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly status: 'CONFIRMED' | 'IN_QUEUE' | 'IN_PROGRESS' | 'READY' | 'DONE' | 'CANCELLED';
       readonly totalAmount: CodecTypes['pg/int4@1']['input'];
@@ -795,6 +863,21 @@ export type StorageColumnInputTypes = {
       readonly stock: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
+    readonly serviceDay: {
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly date: CodecTypes['pg/text@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly isOpen: CodecTypes['pg/bool@1']['input'];
+      readonly locations: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
+    };
+    readonly serviceWindow: {
+      readonly booked: CodecTypes['pg/int4@1']['input'];
+      readonly dayId: CodecTypes['pg/text@1']['input'];
+      readonly endMinute: CodecTypes['pg/int4@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly quota: CodecTypes['pg/int4@1']['input'];
+      readonly startMinute: CodecTypes['pg/int4@1']['input'];
+    };
     readonly siteListItem: {
       readonly body: CodecTypes['pg/text@1']['input'] | null;
       readonly icon: CodecTypes['pg/text@1']['input'] | null;
@@ -836,6 +919,7 @@ export type StorageColumnInputTypes = {
       readonly boothOpen: CodecTypes['pg/bool@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly lowStockThreshold: CodecTypes['pg/int4@1']['input'];
+      readonly orderCutoffMinute: CodecTypes['pg/int4@1']['input'];
       readonly preorderOpen: CodecTypes['pg/bool@1']['input'];
       readonly qrisImageUrl: CodecTypes['pg/text@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -903,6 +987,11 @@ export namespace Models {
     paymentMethod: 'CASH' | 'QRIS';
     paymentStatus: 'UNPAID' | 'PAID';
     paymentProofUrl: CodecTypes['pg/text@1']['output'] | null;
+    serviceDate: CodecTypes['pg/text@1']['output'] | null;
+    handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
+    handoverDetail: CodecTypes['pg/text@1']['output'] | null;
+    serviceWindowId: CodecTypes['pg/text@1']['output'] | null;
+    locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     cashReceived: CodecTypes['pg/int4@1']['output'] | null;
     totalAmount: CodecTypes['pg/int4@1']['output'];
     notes: CodecTypes['pg/text@1']['output'] | null;
@@ -917,9 +1006,10 @@ export namespace Models {
     externalCharges: public_ExternalCharge[];
     handledBy: public_User | null;
     items: public_OrderItem[];
+    serviceWindow: public_ServiceWindow | null;
     stockMovements: public_StockMovement[];
     readonly [RelationKeys]?:
-      'bundles' | 'externalCharges' | 'handledBy' | 'items' | 'stockMovements';
+      'bundles' | 'externalCharges' | 'handledBy' | 'items' | 'serviceWindow' | 'stockMovements';
   };
   export type public_OrderItem = {
     id: CodecTypes['pg/text@1']['output'];
@@ -1004,6 +1094,7 @@ export namespace Models {
     qrisImageUrl: CodecTypes['pg/text@1']['output'] | null;
     adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
     accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
+    orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     readonly [RelationKeys]?: never;
   };
@@ -1015,6 +1106,26 @@ export namespace Models {
     byteSize: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     readonly [RelationKeys]?: never;
+  };
+  export type public_ServiceDay = {
+    id: CodecTypes['pg/text@1']['output'];
+    date: CodecTypes['pg/text@1']['output'];
+    isOpen: CodecTypes['pg/bool@1']['output'];
+    locations: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    windows: public_ServiceWindow[];
+    readonly [RelationKeys]?: 'windows';
+  };
+  export type public_ServiceWindow = {
+    id: CodecTypes['pg/text@1']['output'];
+    dayId: CodecTypes['pg/text@1']['output'];
+    startMinute: CodecTypes['pg/int4@1']['output'];
+    endMinute: CodecTypes['pg/int4@1']['output'];
+    quota: CodecTypes['pg/int4@1']['output'];
+    booked: CodecTypes['pg/int4@1']['output'];
+    day: public_ServiceDay;
+    orders: public_Order[];
+    readonly [RelationKeys]?: 'day' | 'orders';
   };
   export type public_PickupSlot = {
     id: CodecTypes['pg/text@1']['output'];
@@ -1060,6 +1171,8 @@ export declare const models: {
     StockMovement: Models.public_StockMovement;
     StoreSetting: Models.public_StoreSetting;
     StoredImage: Models.public_StoredImage;
+    ServiceDay: Models.public_ServiceDay;
+    ServiceWindow: Models.public_ServiceWindow;
     PickupSlot: Models.public_PickupSlot;
     SiteText: Models.public_SiteText;
     SiteListItem: Models.public_SiteListItem;
@@ -1380,6 +1493,31 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly serviceDate: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly handoverLocation: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly handoverDetail: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly serviceWindowId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly locationReviewedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: true;
+                };
                 readonly cashReceived: {
                   readonly nativeType: 'int4';
                   readonly codecId: 'pg/int4@1';
@@ -1460,6 +1598,18 @@ type ContractBase = Omit<
                   readonly unique: false;
                 },
                 {
+                  readonly name: 'order_serviceDate_idx_478ae72f';
+                  readonly prefix: 'order_serviceDate_idx';
+                  readonly columns: readonly ['serviceDate'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'order_serviceWindowId_idx_4768b9c5';
+                  readonly prefix: 'order_serviceWindowId_idx';
+                  readonly columns: readonly ['serviceWindowId'];
+                  readonly unique: false;
+                },
+                {
                   readonly name: 'order_handledById_idx_7b411288';
                   readonly prefix: 'order_handledById_idx';
                   readonly columns: readonly ['handledById'];
@@ -1467,6 +1617,18 @@ type ContractBase = Omit<
                 },
               ];
               foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'order';
+                    readonly columns: readonly ['serviceWindowId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'serviceWindow';
+                    readonly columns: readonly ['id'];
+                  };
+                },
                 {
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
@@ -1805,6 +1967,106 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly serviceDay: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly date: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly isOpen: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', true>;
+                  };
+                };
+                readonly locations: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['date'] }];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
+            readonly serviceWindow: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly dayId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly startMinute: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly endMinute: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly quota: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly booked: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['dayId', 'startMinute'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'serviceWindow_dayId_idx_0ba48a31';
+                  readonly prefix: 'serviceWindow_dayId_idx';
+                  readonly columns: readonly ['dayId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'serviceWindow';
+                    readonly columns: readonly ['dayId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'serviceDay';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly siteListItem: {
               columns: {
                 readonly id: {
@@ -2097,6 +2359,15 @@ type ContractBase = Omit<
                     readonly value: DefaultLiteralValue<'pg/bool@1', true>;
                   };
                 };
+                readonly orderCutoffMinute: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 1260>;
+                  };
+                };
                 readonly updatedAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -2170,6 +2441,10 @@ type ContractBase = Omit<
             readonly ChargeSource: {
               readonly kind: 'valueSet';
               readonly values: readonly ['PHOTOBOOTH'];
+            };
+            readonly HandoverLocation: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['CAMPUS_B', 'CAMPUS_C', 'MARKET_DAY', 'OTHER'];
             };
             readonly OrderChannel: {
               readonly kind: 'valueSet';
@@ -2256,6 +2531,14 @@ type ContractBase = Omit<
     readonly storedImage: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'StoredImage';
+    };
+    readonly serviceDay: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'ServiceDay';
+    };
+    readonly serviceWindow: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'ServiceWindow';
     };
     readonly pickupSlot: {
       readonly namespace: 'public' & NamespaceId;
@@ -2570,6 +2853,29 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly serviceDate: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly handoverLocation: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly handoverDetail: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly serviceWindowId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly locationReviewedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
               readonly cashReceived: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -2672,6 +2978,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['orderId'];
                 };
               };
+              readonly serviceWindow: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ServiceWindow';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['serviceWindowId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly stockMovements: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -2698,6 +3016,11 @@ type ContractBase = Omit<
                 readonly paymentMethod: { readonly column: 'paymentMethod' };
                 readonly paymentStatus: { readonly column: 'paymentStatus' };
                 readonly paymentProofUrl: { readonly column: 'paymentProofUrl' };
+                readonly serviceDate: { readonly column: 'serviceDate' };
+                readonly handoverLocation: { readonly column: 'handoverLocation' };
+                readonly handoverDetail: { readonly column: 'handoverDetail' };
+                readonly serviceWindowId: { readonly column: 'serviceWindowId' };
+                readonly locationReviewedAt: { readonly column: 'locationReviewedAt' };
                 readonly cashReceived: { readonly column: 'cashReceived' };
                 readonly totalAmount: { readonly column: 'totalAmount' };
                 readonly notes: { readonly column: 'notes' };
@@ -3035,6 +3358,123 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly ServiceDay: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly date: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly isOpen: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
+              readonly locations: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+                readonly many: true;
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly windows: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ServiceWindow';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['dayId'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'serviceDay';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly date: { readonly column: 'date' };
+                readonly isOpen: { readonly column: 'isOpen' };
+                readonly locations: { readonly column: 'locations' };
+                readonly createdAt: { readonly column: 'createdAt' };
+              };
+            };
+          };
+          readonly ServiceWindow: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly dayId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly startMinute: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly endMinute: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly quota: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly booked: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: {
+              readonly day: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ServiceDay';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['dayId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly orders: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Order';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['serviceWindowId'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'serviceWindow';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly dayId: { readonly column: 'dayId' };
+                readonly startMinute: { readonly column: 'startMinute' };
+                readonly endMinute: { readonly column: 'endMinute' };
+                readonly quota: { readonly column: 'quota' };
+                readonly booked: { readonly column: 'booked' };
+              };
+            };
+          };
           readonly SiteListItem: {
             readonly fields: {
               readonly id: {
@@ -3285,6 +3725,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
+              readonly orderCutoffMinute: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -3305,6 +3749,7 @@ type ContractBase = Omit<
                 readonly qrisImageUrl: { readonly column: 'qrisImageUrl' };
                 readonly adminWhatsapp: { readonly column: 'adminWhatsapp' };
                 readonly accentChoiceEnabled: { readonly column: 'accentChoiceEnabled' };
+                readonly orderCutoffMinute: { readonly column: 'orderCutoffMinute' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
@@ -3433,6 +3878,15 @@ type ContractBase = Omit<
             readonly members: readonly [
               { readonly name: 'CASH'; readonly value: 'CASH' },
               { readonly name: 'QRIS'; readonly value: 'QRIS' },
+            ];
+          };
+          readonly HandoverLocation: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'CAMPUS_B'; readonly value: 'CAMPUS_B' },
+              { readonly name: 'CAMPUS_C'; readonly value: 'CAMPUS_C' },
+              { readonly name: 'MARKET_DAY'; readonly value: 'MARKET_DAY' },
+              { readonly name: 'OTHER'; readonly value: 'OTHER' },
             ];
           };
           readonly StoredImageKind: {
@@ -3583,6 +4037,22 @@ type ContractBase = Omit<
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'instantNow' };
           readonly onUpdate: { readonly kind: 'generator'; readonly id: 'instantNow' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'serviceDay';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'serviceWindow';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
         },
         {
           readonly ref: {

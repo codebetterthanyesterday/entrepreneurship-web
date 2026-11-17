@@ -19,16 +19,6 @@ export interface AdminCategory {
   name: string;
 }
 
-export interface AdminPickupSlot {
-  id: string;
-  label: string;
-  quota: number;
-  /** Places already taken by live orders; the quota cannot go below it. */
-  booked: number;
-  sortOrder: number;
-  isActive: boolean;
-}
-
 export interface AdminStoreSettings {
   preorderOpen: boolean;
   boothOpen: boolean;

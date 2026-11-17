@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { describeHandover } from "@/lib/schedule";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -252,7 +253,13 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
                   label="Status bayar"
                   value={PAYMENT_STATUS_LABEL[selected.paymentStatus]}
                 />
-                <DetailRow label="Slot ambil" value={selected.pickupSlot ?? "—"} />
+                <DetailRow
+                  label="Serah terima"
+                  value={selected.pickupSlot ? describeHandover(selected) : "—"}
+                />
+                {selected.awaitingLocationCheck && (
+                  <DetailRow label="Lokasi" value="Menunggu dicek kasir" />
+                )}
                 <DetailRow label="Ditangani" value={selected.handledByName ?? "—"} />
                 <DetailRow label="Catatan" value={selected.notes ?? "—"} />
               </dl>

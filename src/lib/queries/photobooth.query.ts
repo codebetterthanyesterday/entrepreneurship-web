@@ -1,17 +1,22 @@
 import type { Temporal } from "@js-temporal/polyfill";
+import { or } from "@prisma/orm-postgres/orm-client";
 import { prisma as db } from "@/lib/prisma";
 import type { FeedCursor } from "@/lib/photobooth-api";
 import type { OrderWithItems } from "@/lib/services/order.service";
 
 /**
  * Reads for the photobooth's internal API. Preorders only: an on-the-spot
- * order never leaves through here, whatever number is asked for.
+ * order never leaves through here, whatever number is asked for. And only those
+ * handed over at Market Day, where the booth stands (or from before the
+ * schedule, when every preorder was): a campus delivery has no photo session.
+ * Mirrors `goesToPhotobooth`.
  */
 
 export async function findPreorderForPhotobooth(
   orderNumber: string,
 ): Promise<OrderWithItems | null> {
   return await db.orm.public.Order.where({ orderNumber, channel: "PREORDER" })
+    .where((order) => or(order.handoverLocation.eq("MARKET_DAY"), order.handoverLocation.isNull()))
     .include("items", (item) => item.include("product"))
     .include("bundles")
     .first();
@@ -36,7 +41,9 @@ export async function listPreordersForPhotobooth(options: {
   after?: FeedCursor;
   limit: number;
 }): Promise<PreorderPage> {
-  let query = db.orm.public.Order.where({ channel: "PREORDER" });
+  let query = db.orm.public.Order.where({ channel: "PREORDER" }).where((order) =>
+    or(order.handoverLocation.eq("MARKET_DAY"), order.handoverLocation.isNull()),
+  );
   if (options.updatedSince) {
     const since = options.updatedSince;
     query = query.where((order) => order.updatedAt.gte(since));

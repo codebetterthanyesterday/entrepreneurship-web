@@ -3,8 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { toActionError, type ActionResult } from "@/lib/action-result";
 import { requireRole, toActor } from "@/lib/session";
-import { markAsPaidSchema, transitionStatusSchema } from "@/lib/validations/order.schema";
-import { markAsPaid, transitionStatus } from "@/lib/services/order.service";
+import { z } from "zod";
+import { cancelOrderSchema, markAsPaidSchema, transitionStatusSchema } from "@/lib/validations/order.schema";
+import {
+  cancelOrder,
+  confirmHandoverLocation,
+  markAsPaid,
+  transitionStatus,
+} from "@/lib/services/order.service";
+import { findOrderById } from "@/lib/queries/order.query";
+import { ValidationError } from "@/lib/errors";
+import { needsLocationReview } from "@/lib/schedule";
 import type { OrderStatus } from "@/types/order";
 
 /**
@@ -67,5 +76,46 @@ export async function transitionOrderAction(
     return { ok: true, data: { orderNumber: order.orderNumber, status: order.status } };
   } catch (error) {
     return toActionError(error, "transitionOrderAction");
+  }
+}
+
+/** A "Lainnya" location checked and within reach: the order can go ahead. */
+export async function confirmHandoverLocationAction(
+  orderId: unknown,
+): Promise<ActionResult<{ orderNumber: string }>> {
+  try {
+    const user = await requireRole("KASIR", "ADMIN");
+    const id = z.string().min(1, "Pesanannya nggak ketemu").parse(orderId);
+    const order = await confirmHandoverLocation(id, toActor(user));
+    revalidateCounterAndKitchen();
+    return { ok: true, data: { orderNumber: order.orderNumber } };
+  } catch (error) {
+    return toActionError(error, "confirmHandoverLocationAction");
+  }
+}
+
+/**
+ * A "Lainnya" location out of reach: the order is cancelled, stock and its
+ * place in the time range go back, and the reason is kept on the order. The
+ * till can only do this to an order still waiting on its location; cancelling
+ * anything else stays with admins.
+ */
+export async function rejectHandoverLocationAction(
+  input: unknown,
+): Promise<ActionResult<{ orderNumber: string }>> {
+  try {
+    const user = await requireRole("KASIR", "ADMIN");
+    const data = cancelOrderSchema.parse(input);
+    const order = await findOrderById(data.orderId);
+    if (!order || !needsLocationReview(order)) {
+      throw new ValidationError("Pesanan ini nggak sedang menunggu cek lokasi");
+    }
+    const reason = `Lokasi di luar jangkauan${data.reason ? `: ${data.reason}` : ""}`;
+    const cancelled = await cancelOrder(data.orderId, toActor(user), reason);
+    revalidateCounterAndKitchen();
+    revalidatePath("/");
+    return { ok: true, data: { orderNumber: cancelled.orderNumber } };
+  } catch (error) {
+    return toActionError(error, "rejectHandoverLocationAction");
   }
 }

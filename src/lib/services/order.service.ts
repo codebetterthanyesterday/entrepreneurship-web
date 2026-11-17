@@ -1,4 +1,13 @@
 import { Temporal } from "@js-temporal/polyfill";
+import {
+  DEFAULT_CUTOFF_MINUTE,
+  HANDOVER_LABEL,
+  OTHER_DETAIL_MIN,
+  isBookable,
+  needsLocationReview,
+  windowLabel,
+  type HandoverLocation,
+} from "@/lib/schedule";
 import type { Shape } from "@prisma/orm-postgres/family-contract/types";
 import type { Models } from "../../../prisma/schema";
 import { prisma as db } from "@/lib/prisma";
@@ -51,7 +60,14 @@ export interface CreateOrderInput {
   bundles?: readonly BundleLineInput[];
   customerName: string;
   customerPhone?: string | null;
+  /** Legacy: a one-day slot by its label. New preorders use `schedule`. */
   pickupSlot?: string | null;
+  /** A preorder's handover: where, any meeting-point note, and the time range booked. */
+  schedule?: {
+    location: HandoverLocation;
+    detail?: string | null;
+    serviceWindowId: string;
+  } | null;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   cashReceived?: number | null;
@@ -375,8 +391,17 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       throw new ValidationError("Booth lagi tutup, belum bisa terima pesanan");
     }
 
-    // (c) A preorder that picked a pickup slot has to fit in that slot.
-    if (input.channel === "PREORDER" && input.pickupSlot) {
+    // (c) A preorder books a time range on an open date — or, for orders from
+    // before the schedule, a one-day slot by its label.
+    const booked =
+      input.channel === "PREORDER" && input.schedule
+        ? await bookServiceWindow(
+            tx,
+            input.schedule,
+            settings?.orderCutoffMinute ?? DEFAULT_CUTOFF_MINUTE,
+          )
+        : null;
+    if (!booked && input.channel === "PREORDER" && input.pickupSlot) {
       await bookPickupSlot(tx, input.pickupSlot);
     }
 
@@ -454,7 +479,11 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       status,
       customerName: input.customerName,
       customerPhone: input.customerPhone ?? null,
-      pickupSlot: input.pickupSlot ?? null,
+      pickupSlot: booked?.label ?? input.pickupSlot ?? null,
+      serviceDate: booked?.date ?? null,
+      serviceWindowId: booked?.windowId ?? null,
+      handoverLocation: booked ? input.schedule!.location : null,
+      handoverDetail: booked ? input.schedule!.detail?.trim() || null : null,
       paymentMethod: input.paymentMethod,
       paymentStatus: input.paymentStatus,
       cashReceived: input.cashReceived ?? null,
@@ -562,6 +591,68 @@ async function bookPickupSlot(tx: TxClient, label: string): Promise<void> {
   }
 }
 
+/**
+ * Books one place in a time range on a service date, for a preorder.
+ *
+ * Everything the checkout shows is checked again here, inside the order's
+ * transaction: the date is open and serves the chosen place, it is still before
+ * its cut-off, and "Lainnya" carries a location note. The quota is taken the
+ * same way as the old slots, with `booked < quota` inside the UPDATE, so two
+ * customers taking the last place at once cannot both get it.
+ */
+async function bookServiceWindow(
+  tx: TxClient,
+  schedule: { location: HandoverLocation; detail?: string | null; serviceWindowId: string },
+  cutoffMinute: number,
+): Promise<{ date: string; label: string; windowId: string }> {
+  const window = await tx.orm.public.ServiceWindow.where({ id: schedule.serviceWindowId })
+    .include("day")
+    .first();
+  const day = window?.day;
+
+  if (!window || !day || !day.isOpen) {
+    throw new ValidationError("Jadwal itu udah nggak tersedia, pilih tanggal lain ya", "serviceWindowId");
+  }
+  if (!day.locations.includes(schedule.location)) {
+    throw new ValidationError(
+      `Tanggal itu nggak melayani ${HANDOVER_LABEL[schedule.location]}, pilih tanggal lain ya`,
+      "serviceWindowId",
+    );
+  }
+  if (!isBookable(day.date, cutoffMinute)) {
+    throw new ValidationError(
+      "Pemesanan untuk tanggal itu udah ditutup. Pilih tanggal berikutnya ya",
+      "serviceWindowId",
+    );
+  }
+  if (schedule.location === "OTHER" && (schedule.detail?.trim().length ?? 0) < OTHER_DETAIL_MIN) {
+    throw new ValidationError("Tulis lokasinya lengkap ya, biar kami bisa cek jangkauannya", "handoverDetail");
+  }
+
+  const label = windowLabel(window.startMinute, window.endMinute);
+  const plan = db.raw
+    .sql`UPDATE "public"."serviceWindow" SET "booked" = "booked" + 1 WHERE "id" = ${window.id} AND "booked" < "quota"`
+    .affectedCount()
+    .build();
+  const { affectedRows } = await tx.execute(plan);
+
+  if (affectedRows === 0) {
+    throw new ValidationError(`Jam ${label} udah penuh, pilih jam lain ya`, "serviceWindowId");
+  }
+
+  return { date: day.date, label, windowId: window.id };
+}
+
+/** Gives a time range's place back when a preorder that held one is cancelled. */
+async function releaseServiceWindow(tx: TxClient, windowId: string): Promise<void> {
+  const plan = db.raw
+    .sql`UPDATE "public"."serviceWindow" SET "booked" = "booked" - 1 WHERE "id" = ${windowId} AND "booked" > 0`
+    .affectedCount()
+    .build();
+
+  await tx.execute(plan);
+}
+
 /** Gives a place back when an order that held one is cancelled. */
 async function releasePickupSlot(tx: TxClient, label: string): Promise<void> {
   const plan = db.raw
@@ -587,8 +678,42 @@ export async function transitionStatus(
 
     assertTransition(order.status, to, actor.role);
 
+    // A "Lainnya" order is not made or handed over until staff have accepted
+    // its location; cancelling it (rejecting) goes through `cancelOrder`.
+    if (needsLocationReview(order)) {
+      throw new ValidationError("Cek dan terima lokasi pesanan ini dulu sebelum diproses");
+    }
+
     if (!(await applyStatus(tx, orderId, order.status, to))) {
       await throwForLostRace(tx, orderId, to, actor.role);
+    }
+
+    return await loadOrderWithItems(tx, orderId);
+  });
+}
+
+/**
+ * Staff accept a "Lainnya" order's location after checking it can be reached.
+ * Conditional on still waiting, so accepting twice, or accepting an order that
+ * was cancelled meanwhile, changes nothing. Rejecting is `cancelOrder` with the
+ * reason in its note.
+ */
+export async function confirmHandoverLocation(orderId: string, actor: Actor): Promise<OrderWithItems> {
+  return await db.transaction(async (tx) => {
+    const order = await tx.orm.public.Order.where({ id: orderId }).first();
+    if (!order) throw new NotFoundError("Pesanannya nggak ketemu");
+    if (!needsLocationReview(order)) {
+      throw new ValidationError("Pesanan ini nggak sedang menunggu cek lokasi");
+    }
+
+    const plan = tx.sql.public.order
+      .update({ locationReviewedAt: Temporal.Now.instant(), handledById: actor.id })
+      .where((field, fns) => fns.eq(field.id, orderId))
+      .where((field, fns) => fns.eq(field.status, order.status))
+      .build();
+    const { affectedRows } = await tx.execute(plan);
+    if (affectedRows === 0) {
+      throw new ValidationError("Pesanan ini barusan berubah, muat ulang dulu ya");
     }
 
     return await loadOrderWithItems(tx, orderId);
@@ -671,7 +796,9 @@ export async function cancelOrder(
 
     // The place this order held in its pickup slot goes back on the shelf too,
     // otherwise cancellations would slowly starve the slot.
-    if (order.channel === "PREORDER" && order.pickupSlot) {
+    if (order.channel === "PREORDER" && order.serviceWindowId) {
+      await releaseServiceWindow(tx, order.serviceWindowId);
+    } else if (order.channel === "PREORDER" && order.pickupSlot) {
       await releasePickupSlot(tx, order.pickupSlot);
     }
 

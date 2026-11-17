@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/session";
 import { getAllOrders } from "@/lib/queries/report.query";
+import { handoverView } from "@/lib/queries/order.query";
 import { canTransition } from "@/lib/services/order.service";
 import { ORDER_FILTERS, orderListHref, resolveOrderFilter } from "@/lib/order-filters";
 import { OrderBrowser } from "@/components/admin/order-browser";
@@ -68,6 +69,7 @@ export default async function AdminOrdersPage({
     customerName: order.customerName,
     customerPhone: order.customerPhone ?? null,
     pickupSlot: order.pickupSlot ?? null,
+    ...handoverView(order),
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     notes: order.notes ?? null,
