@@ -20,6 +20,8 @@ import { PhotoboothQr } from "./photobooth-qr";
 import { OrderStage, StageArt } from "./order-stage";
 import { Confetti } from "./confetti";
 import { JourneyHero } from "./journey";
+import { ChatLink } from "./whatsapp-chat";
+import { chatOrderOf } from "@/lib/whatsapp";
 import type { OrderStatus } from "@/types/order";
 import type { TrackedOrder } from "@/types/order-view";
 
@@ -231,9 +233,12 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
           </form>
 
           <p className="mt-4 max-w-[52ch] text-[12.5px] leading-relaxed text-ink-soft">
-            Nomor pesanannya ada di halaman konfirmasi dan di chat WhatsApp kami. Sekali ketemu, HP
-            ini bakal inget — nanti tinggal buka halaman ini lagi.
+            Nomor pesanannya ada di halaman konfirmasi pesanan. Sekali ketemu, HP ini bakal inget —
+            nanti tinggal buka halaman ini lagi.
           </p>
+          <ChatLink intent={{ kind: "forgotNumber" }} look="quiet" className="text-[13px]">
+            Lupa nomor pesanannya? Tanya kami
+          </ChatLink>
 
           {error && !data && (
             <p role="alert" className="mt-10 max-w-[42ch] text-[14px] leading-relaxed text-hot">
@@ -407,7 +412,7 @@ function FoundOrder({
           </div>
 
           <div className="mt-3 tablet:mt-4">
-            <OrderStage status={order.status} needsPrep={order.needsPrep} titleAs="h1">
+            <OrderStage status={order.status} needsPrep={order.needsPrep} titleAs="h1" chatOrder={chatOrderOf(order)}>
               {order.status === "READY" && (
                 <p className="mx-auto mt-4 inline-flex flex-col items-center rounded-[20px] bg-white/[0.06] px-6 py-3 tablet:mt-6 tablet:py-4">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/60">

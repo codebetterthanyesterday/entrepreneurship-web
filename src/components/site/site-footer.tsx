@@ -1,7 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/site/brand-mark";
-import { toWhatsappUrl } from "@/lib/utils";
+import { whatsappChatUrl } from "@/lib/whatsapp";
 import type { SiteIdentity } from "@/lib/queries/site.query";
 
 export interface SiteFooterProps {
@@ -28,7 +28,7 @@ const LINKS = [
  * placeholder e-mail and address are not carried over.
  */
 export function SiteFooter({ identity, whatsapp }: SiteFooterProps) {
-  const whatsappUrl = toWhatsappUrl(whatsapp);
+  const whatsappUrl = whatsappChatUrl(whatsapp);
   const { brandName, tagline, instagram } = identity;
 
   return (

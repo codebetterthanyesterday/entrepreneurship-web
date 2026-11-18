@@ -20,7 +20,7 @@ export default function Error({
     <NoticePage
       eyebrow="Ada yang salah"
       title="Halaman ini gagal dimuat."
-      description="Bukan salah kamu. Coba muat ulang dulu — kalau masih sama, kabarin kami lewat WhatsApp ya."
+      description="Bukan salah kamu. Coba muat ulang, atau buka lagi beberapa saat lagi ya."
     >
       <Button
         onClick={() => reset()}
