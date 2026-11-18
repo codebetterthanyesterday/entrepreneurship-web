@@ -9,6 +9,8 @@ import { photoboothLink } from "@/lib/photobooth-link";
 import { PhotoboothQr } from "@/components/public/photobooth-qr";
 import { QrisPayment } from "@/components/public/qris-payment";
 import { getSettings } from "@/lib/services/setting.service";
+import { ChatCard } from "@/components/public/whatsapp-chat";
+import { chatOrderOf } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +74,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             </p>
             <p className="max-w-[34em] text-[14.5px] leading-relaxed text-white/85">
               {cancelled
-                ? "Pesanan ini udah dibatalkan. Kalau ini keliru, kabarin kami lewat WhatsApp ya."
+                ? "Pesanan ini udah dibatalkan. Kalau menurut kamu ini keliru, chat kami ya."
                 : "Yeay, pesanan kamu berhasil dibuat! Simpen nomornya atau screenshot halaman ini, nanti ditanya pas ambil."}
             </p>
           </div>
@@ -127,6 +129,15 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               className="mt-9"
             />
           )}
+
+          {/* Asking about this order, with its number and schedule already typed. */}
+          <ChatCard
+            className="mt-9"
+            title={cancelled ? "Pembatalannya keliru?" : "Ada yang mau ditanyain?"}
+            body="Chat kami di WhatsApp. Nomor pesanan dan jadwalnya udah otomatis ketulis."
+            intent={{ kind: cancelled ? "cancelled" : "order", order: chatOrderOf(order) }}
+            cta="Chat soal pesanan ini"
+          />
 
           <div className="mt-10 flex flex-col gap-2.5 tablet:flex-row">
             <ButtonLink

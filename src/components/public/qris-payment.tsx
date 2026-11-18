@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { cn, formatRupiah } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ChatLink } from "@/components/public/whatsapp-chat";
 import { useToast } from "@/components/ui/use-toast";
 import { shrinkImage } from "@/lib/shrink-image";
 import { REMEMBERED_ORDER_KEY, parseRememberedOrder } from "@/lib/remembered-order";
@@ -123,6 +124,7 @@ export function QrisPayment({
 
           <ProofUpload
             orderNumber={orderNumber}
+            totalAmount={totalAmount}
             hasPaymentProof={hasPaymentProof}
             phoneLast4={phoneLast4}
             onProofSent={onProofSent}
@@ -168,11 +170,13 @@ function useRememberedDigits(orderNumber: string): string | null {
 
 function ProofUpload({
   orderNumber,
+  totalAmount,
   hasPaymentProof,
   phoneLast4,
   onProofSent,
 }: {
   orderNumber: string;
+  totalAmount: number;
   hasPaymentProof: boolean;
   phoneLast4?: string;
   onProofSent?: () => void;
@@ -225,10 +229,19 @@ function ProofUpload({
   return (
     <div className="mt-5 border-t border-line pt-4">
       {sent ? (
-        <p role="status" className="rounded-[14px] bg-sky-soft p-3 text-[13.5px] leading-relaxed text-sky-deep">
-          <b>Bukti bayar udah terkirim.</b> Kasir lagi ngecek pembayarannya; status di sini berubah
-          jadi Lunas sendiri.
-        </p>
+        <div>
+          <p role="status" className="rounded-[14px] bg-sky-soft p-3 text-[13.5px] leading-relaxed text-sky-deep">
+            <b>Bukti bayar udah terkirim.</b> Kasir lagi ngecek pembayarannya; status di sini berubah
+            jadi Lunas sendiri.
+          </p>
+          <ChatLink
+            intent={{ kind: "payment", order: { orderNumber, totalAmount } }}
+            look="quiet"
+            className="mt-1 text-[13px]"
+          >
+            Lama belum Lunas? Chat kami
+          </ChatLink>
+        </div>
       ) : (
         <p className="text-[13px] text-ink-soft">Udah bayar? Kirim buktinya biar kasir cepat ngecek.</p>
       )}

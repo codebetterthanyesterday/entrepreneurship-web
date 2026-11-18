@@ -3,6 +3,8 @@ import { renderSVG } from "uqr";
 import { describeHandover, formatServiceDate } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 import { CopyCodeButton } from "./copy-code-button";
+import { ChatLink } from "./whatsapp-chat";
+import { chatOrderOf } from "@/lib/whatsapp";
 import { OrderReceipt } from "./order-receipt";
 import type { TrackedOrder } from "@/types/order-view";
 
@@ -98,10 +100,19 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
         </div>
 
         {order.awaitingLocationCheck && (
-          <p role="status" className="mt-3 rounded-[10px] bg-warn-soft px-3 py-2.5 text-[13px] leading-relaxed text-warn">
-            <b>Lokasinya lagi kami cek.</b> Kami kabari lewat WhatsApp kalau bisa diantar ke sana.
-            Kalau di luar jangkauan, pesanannya kami batalkan dan stoknya kembali.
-          </p>
+          <div role="status" className="mt-3 rounded-[10px] bg-warn-soft px-3 py-2.5 text-[13px] leading-relaxed text-warn">
+            <p>
+              <b>Lokasinya lagi kami cek.</b> Kami kabari lewat WhatsApp kalau bisa diantar ke sana.
+              Kalau di luar jangkauan, pesanannya kami batalkan dan stoknya kembali.
+            </p>
+            <ChatLink
+              intent={{ kind: "location", order: chatOrderOf(order) }}
+              look="outline"
+              className="mt-2.5 w-full bg-white"
+            >
+              Kirim patokan lokasi
+            </ChatLink>
+          </div>
         )}
 
         <OrderReceipt

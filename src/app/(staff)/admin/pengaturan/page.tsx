@@ -4,6 +4,7 @@ import { getScheduleForAdmin } from "@/lib/queries/schedule.query";
 import { DEFAULT_CUTOFF_MINUTE, todayInJakarta } from "@/lib/schedule";
 import { StoreToggles } from "@/components/admin/store-toggles";
 import { ScheduleManager } from "@/components/admin/schedule-manager";
+import { DEFAULT_CHAT_CLOSE_MINUTE, DEFAULT_CHAT_OPEN_MINUTE } from "@/lib/whatsapp";
 import { MiscSettingsForm } from "@/components/admin/misc-settings-form";
 import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
@@ -47,6 +48,8 @@ export default async function AdminSettingsPage() {
         <MiscSettingsForm
           lowStockThreshold={settings.lowStockThreshold}
           adminWhatsapp={settings.adminWhatsapp}
+          chatOpenMinute={settings.chatOpenMinute ?? DEFAULT_CHAT_OPEN_MINUTE}
+          chatCloseMinute={settings.chatCloseMinute ?? DEFAULT_CHAT_CLOSE_MINUTE}
         />
 
         <div className="desktop:col-span-2">

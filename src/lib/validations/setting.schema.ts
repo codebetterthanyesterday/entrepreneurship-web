@@ -19,4 +19,30 @@ export const updateSettingsSchema = z.object({
     ])
     .nullable()
     .optional(),
-});
+  /** When the team answers chats, in minutes after 00.00 WIB. */
+  chatOpenMinute: z
+    .number()
+    .int("Jamnya nggak valid")
+    .min(0, "Jamnya nggak valid")
+    .max(24 * 60, "Jamnya nggak valid")
+    .optional(),
+  chatCloseMinute: z
+    .number()
+    .int("Jamnya nggak valid")
+    .min(0, "Jamnya nggak valid")
+    .max(24 * 60, "Jamnya nggak valid")
+    .optional(),
+})
+  .superRefine((data, ctx) => {
+    if (
+      data.chatOpenMinute != null &&
+      data.chatCloseMinute != null &&
+      data.chatCloseMinute <= data.chatOpenMinute
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["chatCloseMinute"],
+        message: "Jam selesainya harus setelah jam mulai",
+      });
+    }
+  });

@@ -307,6 +307,10 @@ model StoreSetting {
   // Batas pesan untuk tanggal D: jam ini (menit sejak 00.00 WIB) di hari D-1.
   // Bawaan 21.00.
   orderCutoffMinute Int @default(1260)
+  // Jam tim membalas chat WhatsApp (menit sejak 00.00 WIB). Di luar jam ini
+  // tombol chat tetap ada, tapi bilang kapan dibalas. Bawaan 08.00–21.00.
+  chatOpenMinute    Int @default(480)
+  chatCloseMinute   Int @default(1260)
   updatedAt         temporal.updatedAt()
 }
 

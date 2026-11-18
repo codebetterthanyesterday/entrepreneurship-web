@@ -9,6 +9,8 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { KingdomRoot } from "@/components/site/kingdom-root";
 import { SplashScreen } from "@/components/site/splash-screen";
 import { SPLASH_COOKIE, shouldShowSplash } from "@/lib/splash";
+import { HeaderChat, WhatsappProvider, type WhatsappContact } from "@/components/public/whatsapp-chat";
+import { DEFAULT_CHAT_CLOSE_MINUTE, DEFAULT_CHAT_OPEN_MINUTE, toWhatsappNumber } from "@/lib/whatsapp";
 import "../kingdom.css";
 
 export default async function PublicLayout({
@@ -33,50 +35,67 @@ export default async function PublicLayout({
     userAgent: requestHeaders.get("user-agent"),
   });
 
+  // The team's chat, for every button on every customer page. Without a usable
+  // number there is none, and the buttons stay out of sight.
+  const chatNumber = toWhatsappNumber(settings.adminWhatsapp);
+  const contact: WhatsappContact | null = chatNumber
+    ? {
+        number: chatNumber,
+        brand: identity.brandName,
+        openMinute: settings.chatOpenMinute ?? DEFAULT_CHAT_OPEN_MINUTE,
+        closeMinute: settings.chatCloseMinute ?? DEFAULT_CHAT_CLOSE_MINUTE,
+      }
+    : null;
+
   return (
     // `KingdomRoot` is what makes these pages the Snack Kingdom: it sets
     // `data-theme="kingdom"`, which `globals.css` and `kingdom.css` answer. The
     // staff layout renders it too, with its own work-mode chrome (`staff.css`).
     <KingdomRoot className="min-h-screen flex flex-col bg-cream">
-      {showSplash && <SplashScreen brandName={identity.brandName} tagline={identity.tagline} />}
+      <WhatsappProvider contact={contact}>
+        {showSplash && <SplashScreen brandName={identity.brandName} tagline={identity.tagline} />}
 
-      {/* Header */}
-      <header className="bg-white border-b-2 border-line sticky top-0 z-40">
-        <div className="band-inner h-16 flex items-center justify-between gap-3">
-          <Link href="/" className="flex min-h-[44px] flex-col justify-center min-w-0">
-            {/*
-              A span, not a heading. This is the site's banner logo on every
-              customer page, and every one of those pages already has its own
-              <h1>. Marking the logo up as one too gave each page two first-level
-              headings, which leaves someone navigating by heading unable to tell
-              where the page's own content starts.
-            */}
-            <span className="k-logo-name">{identity.brandName}</span>
-            <span className="k-logo-tagline truncate">{identity.tagline}</span>
-          </Link>
+        {/* Header */}
+        <header className="bg-white border-b-2 border-line sticky top-0 z-40">
+          <div className="band-inner h-16 flex items-center justify-between gap-3">
+            <Link href="/" className="flex min-h-[44px] flex-col justify-center min-w-0">
+              {/*
+                A span, not a heading. This is the site's banner logo on every
+                customer page, and every one of those pages already has its own
+                <h1>. Marking the logo up as one too gave each page two first-level
+                headings, which leaves someone navigating by heading unable to tell
+                where the page's own content starts.
+              */}
+              <span className="k-logo-name">{identity.brandName}</span>
+              <span className="k-logo-tagline truncate">{identity.tagline}</span>
+            </Link>
 
-          <HeaderBag />
-        </div>
-      </header>
+            <div className="flex flex-none items-center gap-2.5">
+              <HeaderChat />
+              <HeaderBag />
+            </div>
+          </div>
+        </header>
 
-      {/*
-        A sibling of the header rather than a child, because on a phone the bar
-        is `position: fixed` and nesting that inside a `position: sticky`
-        ancestor is a shape WebKit has historically got wrong. From 640px up it
-        is laid over the header's middle — see `.k-nav` in `kingdom.css`.
-      */}
-      <PublicNav />
+        {/*
+          A sibling of the header rather than a child, because on a phone the bar
+          is `position: fixed` and nesting that inside a `position: sticky`
+          ancestor is a shape WebKit has historically got wrong. From 640px up it
+          is laid over the header's middle — see `.k-nav` in `kingdom.css`.
+        */}
+        <PublicNav />
 
-      <WorldSteps />
+        <WorldSteps />
 
-      {/*
-        No measure and no padding here on purpose: every customer page is built
-        from full-bleed bands, and a band has to be able to reach the edge of
-        the screen. Each page supplies its own inner measure through `.band-inner`.
-      */}
-      <main className="flex-1 w-full">{children}</main>
+        {/*
+          No measure and no padding here on purpose: every customer page is built
+          from full-bleed bands, and a band has to be able to reach the edge of
+          the screen. Each page supplies its own inner measure through `.band-inner`.
+        */}
+        <main className="flex-1 w-full">{children}</main>
 
-      <SiteFooter identity={identity} whatsapp={settings.adminWhatsapp} />
+        <SiteFooter identity={identity} whatsapp={settings.adminWhatsapp} />
+      </WhatsappProvider>
     </KingdomRoot>
   );
 }

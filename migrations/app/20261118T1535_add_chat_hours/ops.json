@@ -1,0 +1,86 @@
+[
+  {
+    "id": "column.public.storeSetting.chatCloseMinute",
+    "label": "Add column \"chatCloseMinute\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "chatCloseMinute",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"chatCloseMinute\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "chatCloseMinute"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"chatCloseMinute\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"chatCloseMinute\" int4 DEFAULT 1260 NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"chatCloseMinute\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "chatCloseMinute"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.storeSetting.chatOpenMinute",
+    "label": "Add column \"chatOpenMinute\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "chatOpenMinute",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"chatOpenMinute\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "chatOpenMinute"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"chatOpenMinute\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"chatOpenMinute\" int4 DEFAULT 480 NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"chatOpenMinute\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "chatOpenMinute"
+        ]
+      }
+    ]
+  }
+]

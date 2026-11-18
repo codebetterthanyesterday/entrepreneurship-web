@@ -373,6 +373,37 @@ html[data-theme="kingdom"] body > * {
   box-shadow: 3px 3px 0 var(--k-navy);
 }
 
+/* The header's chat entry: the bag's shape in the chat's green, so the two
+   read as a pair (ask / buy) without competing. */
+.k-chat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: #0b7a3e;
+  border: 2px solid #0b7a3e;
+  box-shadow: 3px 3px 0 var(--k-navy);
+  font-family: var(--k-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.k-chat:hover {
+  background: #e8f6ee;
+}
+
+/* On the narrowest phones the word goes; the label stays for a screen reader. */
+@media (max-width: 359px) {
+  .k-chat-label {
+    display: none;
+  }
+}
+
 .k-bag-count {
   padding: 1px 5px;
   border-radius: 4px;

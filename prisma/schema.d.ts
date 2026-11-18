@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'01ca04f9fbab679444d309d8fec8b9bc39a0b8962a1e8dfff59c5f13170a687a'>;
+  StorageHashBase<'cc0da9368a576129a29db0e62d43e5f658a7ea6f66c89b6c8d1250c8a0ddf296'>;
 export type ExecutionHash =
   ExecutionHashBase<'2237e05b4e45077ca9d3cde4b5ce91bacce3c0621a9e066f075cdf7bbf1ebed3'>;
 export type ProfileHash =
@@ -400,6 +400,8 @@ export type FieldOutputTypes = {
       readonly adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
+      readonly chatOpenMinute: CodecTypes['pg/int4@1']['output'];
+      readonly chatCloseMinute: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly User: {
@@ -574,6 +576,8 @@ export type FieldInputTypes = {
       readonly adminWhatsapp: CodecTypes['pg/text@1']['input'] | null;
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['input'];
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['input'];
+      readonly chatOpenMinute: CodecTypes['pg/int4@1']['input'];
+      readonly chatCloseMinute: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly User: {
@@ -743,6 +747,8 @@ export type StorageColumnTypes = {
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
       readonly adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
       readonly boothOpen: CodecTypes['pg/bool@1']['output'];
+      readonly chatCloseMinute: CodecTypes['pg/int4@1']['output'];
+      readonly chatOpenMinute: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly lowStockThreshold: CodecTypes['pg/int4@1']['output'];
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
@@ -917,6 +923,8 @@ export type StorageColumnInputTypes = {
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['input'];
       readonly adminWhatsapp: CodecTypes['pg/text@1']['input'] | null;
       readonly boothOpen: CodecTypes['pg/bool@1']['input'];
+      readonly chatCloseMinute: CodecTypes['pg/int4@1']['input'];
+      readonly chatOpenMinute: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly lowStockThreshold: CodecTypes['pg/int4@1']['input'];
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['input'];
@@ -1095,6 +1103,8 @@ export namespace Models {
     adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
     accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
     orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
+    chatOpenMinute: CodecTypes['pg/int4@1']['output'];
+    chatCloseMinute: CodecTypes['pg/int4@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     readonly [RelationKeys]?: never;
   };
@@ -2360,6 +2370,24 @@ type ContractBase = Omit<
                   };
                 };
                 readonly orderCutoffMinute: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 1260>;
+                  };
+                };
+                readonly chatOpenMinute: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 480>;
+                  };
+                };
+                readonly chatCloseMinute: {
                   readonly nativeType: 'int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
@@ -3729,6 +3757,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly chatOpenMinute: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly chatCloseMinute: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -3750,6 +3786,8 @@ type ContractBase = Omit<
                 readonly adminWhatsapp: { readonly column: 'adminWhatsapp' };
                 readonly accentChoiceEnabled: { readonly column: 'accentChoiceEnabled' };
                 readonly orderCutoffMinute: { readonly column: 'orderCutoffMinute' };
+                readonly chatOpenMinute: { readonly column: 'chatOpenMinute' };
+                readonly chatCloseMinute: { readonly column: 'chatCloseMinute' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };

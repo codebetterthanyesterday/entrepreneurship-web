@@ -2,6 +2,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { summariseStage, type TimelineStageId, type TimelineStep } from "@/lib/order-timeline";
 import type { OrderStatus } from "@/types/order";
+import type { ChatOrder } from "@/lib/whatsapp";
+import { ChatLink } from "./whatsapp-chat";
 
 /**
  * The stage: where an order is, drawn rather than listed.
@@ -324,6 +326,8 @@ export interface OrderStageProps {
   needsPrep: boolean;
   /** The stage's title is the tracker's <h1>; elsewhere it is a lesser heading. */
   titleAs?: "h1" | "h2";
+  /** The order a cancelled stage offers to chat about; without it, no button. */
+  chatOrder?: ChatOrder;
   /** Anything the current stage wants to add under its line, such as the pickup reminder. */
   children?: React.ReactNode;
 }
@@ -333,6 +337,7 @@ export function OrderStage({
   status,
   needsPrep,
   titleAs: Title = "h2",
+  chatOrder,
   children,
 }: OrderStageProps) {
   const { steps, current } = summariseStage(status, needsPrep);
@@ -352,10 +357,19 @@ export function OrderStage({
         </Title>
 
         <p className="journey-lede mx-auto mt-2.5 text-white/70 tablet:mt-3">
-          {current
-            ? current.detail
-            : "Kalau menurut kamu ini keliru, hubungi kami lewat WhatsApp ya."}
+          {current ? current.detail : "Kalau menurut kamu ini keliru, chat kami ya."}
         </p>
+
+        {!current && chatOrder && (
+          <ChatLink
+            intent={{ kind: "cancelled", order: chatOrder }}
+            look="outline"
+            tone="dark"
+            className="mt-4"
+          >
+            Chat soal pembatalan
+          </ChatLink>
+        )}
 
         {children}
       </div>
