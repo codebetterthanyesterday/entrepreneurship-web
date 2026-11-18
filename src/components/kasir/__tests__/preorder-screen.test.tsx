@@ -4,12 +4,17 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CashierPreorder } from "@/types/order-view";
 
+const markLocationNotifiedAction = vi.hoisted(() =>
+  vi.fn<(orderId: unknown) => Promise<{ ok: true; data: { orderNumber: string } }>>(async () => ({ ok: true, data: { orderNumber: "PO-0042" } })),
+);
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
 }));
 vi.mock("@/actions/kasir.actions", () => ({
   markAsPaidAction: vi.fn(async () => ({ ok: true, data: {} })),
   transitionOrderAction: vi.fn(async () => ({ ok: true, data: {} })),
+  markLocationNotifiedAction: (orderId: unknown) => markLocationNotifiedAction(orderId),
 }));
 
 const { PreorderScreen } = await import("@/components/kasir/preorder-screen");
@@ -37,6 +42,8 @@ function preorder(overrides: Partial<CashierPreorder> = {}): CashierPreorder {
     paymentMethod: "CASH",
     paymentStatus: "UNPAID",
     paymentProofUrl: null,
+    customerPhone: "081234567890",
+    locationNotifiedAt: null,
     status: "CONFIRMED",
     notes: null,
     totalAmount: 36_000,
@@ -53,7 +60,7 @@ function preorder(overrides: Partial<CashierPreorder> = {}): CashierPreorder {
 function open(order: CashierPreorder) {
   render(
     <ToastProvider>
-      <PreorderScreen preorders={[order]} qrisImageUrl={null} />
+      <PreorderScreen preorders={[order]} qrisImageUrl={null} brand="Bunnyè" />
     </ToastProvider>,
   );
   fireEvent.click(screen.getByText(order.customerName));
@@ -81,5 +88,56 @@ describe("PreorderScreen: photobooth charges (BPB-098)", () => {
   it("says nothing about the photobooth when there are no charges", () => {
     open(preorder());
     expect(screen.queryByRole("region", { name: /Photobooth/ })).toBeNull();
+  });
+});
+
+describe("PreorderScreen: chatting the customer", () => {
+  const FUTURE = "2099-01-10";
+  const textOf = (link: HTMLElement) => new URL(link.getAttribute("href")!).searchParams.get("text") ?? "";
+
+  it("opens WhatsApp to the customer's number, signed and naming the order", () => {
+    open(preorder({ serviceDate: FUTURE, handoverLocation: "CAMPUS_B" }));
+    const section = screen.getByRole("region", { name: "Chat pelanggan" });
+    const link = within(section).getByRole("link", { name: /Pesanan lagi diantar/ });
+    const href = new URL(link.getAttribute("href")!);
+    expect(href.origin + href.pathname).toBe("https://wa.me/6281234567890");
+    expect(textOf(link)).toContain("Halo Nadia Prameswari, ini Bunnyè.");
+    expect(textOf(link)).toContain("PO-0042");
+    expect(link.getAttribute("target")).toBe("_blank");
+  });
+
+  it("asks for a landmark while a Lainnya location is being checked", () => {
+    open(preorder({ serviceDate: FUTURE, handoverLocation: "OTHER", handoverDetail: "Kos Melati", awaitingLocationCheck: true }));
+    const links = within(screen.getByRole("region", { name: "Chat pelanggan" })).getAllByRole("link");
+    expect(links[0]!.textContent).toContain("Minta patokan lokasi");
+  });
+
+  it("flags a Lainnya customer not yet told, and marks them told when the verdict is sent", () => {
+    markLocationNotifiedAction.mockClear();
+    open(preorder({ serviceDate: FUTURE, handoverLocation: "OTHER", handoverDetail: "Kos Melati" }));
+    expect(screen.getAllByText(/belum dikabari/).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("link", { name: /Kabari: lokasi diterima/ }));
+    expect(markLocationNotifiedAction).toHaveBeenCalledWith("order-1");
+  });
+
+  it("says when a Lainnya customer was told, and asks nothing more", () => {
+    open(
+      preorder({
+        serviceDate: FUTURE,
+        handoverLocation: "OTHER",
+        handoverDetail: "Kos Melati",
+        locationNotifiedAt: "2099-01-09T07:05:00Z",
+      }),
+    );
+    expect(screen.getByText(/udah dikabari hasil cek lokasinya/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Udah dikabari" })).toBeNull();
+  });
+
+  it("explains, rather than offering a dead link, when there is no number", () => {
+    open(preorder({ customerPhone: null }));
+    const section = screen.getByRole("region", { name: "Chat pelanggan" });
+    expect(within(section).queryByRole("link")).toBeNull();
+    expect(within(section).getByText(/nggak punya nomor WhatsApp/)).toBeTruthy();
   });
 });

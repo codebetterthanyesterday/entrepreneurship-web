@@ -137,7 +137,7 @@ export function HeaderChat() {
 }
 
 /** A speech bubble with a handset: WhatsApp's shape without its trademark. */
-function ChatGlyph({ className }: { className?: string }) {
+export function ChatGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path

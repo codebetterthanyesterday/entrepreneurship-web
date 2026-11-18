@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'cc0da9368a576129a29db0e62d43e5f658a7ea6f66c89b6c8d1250c8a0ddf296'>;
+  StorageHashBase<'e48754ecd891730f8133d637ee75515bf9b6a9017b5c83a22868fc31925a5afc'>;
 export type ExecutionHash =
   ExecutionHashBase<'2237e05b4e45077ca9d3cde4b5ce91bacce3c0621a9e066f075cdf7bbf1ebed3'>;
 export type ProfileHash =
@@ -291,6 +291,7 @@ export type FieldOutputTypes = {
       readonly handoverDetail: CodecTypes['pg/text@1']['output'] | null;
       readonly serviceWindowId: CodecTypes['pg/text@1']['output'] | null;
       readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+      readonly locationNotifiedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly cashReceived: CodecTypes['pg/int4@1']['output'] | null;
       readonly totalAmount: CodecTypes['pg/int4@1']['output'];
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
@@ -467,6 +468,7 @@ export type FieldInputTypes = {
       readonly handoverDetail: CodecTypes['pg/text@1']['input'] | null;
       readonly serviceWindowId: CodecTypes['pg/text@1']['input'] | null;
       readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
+      readonly locationNotifiedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly cashReceived: CodecTypes['pg/int4@1']['input'] | null;
       readonly totalAmount: CodecTypes['pg/int4@1']['input'];
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
@@ -638,6 +640,7 @@ export type StorageColumnTypes = {
       readonly handoverDetail: CodecTypes['pg/text@1']['output'] | null;
       readonly handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
       readonly id: CodecTypes['pg/text@1']['output'];
+      readonly locationNotifiedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly notes: CodecTypes['pg/text@1']['output'] | null;
       readonly orderNumber: CodecTypes['pg/text@1']['output'];
@@ -814,6 +817,7 @@ export type StorageColumnInputTypes = {
       readonly handoverDetail: CodecTypes['pg/text@1']['input'] | null;
       readonly handoverLocation: 'CAMPUS_B' | 'CAMPUS_C' | 'MARKET_DAY' | 'OTHER' | null;
       readonly id: CodecTypes['pg/text@1']['input'];
+      readonly locationNotifiedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
       readonly orderNumber: CodecTypes['pg/text@1']['input'];
@@ -1000,6 +1004,7 @@ export namespace Models {
     handoverDetail: CodecTypes['pg/text@1']['output'] | null;
     serviceWindowId: CodecTypes['pg/text@1']['output'] | null;
     locationReviewedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    locationNotifiedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
     cashReceived: CodecTypes['pg/int4@1']['output'] | null;
     totalAmount: CodecTypes['pg/int4@1']['output'];
     notes: CodecTypes['pg/text@1']['output'] | null;
@@ -1524,6 +1529,11 @@ type ContractBase = Omit<
                   readonly nullable: true;
                 };
                 readonly locationReviewedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: true;
+                };
+                readonly locationNotifiedAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
                   readonly nullable: true;
@@ -2904,6 +2914,13 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-temporal@1';
                 };
               };
+              readonly locationNotifiedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
               readonly cashReceived: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -3049,6 +3066,7 @@ type ContractBase = Omit<
                 readonly handoverDetail: { readonly column: 'handoverDetail' };
                 readonly serviceWindowId: { readonly column: 'serviceWindowId' };
                 readonly locationReviewedAt: { readonly column: 'locationReviewedAt' };
+                readonly locationNotifiedAt: { readonly column: 'locationNotifiedAt' };
                 readonly cashReceived: { readonly column: 'cashReceived' };
                 readonly totalAmount: { readonly column: 'totalAmount' };
                 readonly notes: { readonly column: 'notes' };

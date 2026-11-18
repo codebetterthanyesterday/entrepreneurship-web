@@ -30,6 +30,8 @@ import {
 import { formatRupiah } from "@/lib/utils";
 import type { CashierPreorder } from "@/types/order-view";
 import { PaymentSheet, type PaymentSubmission } from "./payment-sheet";
+import { CustomerChat } from "@/components/staff/customer-chat";
+import { needsLocationNotice } from "@/lib/customer-chat";
 
 /**
  * The kitchen moves orders from its own screen, so this list would otherwise go
@@ -50,15 +52,23 @@ const PAYMENT_LABEL = {
 export interface PreorderScreenProps {
   preorders: CashierPreorder[];
   qrisImageUrl: string | null;
+  /** The name messages to customers are signed with. */
+  brand: string;
 }
 
-export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps) {
+/** A preorder as the chat templates read it. */
+const chatView = (order: CashierPreorder) => ({ ...order, hasPaymentProof: order.paymentProofUrl !== null });
+
+export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScreenProps) {
   const router = useRouter();
   const { toast } = useToast();
 
   const [search, setSearch] = React.useState("");
   const [filterKey, setFilterKey] = React.useState(PREORDER_FILTERS[0]!.key);
-  /** "ALL", one service date, or "REVIEW" for "Lainnya" orders waiting on a check. */
+  /**
+   * "ALL", one service date, or "REVIEW" for "Lainnya" orders with something
+   * left to do: a location to check, or a customer to tell how it went.
+   */
   const [dateKey, setDateKey] = React.useState<string>("ALL");
   const [rejectReason, setRejectReason] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -82,13 +92,15 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
   // and the counter needs the list to settle as the cashier types, not one
   // round trip later.
   const dates = [...new Set(preorders.map((order) => order.serviceDate).filter(Boolean) as string[])].sort();
-  const awaiting = preorders.filter((order) => order.awaitingLocationCheck).length;
+  const needsReview = (order: CashierPreorder) =>
+    order.awaitingLocationCheck || needsLocationNotice(chatView(order));
+  const awaiting = preorders.filter(needsReview).length;
 
   const visible = preorders.filter(
     (order) =>
       (activeFilter.statuses.length === 0 || activeFilter.statuses.includes(order.status)) &&
       (dateKey === "ALL" ||
-        (dateKey === "REVIEW" ? order.awaitingLocationCheck : order.serviceDate === dateKey)) &&
+        (dateKey === "REVIEW" ? needsReview(order) : order.serviceDate === dateKey)) &&
       matchesPreorderSearch(order, search),
   );
 
@@ -157,13 +169,14 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
       toast(result.error);
       return;
     }
+    // The sheet stays open either way: the customer is told next, from the
+    // chat templates that now lead it.
     toast(
       accept
-        ? `Lokasi ${result.data.orderNumber} diterima`
-        : `${result.data.orderNumber} dibatalkan, stoknya kembali`,
+        ? `Lokasi ${result.data.orderNumber} diterima. Kabari pelanggannya ya`
+        : `${result.data.orderNumber} dibatalkan, stoknya kembali. Kabari pelanggannya ya`,
     );
     setRejectReason("");
-    if (!accept) setSelectedId(null);
     router.refresh();
   };
 
@@ -210,7 +223,7 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
           ))}
           {awaiting > 0 && (
             <Chip active={dateKey === "REVIEW"} aria-pressed={dateKey === "REVIEW"} onClick={() => setDateKey("REVIEW")} className="flex-none">
-              Cek lokasi ({awaiting})
+              Lokasi Lainnya ({awaiting})
             </Chip>
           )}
         </div>
@@ -278,6 +291,9 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                         ) : (
                           <span className="text-hot font-semibold"> · belum bayar</span>
                         ))}
+                      {needsLocationNotice(chatView(order)) && (
+                        <span className="text-warn font-semibold"> · belum dikabari</span>
+                      )}
                     </span>
                   </span>
 
@@ -425,8 +441,8 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
             {selected.awaitingLocationCheck ? (
               <div className="flex flex-col gap-2">
                 <Note variant="warn">
-                  Lokasi &ldquo;Lainnya&rdquo;: cek dulu jangkauannya (hubungi pelanggan lewat WhatsApp).
-                  Pesanan baru bisa diproses setelah lokasinya diterima.
+                  Lokasi &ldquo;Lainnya&rdquo;: cek dulu jangkauannya. Kalau tempatnya kurang jelas,
+                  minta patokan lewat chat di bawah. Pesanan baru bisa diproses setelah lokasinya diterima.
                 </Note>
                 <Button variant="go" fullWidth isLoading={isWorking} onClick={() => reviewLocation(true)}>
                   Lokasi bisa, terima
@@ -460,6 +476,13 @@ export function PreorderScreen({ preorders, qrisImageUrl }: PreorderScreenProps)
                 {action.label}
               </Button>
             )}
+
+            <CustomerChat
+              orderId={selected.id}
+              order={chatView(selected)}
+              brand={brand}
+              className="border-t-2 border-dashed border-line pt-3 mt-1"
+            />
           </div>
         </Sheet>
       )}

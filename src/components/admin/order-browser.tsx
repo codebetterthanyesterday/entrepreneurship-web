@@ -13,6 +13,8 @@ import { cancelOrderAction } from "@/actions/admin.actions";
 import { cn, formatRupiah } from "@/lib/utils";
 import type { OrderStatus } from "@/types/order";
 import type { AdminOrder } from "@/types/order-view";
+import { CustomerChat } from "@/components/staff/customer-chat";
+import { needsLocationNotice } from "@/lib/customer-chat";
 
 /** Status names as staff say them, matching the dashboard and the kitchen. */
 const STATUS_LABEL: Readonly<Record<OrderStatus, string>> = {
@@ -97,6 +99,7 @@ function OrderCard({ order, onSelect }: { order: AdminOrder; onSelect: () => voi
         {order.paymentStatus === "UNPAID" && order.status !== "CANCELLED" && (
           <Badge variant="danger">belum bayar</Badge>
         )}
+        {needsLocationNotice(order) && <Badge variant="prep">belum dikabari</Badge>}
       </span>
 
       {itemSummary && (
@@ -119,6 +122,8 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
 
 export interface OrderBrowserProps {
   orders: readonly AdminOrder[];
+  /** The name messages to customers are signed with. */
+  brand: string;
 }
 
 /**
@@ -129,7 +134,7 @@ export interface OrderBrowserProps {
  * view can be bookmarked. This component owns the two things that genuinely
  * need the browser: opening a detail sheet, and cancelling.
  */
-export function OrderBrowser({ orders }: OrderBrowserProps) {
+export function OrderBrowser({ orders, brand }: OrderBrowserProps) {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = React.useState(false);
   const [isCancelling, setIsCancelling] = React.useState(false);
@@ -264,6 +269,11 @@ export function OrderBrowser({ orders }: OrderBrowserProps) {
                 <DetailRow label="Catatan" value={selected.notes ?? "—"} />
               </dl>
             </section>
+
+            {/* A sale at the booth was handed over there and then: nobody to chat. */}
+            {selected.channel === "PREORDER" && (
+              <CustomerChat orderId={selected.id} order={selected} brand={brand} />
+            )}
 
             <section>
               <h3 className="s-eyebrow mb-2">Jejak waktu</h3>

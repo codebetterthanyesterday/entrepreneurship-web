@@ -9,11 +9,13 @@ import {
   cancelOrder,
   confirmHandoverLocation,
   markAsPaid,
+  markLocationNotified,
   transitionStatus,
 } from "@/lib/services/order.service";
 import { findOrderById } from "@/lib/queries/order.query";
 import { ValidationError } from "@/lib/errors";
 import { needsLocationReview } from "@/lib/schedule";
+import { LOCATION_REJECTED_REASON } from "@/lib/customer-chat";
 import type { OrderStatus } from "@/types/order";
 
 /**
@@ -110,12 +112,31 @@ export async function rejectHandoverLocationAction(
     if (!order || !needsLocationReview(order)) {
       throw new ValidationError("Pesanan ini nggak sedang menunggu cek lokasi");
     }
-    const reason = `Lokasi di luar jangkauan${data.reason ? `: ${data.reason}` : ""}`;
+    const reason = `${LOCATION_REJECTED_REASON}${data.reason ? `: ${data.reason}` : ""}`;
     const cancelled = await cancelOrder(data.orderId, toActor(user), reason);
     revalidateCounterAndKitchen();
     revalidatePath("/");
     return { ok: true, data: { orderNumber: cancelled.orderNumber } };
   } catch (error) {
     return toActionError(error, "rejectHandoverLocationAction");
+  }
+}
+
+/**
+ * A "Lainnya" customer has been told how the check of their location went.
+ * The till and the admin's order sheet both mark it, so both lists refresh.
+ */
+export async function markLocationNotifiedAction(
+  orderId: unknown,
+): Promise<ActionResult<{ orderNumber: string }>> {
+  try {
+    await requireRole("KASIR", "ADMIN");
+    const id = z.string().min(1, "Pesanannya nggak ketemu").parse(orderId);
+    const result = await markLocationNotified(id);
+    revalidatePath("/kasir/preorder");
+    revalidatePath("/admin/pesanan");
+    return { ok: true, data: result };
+  } catch (error) {
+    return toActionError(error, "markLocationNotifiedAction");
   }
 }

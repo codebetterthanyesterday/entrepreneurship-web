@@ -720,6 +720,28 @@ export async function confirmHandoverLocation(orderId: string, actor: Actor): Pr
   });
 }
 
+/**
+ * Records that a "Lainnya" customer has been told how the check of their
+ * location went. Only once the check is done, accepted or rejected; marking it
+ * again keeps the first time, so two cashiers telling the same customer leave
+ * one record of when it happened.
+ */
+export async function markLocationNotified(orderId: string): Promise<{ orderNumber: string }> {
+  const order = await db.orm.public.Order.where({ id: orderId }).first();
+  if (!order) throw new NotFoundError("Pesanannya nggak ketemu");
+  if (order.handoverLocation !== "OTHER") {
+    throw new ValidationError("Cuma pesanan berlokasi Lainnya yang perlu dikabari hasil cek lokasinya");
+  }
+  if (needsLocationReview(order)) {
+    throw new ValidationError("Lokasinya belum dicek, terima atau tolak dulu ya");
+  }
+
+  if (!order.locationNotifiedAt) {
+    await db.orm.public.Order.where({ id: orderId }).update({ locationNotifiedAt: Temporal.Now.instant() });
+  }
+  return { orderNumber: order.orderNumber };
+}
+
 // ---------------------------------------------------------------------------
 // 5. Payment
 // ---------------------------------------------------------------------------

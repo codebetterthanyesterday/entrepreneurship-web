@@ -155,6 +155,9 @@ model Order {
   serviceWindow      ServiceWindow?    @relation(fields: [serviceWindowId], references: [id])
   // Pesanan berlokasi OTHER menunggu dicek pengurus; diisi saat diterima.
   locationReviewedAt DateTime?
+  // Kapan pelanggan pesanan OTHER dikabari hasil cek lokasinya (diterima atau
+  // ditolak). Kosong = belum ada yang ngabarin.
+  locationNotifiedAt DateTime?
   cashReceived    Int?
   totalAmount     Int
   notes           String?

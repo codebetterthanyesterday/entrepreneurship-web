@@ -14,11 +14,19 @@ const cancelOrderAction = vi.fn<(input: unknown) => Promise<CancelResult>>(async
   data: { orderNumber: "PO-0001" },
 }));
 const refresh = vi.fn();
+const markLocationNotifiedAction = vi.fn<(orderId: unknown) => Promise<CancelResult>>(async () => ({
+  ok: true,
+  data: { orderNumber: "PO-0001" },
+}));
 
 // The browser imports a server action, which cannot be loaded in a test
 // process. These tests are about what the screen shows and what it submits.
 vi.mock("@/actions/admin.actions", () => ({
   cancelOrderAction: (input: unknown) => cancelOrderAction(input),
+}));
+
+vi.mock("@/actions/kasir.actions", () => ({
+  markLocationNotifiedAction: (orderId: unknown) => markLocationNotifiedAction(orderId),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -38,8 +46,10 @@ function order(overrides: Partial<AdminOrder> = {}): AdminOrder {
     handoverLocation: null,
     handoverDetail: null,
     awaitingLocationCheck: false,
+    locationNotifiedAt: null,
     paymentMethod: "CASH",
     paymentStatus: "UNPAID",
+    hasPaymentProof: false,
     notes: "Pedas ya",
     totalAmount: 25_000,
     itemCount: 3,
@@ -63,7 +73,7 @@ function order(overrides: Partial<AdminOrder> = {}): AdminOrder {
 function renderBrowser(orders: AdminOrder[]) {
   return render(
     <ToastProvider>
-      <OrderBrowser orders={orders} />
+      <OrderBrowser orders={orders} brand="Bunnyè" />
       {/* The app renders the toast in the root layout; the browser only calls it. */}
       <Toast />
     </ToastProvider>,
@@ -213,5 +223,25 @@ describe("cancelling", () => {
     openDetail("PO-0001");
 
     expect(screen.queryByText("Batalkan pesanan")).toBeNull();
+  });
+});
+
+describe("chatting the customer from the order sheet", () => {
+  it("is there for a preorder", () => {
+    renderBrowser([order()]);
+    openDetail("PO-0001");
+    const section = screen.getByRole("region", { name: "Chat pelanggan" });
+    expect(within(section).getAllByRole("link")[0]!.getAttribute("href")).toMatch(/^https:\/\/wa\.me\/6281234567890\?text=/);
+  });
+
+  it("is not there for a sale at the booth", () => {
+    renderBrowser([order({ channel: "ONSITE", customerPhone: null })]);
+    openDetail("PO-0001");
+    expect(screen.queryByRole("region", { name: "Chat pelanggan" })).toBeNull();
+  });
+
+  it("flags a Lainnya customer nobody has told yet", () => {
+    renderBrowser([order({ handoverLocation: "OTHER", handoverDetail: "Kos Melati", serviceDate: "2099-01-10" })]);
+    expect(screen.getByText("belum dikabari")).toBeDefined();
   });
 });

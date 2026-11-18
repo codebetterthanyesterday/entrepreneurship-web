@@ -6,6 +6,7 @@ import {
   cancelOrder,
   confirmHandoverLocation,
   createOrder,
+  markLocationNotified,
   transitionStatus,
 } from "@/lib/services/order.service";
 import {
@@ -145,6 +146,44 @@ describe("a Lainnya order waits for staff to accept its location", () => {
     await expect(confirmHandoverLocation(order.id, { id: cashier.id, role: "KASIR" })).rejects.toBeInstanceOf(
       ValidationError,
     );
+  });
+});
+
+describe("telling a Lainnya customer how the check went", () => {
+  const notifiedAt = async (id: string) =>
+    (await db.orm.public.Order.where({ id }).first())!.locationNotifiedAt;
+
+  it("waits for the check, then records the first time they were told", async () => {
+    const { window } = await openDay();
+    const order = await preorder(window.id, "OTHER", "Kos Melati");
+    const cashier = await makeUser("KASIR");
+
+    await expect(markLocationNotified(order.id)).rejects.toBeInstanceOf(ValidationError);
+
+    await confirmHandoverLocation(order.id, { id: cashier.id, role: "KASIR" });
+    await markLocationNotified(order.id);
+    const first = await notifiedAt(order.id);
+    expect(first).not.toBeNull();
+
+    // A second cashier telling them again keeps the first record.
+    await markLocationNotified(order.id);
+    expect((await notifiedAt(order.id))!.toString()).toBe(first!.toString());
+  });
+
+  it("can be recorded for a rejected location too", async () => {
+    const { window } = await openDay();
+    const order = await preorder(window.id, "OTHER", "Kos Melati");
+    const admin = await makeUser("ADMIN");
+
+    await cancelOrder(order.id, { id: admin.id, role: "ADMIN" }, "Lokasi di luar jangkauan");
+    await expect(markLocationNotified(order.id)).resolves.toEqual({ orderNumber: order.orderNumber });
+    expect(await notifiedAt(order.id)).not.toBeNull();
+  });
+
+  it("is only for Lainnya orders", async () => {
+    const { window } = await openDay();
+    const order = await preorder(window.id, "CAMPUS_B");
+    await expect(markLocationNotified(order.id)).rejects.toBeInstanceOf(ValidationError);
   });
 });
 
