@@ -9,6 +9,7 @@ import { cn, formatRupiah } from "@/lib/utils";
 import { pricedLines } from "@/lib/order-lines";
 import type { AdminOrder } from "@/types/order-view";
 import { pageTitle } from "@/lib/brand";
+import { getSiteIdentity } from "@/lib/queries/site.query";
 import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
@@ -53,11 +54,14 @@ export default async function AdminOrdersPage({
 
   const filter = resolveOrderFilter(filterId);
 
-  const { orders, total, totalAmount, page, pageCount } = await getAllOrders({
-    ...filter.where,
-    page: Number.isNaN(pageParam) ? 1 : pageParam,
-    pageSize: PAGE_SIZE,
-  });
+  const [{ orders, total, totalAmount, page, pageCount }, identity] = await Promise.all([
+    getAllOrders({
+      ...filter.where,
+      page: Number.isNaN(pageParam) ? 1 : pageParam,
+      pageSize: PAGE_SIZE,
+    }),
+    getSiteIdentity(),
+  ]);
 
   // Plain values only — Prisma rows carry Temporal instants that cannot cross
   // the server/client boundary.
@@ -70,8 +74,10 @@ export default async function AdminOrdersPage({
     customerPhone: order.customerPhone ?? null,
     pickupSlot: order.pickupSlot ?? null,
     ...handoverView(order),
+    locationNotifiedAt: order.locationNotifiedAt?.toString() ?? null,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
+    hasPaymentProof: order.paymentProofUrl != null,
     notes: order.notes ?? null,
     totalAmount: order.totalAmount,
     itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
@@ -123,7 +129,7 @@ export default async function AdminOrdersPage({
         ))}
       </nav>
 
-      <OrderBrowser orders={items} />
+      <OrderBrowser orders={items} brand={identity.brandName} />
 
       {pageCount > 1 && (
         <nav

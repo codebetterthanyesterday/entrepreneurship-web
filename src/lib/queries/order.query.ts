@@ -201,6 +201,8 @@ export function toCashierPreorder(
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     paymentProofUrl: order.paymentProofUrl,
+    customerPhone: order.customerPhone ?? null,
+    locationNotifiedAt: order.locationNotifiedAt?.toString() ?? null,
     status: order.status,
     notes: order.notes,
     totalAmount: order.totalAmount,

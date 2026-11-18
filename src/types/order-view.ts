@@ -111,6 +111,10 @@ export interface CashierPreorder {
   paymentStatus: PaymentStatus;
   /** The QRIS payment proof the customer uploaded, for the cashier to check (staff only). */
   paymentProofUrl: string | null;
+  /** The number given at checkout, for chatting the customer (staff only). */
+  customerPhone: string | null;
+  /** When a "Lainnya" customer was told how their location's check went, ISO. */
+  locationNotifiedAt: string | null;
   status: OrderStatus;
   notes: string | null;
   totalAmount: number;
@@ -213,8 +217,12 @@ export interface AdminOrder {
   handoverLocation: string | null;
   handoverDetail: string | null;
   awaitingLocationCheck: boolean;
+  /** When a "Lainnya" customer was told how their location's check went, ISO. */
+  locationNotifiedAt: string | null;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  /** A QRIS payment proof is waiting to be checked. */
+  hasPaymentProof: boolean;
   notes: string | null;
   totalAmount: number;
   /** Units ordered, across every line. */
