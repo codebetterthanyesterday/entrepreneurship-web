@@ -35,6 +35,8 @@ export function HandoverSteps({
   disabled,
   fieldError,
   Step,
+  audience = "customer",
+  currentWindowId = null,
 }: {
   schedule: BookableSchedule;
   value: HandoverChoice;
@@ -42,7 +44,15 @@ export function HandoverSteps({
   disabled: boolean;
   fieldError: (field: string) => string | undefined;
   Step: React.ComponentType<{ number: string; title: string; hint?: string; children: React.ReactNode }>;
+  /**
+   * Staff moving an order (`OrderEditSheet`) are not held to the cut-off, and
+   * a "Lainnya" place they write is taken as checked: the copy says so.
+   */
+  audience?: "customer" | "staff";
+  /** The range the order being edited holds now: labelled as such, not by its places left. */
+  currentWindowId?: string | null;
 }) {
+  const staff = audience === "staff";
   const days = React.useMemo(
     () =>
       value.location
@@ -117,7 +127,9 @@ export function HandoverSteps({
               />
               {value.location === "OTHER" && !fieldError("handoverDetail") && (
                 <span className="mt-1.5 block text-[12px] text-ink-soft">
-                  Pesanan ke lokasi lain kami cek dulu jangkauannya, lalu kami kabari lewat WhatsApp.
+                  {staff
+                    ? "Lokasi yang kamu tulis di sini dianggap sudah dicek jangkauannya."
+                    : "Pesanan ke lokasi lain kami cek dulu jangkauannya, lalu kami kabari lewat WhatsApp."}
                 </span>
               )}
               {fieldError("handoverDetail") && (
@@ -130,7 +142,9 @@ export function HandoverSteps({
 
       <Step number="03" title="Tanggal berapa?">
         <p className="-mt-1 mb-3 text-[12.5px] text-ink-soft">
-          Pesan paling lambat sehari sebelumnya, jam {cutoff}.
+          {staff
+            ? `Tanggal yang sudah lewat batas pesan (${cutoff} sehari sebelumnya) tetap bisa dipilih; pastikan dapur sanggup.`
+            : `Pesan paling lambat sehari sebelumnya, jam ${cutoff}.`}
         </p>
         {!value.location ? (
           <p className="text-sm text-ink-soft">Pilih lokasinya dulu, nanti tanggal yang buka muncul di sini.</p>
@@ -173,15 +187,21 @@ export function HandoverSteps({
                   >
                     <span className="block text-[14.5px] font-semibold tabular-nums">{window.label}</span>
                     <span className={cn("eyebrow mt-0.5 block", active ? "text-white" : "text-ink-soft")}>
-                      {window.isFull ? "Penuh" : `Sisa ${window.remaining} tempat`}
+                      {window.id === currentWindowId
+                        ? "Jadwal sekarang"
+                        : window.isFull
+                          ? "Penuh"
+                          : `Sisa ${window.remaining} tempat`}
                     </span>
                   </button>
                 );
               })}
             </div>
-            <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
-              Kami datang di dalam rentang jam itu. Kalau ada kendala di jalan, kami kabari lewat WhatsApp.
-            </p>
+            {!staff && (
+              <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
+                Kami datang di dalam rentang jam itu. Kalau ada kendala di jalan, kami kabari lewat WhatsApp.
+              </p>
+            )}
           </fieldset>
         )}
         {fieldError("serviceWindowId") && (

@@ -106,6 +106,8 @@ export interface CashierPreorder {
   serviceDate: string | null;
   handoverLocation: string | null;
   handoverDetail: string | null;
+  /** The time range the preorder holds, for moving it (`OrderEditSheet`). */
+  serviceWindowId: string | null;
   awaitingLocationCheck: boolean;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -216,6 +218,8 @@ export interface AdminOrder {
   serviceDate: string | null;
   handoverLocation: string | null;
   handoverDetail: string | null;
+  /** The time range the preorder holds, for moving it (`OrderEditSheet`). */
+  serviceWindowId: string | null;
   awaitingLocationCheck: boolean;
   /** When a "Lainnya" customer was told how their location's check went, ISO. */
   locationNotifiedAt: string | null;

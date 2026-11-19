@@ -34,6 +34,8 @@ const { formatRupiah } = await import("@/lib/utils");
 
 afterEach(cleanup);
 
+const NO_SCHEDULE = { days: [], cutoffMinute: 21 * 60 };
+
 /**
  * formatRupiah's output as Testing Library sees page text: it turns the
  * non-breaking space after "Rp" into a plain one before matching.
@@ -46,6 +48,7 @@ function preorder(overrides: Partial<CashierPreorder> = {}): CashierPreorder {
     orderNumber: "PO-0042",
     customerName: "Nadia Prameswari",
     pickupSlot: "09.00 - 10.00",
+    serviceWindowId: null,
     serviceDate: null,
     handoverLocation: null,
     handoverDetail: null,
@@ -71,7 +74,7 @@ function preorder(overrides: Partial<CashierPreorder> = {}): CashierPreorder {
 function open(order: CashierPreorder) {
   render(
     <ToastProvider>
-      <PreorderScreen preorders={[order]} qrisImageUrl={null} brand="Bunnyè" />
+      <PreorderScreen preorders={[order]} qrisImageUrl={null} brand="Bunnyè" schedule={NO_SCHEDULE} />
     </ToastProvider>,
   );
   fireEvent.click(screen.getByText(order.customerName));
@@ -157,7 +160,7 @@ describe("PreorderScreen: scanning the customer's ticket", () => {
   function screenWith(orders: CashierPreorder[]) {
     render(
       <ToastProvider>
-        <PreorderScreen preorders={orders} qrisImageUrl={null} brand="Bunnyè" />
+        <PreorderScreen preorders={orders} qrisImageUrl={null} brand="Bunnyè" schedule={NO_SCHEDULE} />
       </ToastProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Scan QR/ }));

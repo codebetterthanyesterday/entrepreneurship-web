@@ -10,6 +10,7 @@ import { pricedLines } from "@/lib/order-lines";
 import type { AdminOrder } from "@/types/order-view";
 import { pageTitle } from "@/lib/brand";
 import { getSiteIdentity } from "@/lib/queries/site.query";
+import { getBookableSchedule } from "@/lib/queries/schedule.query";
 import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
@@ -54,13 +55,14 @@ export default async function AdminOrdersPage({
 
   const filter = resolveOrderFilter(filterId);
 
-  const [{ orders, total, totalAmount, page, pageCount }, identity] = await Promise.all([
+  const [{ orders, total, totalAmount, page, pageCount }, identity, schedule] = await Promise.all([
     getAllOrders({
       ...filter.where,
       page: Number.isNaN(pageParam) ? 1 : pageParam,
       pageSize: PAGE_SIZE,
     }),
     getSiteIdentity(),
+    getBookableSchedule(undefined, { staff: true }),
   ]);
 
   // Plain values only — Prisma rows carry Temporal instants that cannot cross
@@ -74,6 +76,7 @@ export default async function AdminOrdersPage({
     customerPhone: order.customerPhone ?? null,
     pickupSlot: order.pickupSlot ?? null,
     ...handoverView(order),
+    serviceWindowId: order.serviceWindowId ?? null,
     locationNotifiedAt: order.locationNotifiedAt?.toString() ?? null,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
@@ -129,7 +132,7 @@ export default async function AdminOrdersPage({
         ))}
       </nav>
 
-      <OrderBrowser orders={items} brand={identity.brandName} />
+      <OrderBrowser orders={items} brand={identity.brandName} schedule={schedule} />
 
       {pageCount > 1 && (
         <nav

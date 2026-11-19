@@ -4,6 +4,7 @@ import { findPreordersForCashier, toCashierPreorder } from "@/lib/queries/order.
 import { getSettings } from "@/lib/services/setting.service";
 import { getSiteIdentity } from "@/lib/queries/site.query";
 import { PreorderScreen } from "@/components/kasir/preorder-screen";
+import { getBookableSchedule } from "@/lib/queries/schedule.query";
 import { pageTitle } from "@/lib/brand";
 import { PageHead } from "@/components/staff/page-head";
 
@@ -19,10 +20,11 @@ export const dynamic = "force-dynamic";
 export default async function CashierPreorderPage() {
   await requireRole("KASIR", "ADMIN");
 
-  const [orders, settings, identity] = await Promise.all([
+  const [orders, settings, identity, schedule] = await Promise.all([
     findPreordersForCashier(),
     getSettings(),
     getSiteIdentity(),
+    getBookableSchedule(undefined, { staff: true }),
   ]);
 
   // Plain values only — Prisma rows carry Temporal instants that cannot cross
@@ -46,6 +48,7 @@ export default async function CashierPreorderPage() {
         preorders={preorders}
         qrisImageUrl={settings.qrisImageUrl ?? null}
         brand={identity.brandName}
+        schedule={schedule}
       />
     </div>
   );
