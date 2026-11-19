@@ -1,4 +1,5 @@
 import { findActiveCharges } from "@/lib/queries/external-charge.query";
+import { normaliseOrderNumber } from "@/lib/order-number";
 import { findForTracking, toTrackedOrder } from "@/lib/queries/order.query";
 import type { TrackedOrder } from "@/types/order-view";
 import { photoboothLink } from "@/lib/photobooth-link";
@@ -20,11 +21,12 @@ export interface TrackingResponse {
  *
  * Always answers 200, with `order: null` for every kind of miss. A 404 for
  * "unknown number" and a 403 for "wrong digits" would let someone walk the
- * order numbers — they run in sequence — and learn which ones exist.
+ * order numbers and learn which ones exist. (They are random now, but the
+ * older sequential ones are still out there.)
  */
 export async function GET(request: Request): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const orderNumber = params.get("no")?.trim() ?? "";
+  const orderNumber = normaliseOrderNumber(params.get("no") ?? "");
   const phoneLast4 = params.get("wa")?.trim() ?? "";
 
   const empty: TrackingResponse = { order: null };

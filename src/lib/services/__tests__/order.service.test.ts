@@ -54,7 +54,7 @@ describe("createOrder — happy path", () => {
       onsiteOrder({ items: [{ productId: product.id, quantity: 3 }] }),
     );
 
-    expect(order.orderNumber).toBe("OS-0001");
+    expect(order.orderNumber).toMatch(/^OS-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/);
     expect(order.totalAmount).toBe(37_500);
     expect(order.items).toHaveLength(1);
     expect(order.items[0]!.priceAtOrder).toBe(12_500);
@@ -160,11 +160,11 @@ describe("generateOrderNumber — uniqueness", () => {
 
     expect(numbers).toHaveLength(50);
     expect(new Set(numbers).size).toBe(50);
-    expect(numbers.every((number) => /^OS-\d{4}$/.test(number))).toBe(true);
+    expect(numbers.every((number) => /^OS-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/.test(number))).toBe(true);
     expect(await stockOf(product.id)).toBe(50);
   });
 
-  it("numbers the two channels independently", async () => {
+  it("prefixes each channel's numbers with its own code", async () => {
     const product = await makeProduct({ stock: 10 });
     await makePickupSlot("09.00 - 10.00", 10);
 
@@ -180,8 +180,18 @@ describe("generateOrderNumber — uniqueness", () => {
       }),
     );
 
-    expect(onsite.orderNumber).toBe("OS-0001");
-    expect(preorder.orderNumber).toBe("PO-0001");
+    expect(onsite.orderNumber).toMatch(/^OS-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/);
+    expect(preorder.orderNumber).toMatch(/^PO-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/);
+  });
+
+  it("does not number orders in sequence, so one number says nothing about the next", async () => {
+    const product = await makeProduct({ stock: 10 });
+
+    const first = await createOrder(onsiteOrder({ items: [{ productId: product.id, quantity: 1 }] }));
+    const second = await createOrder(onsiteOrder({ items: [{ productId: product.id, quantity: 1 }] }));
+
+    expect(first.orderNumber).not.toBe("OS-0001");
+    expect(second.orderNumber).not.toBe(first.orderNumber);
   });
 });
 
@@ -323,7 +333,7 @@ describe("createOrder — closed channels", () => {
       onsiteOrder({ items: [{ productId: product.id, quantity: 1 }] }),
     );
 
-    expect(order.orderNumber).toBe("OS-0001");
+    expect(order.orderNumber).toMatch(/^OS-/);
   });
 
   it("refuses an on-site order while the booth is closed", async () => {
@@ -477,7 +487,8 @@ describe("createOrder — pickup slot quota", () => {
     await cancelOrder(first.id, { id: kasir.id, role: "KASIR" });
 
     const second = await createOrder(preorder());
-    expect(second.orderNumber).toBe("PO-0002");
+    expect(second.orderNumber).toMatch(/^PO-/);
+    expect(second.orderNumber).not.toBe(first.orderNumber);
   });
 });
 

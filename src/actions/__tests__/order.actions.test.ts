@@ -135,7 +135,7 @@ describe("submitPreorderAction — what it refuses to trust", () => {
     expect(order.totalAmount).toBe(12_000);
   });
 
-  it("numbers the order on the preorder sequence", async () => {
+  it("numbers the order as a preorder", async () => {
     const product = await makeProduct({ stock: 10 });
     await openWindow(20);
 
@@ -143,7 +143,7 @@ describe("submitPreorderAction — what it refuses to trust", () => {
       payload({ items: [{ productId: product.id, quantity: 1 }] }),
     );
 
-    expect(result.ok && result.data.orderNumber).toBe("PO-0001");
+    expect(result.ok && result.data.orderNumber).toMatch(/^PO-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/);
   });
 
   it("records where, which day and which range, taking the range's label from the server", async () => {
@@ -402,7 +402,7 @@ describe("submitOnsiteOrderAction — what it refuses to trust", () => {
     expect(order.totalAmount).toBe(30_000);
     expect(order.items[0]!.priceAtOrder).toBe(15_000);
     expect(order.cashReceived).toBe(50_000);
-    expect(result.data.orderNumber).toBe("OS-0001");
+    expect(result.data.orderNumber).toMatch(/^OS-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/);
     expect(result.data.change).toBe(20_000);
   });
 

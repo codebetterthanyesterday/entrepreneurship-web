@@ -104,13 +104,13 @@ describe("reports keep the photobooth apart from food", () => {
 
   it("the order export carries the photobooth amount in its own column", async () => {
     const order = await paidPreorder();
-    await paidPreorder();
+    const other = await paidPreorder();
     await charge(order.orderNumber, A, 8_000, 5);
 
     const rows = await getOrdersForExport();
     expect(rows.map((row) => [row.orderNumber, row.totalAmount, row.photoboothAmount])).toEqual([
       [order.orderNumber, 36_000, 8_000],
-      ["PO-0002", 36_000, 0],
+      [other.orderNumber, 36_000, 0],
     ]);
   });
 

@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { PREORDER_NUMBER_PATTERN } from "@/lib/order-number";
 import { Temporal } from "@js-temporal/polyfill";
 import { z } from "zod";
 import type { ChargeRecord } from "@/lib/services/external-charge.service";
@@ -94,7 +95,11 @@ export function isAuthorized(header: string | null, secrets = configuredSecrets(
 // Preorders
 // ---------------------------------------------------------------------------
 
-export const ORDER_NUMBER_PATTERN = /^PO-\d{4,}$/;
+/**
+ * A preorder number, random (`PO-7KX4QM`) or from before the numbering was
+ * randomised (`PO-0042`). ADR-003 K-02; the photobooth checks the same.
+ */
+export const ORDER_NUMBER_PATTERN = PREORDER_NUMBER_PATTERN;
 
 export function toPreorderV1(order: OrderWithItems): PreorderV1 {
   return {

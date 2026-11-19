@@ -1,4 +1,5 @@
 import { toActionError, type ActionResult } from "@/lib/action-result";
+import { normaliseOrderNumber } from "@/lib/order-number";
 import { attachPaymentProof } from "@/lib/services/image.service";
 import { MAX_IMAGE_BYTES } from "@/lib/stored-image";
 
@@ -31,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
       result = { ok: false, error: "Pilih gambar bukti bayarnya dulu ya", field: "file" };
     } else {
       const data = await attachPaymentProof({
-        orderNumber: String(form.get("no") ?? "").trim(),
+        orderNumber: normaliseOrderNumber(String(form.get("no") ?? "")),
         phoneLast4: String(form.get("wa") ?? "").trim(),
         bytes: new Uint8Array(await file.arrayBuffer()),
       });
