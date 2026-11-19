@@ -22,7 +22,8 @@ export const bundleSchema = z.object({
   name: z.string().trim().min(2, "Nama paketnya belum diisi minimal 2 huruf ya").max(60),
   description: z.string().trim().max(200, "Deskripsinya kepanjangan").optional().nullable(),
   price: z.number().int("Harganya harus angka bulat").positive("Harganya harus lebih dari nol"),
-  imageUrl: z.string().trim().url("Alamat gambarnya nggak valid").optional().nullable().or(z.literal("")),
+  // The cover photo is not part of this form: it is uploaded on its own
+  // (`/api/admin/paket/[id]/foto`), so saving the details never touches it.
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().min(0).default(0),
   items,

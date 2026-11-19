@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'bc55a22041ca999ebbd127cec65345dcae12fc4223a65e03254c6bca6645131f'>;
+  StorageHashBase<'f468f23b87be644d6874c11c34a121befb41238f5ddcd72ed2bcfd0cb2e2e830'>;
 export type ExecutionHash =
   ExecutionHashBase<'1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890'>;
 export type ProfileHash =
@@ -398,7 +398,7 @@ export type FieldOutputTypes = {
     };
     readonly StoredImage: {
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT' | 'BUNDLE';
       readonly mimeType: CodecTypes['pg/text@1']['output'];
       readonly data: CodecTypes['pg/bytea@1']['output'];
       readonly byteSize: CodecTypes['pg/int4@1']['output'];
@@ -591,7 +591,7 @@ export type FieldInputTypes = {
     };
     readonly StoredImage: {
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT' | 'BUNDLE';
       readonly mimeType: CodecTypes['pg/text@1']['input'];
       readonly data: CodecTypes['pg/bytea@1']['input'];
       readonly byteSize: CodecTypes['pg/int4@1']['input'];
@@ -787,7 +787,7 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly data: CodecTypes['pg/bytea@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT' | 'BUNDLE';
       readonly mimeType: CodecTypes['pg/text@1']['output'];
     };
     readonly storeSetting: {
@@ -980,7 +980,7 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly data: CodecTypes['pg/bytea@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT' | 'BUNDLE';
       readonly mimeType: CodecTypes['pg/text@1']['input'];
     };
     readonly storeSetting: {
@@ -1185,7 +1185,7 @@ export namespace Models {
   };
   export type public_StoredImage = {
     id: CodecTypes['pg/text@1']['output'];
-    kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
+    kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT' | 'BUNDLE';
     mimeType: CodecTypes['pg/text@1']['output'];
     data: CodecTypes['pg/bytea@1']['output'];
     byteSize: CodecTypes['pg/int4@1']['output'];
@@ -2725,7 +2725,7 @@ type ContractBase = Omit<
             };
             readonly StoredImageKind: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['QRIS', 'PAYMENT_PROOF', 'PRODUCT'];
+              readonly values: readonly ['QRIS', 'PAYMENT_PROOF', 'PRODUCT', 'BUNDLE'];
             };
             readonly UserRole: {
               readonly kind: 'valueSet';
@@ -4295,6 +4295,7 @@ type ContractBase = Omit<
               { readonly name: 'QRIS'; readonly value: 'QRIS' },
               { readonly name: 'PAYMENT_PROOF'; readonly value: 'PAYMENT_PROOF' },
               { readonly name: 'PRODUCT'; readonly value: 'PRODUCT' },
+              { readonly name: 'BUNDLE'; readonly value: 'BUNDLE' },
             ];
           };
           readonly ChargeSource: {

@@ -6,7 +6,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /**
  * An image kept in the database (`StoredImage`).
  *
- * The booth's QRIS and the menu's photos are public: every customer sees them,
+ * The booth's QRIS, the menu's photos and the paket covers are public: every customer sees them,
  * and a new upload is a new id, so the address is cached for good, by the
  * browser and by Vercel's CDN alike, which keeps a busy menu from reading the
  * same bytes out of the database over and over. A payment

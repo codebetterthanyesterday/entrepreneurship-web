@@ -61,6 +61,8 @@ enum StoredImageKind {
   QRIS = "QRIS"
   PAYMENT_PROOF = "PAYMENT_PROOF"
   PRODUCT = "PRODUCT"
+  // Foto sampul sebuah paket; publik seperti foto menu.
+  BUNDLE = "BUNDLE"
 }
 
 // Layanan lain yang boleh menagih ke nota pesanan (BPB-098, keputusan K-05).

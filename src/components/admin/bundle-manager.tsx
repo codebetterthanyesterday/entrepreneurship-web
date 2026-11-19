@@ -17,6 +17,7 @@ import {
   updateBundleAction,
 } from "@/actions/bundle.actions";
 import type { AdminProduct } from "@/types/admin";
+import { BundlePhoto } from "./bundle-photo";
 
 /** A paket as the admin page hands it to the browser: plain values only. */
 export interface AdminBundle {
@@ -166,6 +167,8 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
       {editing !== null && (
         <BundleFormSheet
           bundle={editing === "new" ? null : editing}
+          // From the live list, so a photo just uploaded shows in the open sheet.
+          photoUrl={editing === "new" ? null : (bundles.find((b) => b.id === editing.id)?.imageUrl ?? null)}
           products={products}
           onClose={() => setEditing(null)}
           onSaved={(message) => {
@@ -186,11 +189,13 @@ interface DraftItem {
 
 function BundleFormSheet({
   bundle,
+  photoUrl,
   products,
   onClose,
   onSaved,
 }: {
   bundle: AdminBundle | null;
+  photoUrl: string | null;
   products: AdminProduct[];
   onClose: () => void;
   onSaved: (message: string) => void;
@@ -199,7 +204,6 @@ function BundleFormSheet({
   const [name, setName] = React.useState(bundle?.name ?? "");
   const [description, setDescription] = React.useState(bundle?.description ?? "");
   const [price, setPrice] = React.useState(bundle ? String(bundle.price) : "");
-  const [imageUrl, setImageUrl] = React.useState(bundle?.imageUrl ?? "");
   const [items, setItems] = React.useState<DraftItem[]>(
     bundle?.items ?? [
       { productId: "", quantity: 1 },
@@ -231,7 +235,6 @@ function BundleFormSheet({
       name: name.trim(),
       description: description.trim() || null,
       price: Number(price.replace(/\D/g, "")),
-      imageUrl: imageUrl.trim() || null,
       isActive: bundle?.isActive ?? true,
       sortOrder: bundle?.sortOrder ?? 0,
       items: items.filter((item) => item.productId !== ""),
@@ -356,15 +359,13 @@ function BundleFormSheet({
           disabled={isSaving}
         />
 
-        <Input
-          label="Alamat gambar (opsional)"
-          placeholder="https://…"
-          value={imageUrl}
-          onChange={(event) => setImageUrl(event.target.value)}
-          error={fieldError("imageUrl")}
-          hint="Kosongin aja, nanti katalog nampilin gambar isi paketnya"
-          disabled={isSaving}
-        />
+        {bundle ? (
+          <BundlePhoto bundleId={bundle.id} bundleName={bundle.name} imageUrl={photoUrl} />
+        ) : (
+          <p className="text-[12.5px] text-ink-soft">
+            Foto paket bisa dipasang setelah paketnya disimpan. Tanpa foto, katalog menggambar paketnya dari isinya.
+          </p>
+        )}
 
         <div className="flex flex-col gap-2 pt-1">
           <Button type="submit" variant="primary" fullWidth isLoading={isSaving}>
