@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -323,6 +324,17 @@ export function CheckoutForm({
                   disabled={isSubmitting}
                 />
               </Step>
+
+              {/* Said where the data is handed over, before the button that
+                  sends it (UU PDP); the details are on /privasi. */}
+              <p className="mt-6 text-[13px] leading-relaxed text-ink-soft">
+                Nama, nomor WhatsApp, dan lokasi kamu cuma dipakai buat pesanan ini: menyiapkan dan
+                menyerahkannya, menghubungi kamu soal pesanan, dan membuka foto booth kamu. Nggak dijual
+                atau dibagikan.{" "}
+                <Link href="/privasi" className="font-semibold text-pink-deep underline underline-offset-4">
+                  Selengkapnya
+                </Link>
+              </p>
 
               {fieldError("items") && (
                 <p
