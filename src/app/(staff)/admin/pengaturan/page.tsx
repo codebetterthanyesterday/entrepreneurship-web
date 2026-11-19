@@ -8,6 +8,7 @@ import { DEFAULT_CHAT_CLOSE_MINUTE, DEFAULT_CHAT_OPEN_MINUTE } from "@/lib/whats
 import { MiscSettingsForm } from "@/components/admin/misc-settings-form";
 import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
+import { ButtonLink } from "@/components/ui/button";
 import { hasAnyPhotoboothCharge } from "@/lib/queries/external-charge.query";
 import { pageTitle } from "@/lib/brand";
 import { PageHead } from "@/components/staff/page-head";
@@ -56,6 +57,20 @@ export default async function AdminSettingsPage() {
           chatOpenMinute={settings.chatOpenMinute ?? DEFAULT_CHAT_OPEN_MINUTE}
           chatCloseMinute={settings.chatCloseMinute ?? DEFAULT_CHAT_CLOSE_MINUTE}
         />
+
+        {/* Not in the bar: an admin's bar is already six wide on a phone, and
+            accounts are managed now and then, not during service. */}
+        <section className="flex flex-col gap-2.5">
+          <h2 className="s-h2">Akun staf</h2>
+          <div className="s-slab flex flex-col gap-3 p-3.5">
+            <p className="text-sm text-ink-soft">
+              Tambah akun kasir, dapur, atau admin, nonaktifkan yang sudah nggak bertugas, dan reset password yang lupa.
+            </p>
+            <ButtonLink href="/admin/staf" variant="flat" size="sm" className="self-start px-5">
+              Kelola akun staf
+            </ButtonLink>
+          </div>
+        </section>
 
         <div className="desktop:col-span-2">
           <ExportPanel photobooth={photoboothCharges} />

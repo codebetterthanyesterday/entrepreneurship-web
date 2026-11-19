@@ -142,3 +142,39 @@ test("an admin's photos become the menu's cover and its gallery", async ({ page,
   await admin.context().close();
 });
 
+test("an admin adds a cashier, and switching them off signs them out at once", async ({ browser }) => {
+  const stamp = Date.now();
+  const email = `kasir-${stamp}@e2e.test`;
+  // Unique per run: the mobile and desktop projects share one database.
+  const name = `Kasir ${stamp}`;
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+
+  // Admin → Pengaturan → Kelola akun staf → Tambah staf.
+  await admin.goto("/admin/pengaturan");
+  await admin.getByRole("link", { name: "Kelola akun staf" }).click();
+  await admin.getByRole("button", { name: "Tambah staf" }).click();
+  await admin.getByLabel("Nama").fill(name);
+  await admin.getByLabel("Email").fill(email);
+  await admin.getByRole("button", { name: "Kasir", exact: true }).click();
+  await admin.getByRole("button", { name: "Buat akun" }).click();
+  const password = (await admin.getByText(/^[a-z2-9]{4}-[a-z2-9]{4}-[a-z2-9]{4}$/).innerText()).trim();
+  await admin.getByRole("button", { name: "Udah dicatat, tutup" }).click();
+  await expect(admin.getByRole("listitem").filter({ hasText: name }).getByText("Belum ganti password")).toBeVisible();
+
+  // The new cashier signs in with it, and is asked to change it.
+  const till = await signInStaff(browser, { email, password });
+  await till.goto("/kasir/preorder");
+  await expect(till.getByText(/password sementara dari admin/)).toBeVisible();
+
+  // The admin switches the account off; the cashier's open session ends.
+  await admin.getByRole("button", { name: `Ubah akun ${name}` }).click();
+  await admin.getByRole("button", { name: "Nonaktif", exact: true }).click();
+  await admin.getByRole("button", { name: "Simpan" }).click();
+  await expect(admin.getByText(`${name} dinonaktifkan dan keluar dari semua perangkat`)).toBeVisible();
+
+  expect((await till.goto("/kasir/preorder"))?.status()).toBe(404);
+
+  await admin.context().close();
+  await till.context().close();
+});
+

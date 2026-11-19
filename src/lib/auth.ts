@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma as db } from "@/lib/prisma";
 import { clientIp } from "@/lib/client-ip";
 import { LIMITS, checkRateLimit, hitRateLimit } from "@/lib/services/rate-limit.service";
+import { currentSessionAccount } from "@/lib/services/staff.service";
 
 /**
  * Too many failed sign-ins lately, for this email or from this address. The
@@ -56,10 +57,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 12 * 60 * 60, // 12 hours
   },
   callbacks: {
+    // Runs whenever a session is read: in the proxy on every staff request,
+    // and in each page and server action. The JWT alone would keep a session
+    // alive for twelve hours after its account was switched off or reset, so
+    // the account is read back each time (one lookup by primary key; visitors
+    // without a session never get here). Gone, switched off, or reset since
+    // sign-in: the session ends. Otherwise its role and name follow the
+    // account, so an admin's change applies at once.
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.sv = (user as { sessionVersion?: number }).sessionVersion ?? 0;
+        return token;
+      }
+      if (typeof token.id !== "string") return null;
+      try {
+        const account = await currentSessionAccount(token.id, typeof token.sv === "number" ? token.sv : 0);
+        if (!account) return null;
+        token.role = account.role;
+        token.name = account.name;
+      } catch (error) {
+        // A database hiccup must not sign the whole counter out mid-service;
+        // the next request checks again.
+        console.error("auth: could not re-check the session's account", error);
       }
       return token;
     },
@@ -83,7 +104,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 /** The account behind an email and password, or null for any kind of mismatch. */
 async function verifyCredentials(email: string, password: string) {
-  const user = await db.orm.public.User.where({ email }).first();
+  // Accounts added on Admin → Staf are stored lower-cased, and phones like to
+  // capitalise the first letter; an older account is matched as stored.
+  const typed = email.trim();
+  const user =
+    (await db.orm.public.User.where({ email: typed }).first()) ??
+    (await db.orm.public.User.where({ email: typed.toLowerCase() }).first());
 
   if (!user || !user.password) {
     return null;
@@ -108,5 +134,6 @@ async function verifyCredentials(email: string, password: string) {
     email: user.email,
     name: user.name,
     role: user.role,
+    sessionVersion: user.sessionVersion,
   };
 }

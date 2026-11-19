@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0457b81c730e6f5e20904bb74e9110340be84611bc8eab86d1bb1a668fd006ce'>;
+  StorageHashBase<'ecca80cd6e4633f781d3e09cb0f555825ed7b69da19c9beafda48db8bfd5f166'>;
 export type ExecutionHash =
   ExecutionHashBase<'1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890'>;
 export type ProfileHash =
@@ -425,6 +425,7 @@ export type FieldOutputTypes = {
       readonly role: 'ADMIN' | 'KASIR' | 'DAPUR';
       readonly isActive: CodecTypes['pg/bool@1']['output'];
       readonly mustChangePassword: CodecTypes['pg/bool@1']['output'];
+      readonly sessionVersion: CodecTypes['pg/int4@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
   };
@@ -614,6 +615,7 @@ export type FieldInputTypes = {
       readonly role: 'ADMIN' | 'KASIR' | 'DAPUR';
       readonly isActive: CodecTypes['pg/bool@1']['input'];
       readonly mustChangePassword: CodecTypes['pg/bool@1']['input'];
+      readonly sessionVersion: CodecTypes['pg/int4@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
   };
@@ -804,6 +806,7 @@ export type StorageColumnTypes = {
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly password: CodecTypes['pg/text@1']['output'];
       readonly role: 'ADMIN' | 'KASIR' | 'DAPUR';
+      readonly sessionVersion: CodecTypes['pg/int4@1']['output'];
     };
   };
 };
@@ -993,6 +996,7 @@ export type StorageColumnInputTypes = {
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly password: CodecTypes['pg/text@1']['input'];
       readonly role: 'ADMIN' | 'KASIR' | 'DAPUR';
+      readonly sessionVersion: CodecTypes['pg/int4@1']['input'];
     };
   };
 };
@@ -1006,6 +1010,7 @@ export namespace Models {
     role: 'ADMIN' | 'KASIR' | 'DAPUR';
     isActive: CodecTypes['pg/bool@1']['output'];
     mustChangePassword: CodecTypes['pg/bool@1']['output'];
+    sessionVersion: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     handledOrders: public_Order[];
     stockMovements: public_StockMovement[];
@@ -2620,6 +2625,15 @@ type ContractBase = Omit<
                     readonly value: DefaultLiteralValue<'pg/bool@1', false>;
                   };
                 };
+                readonly sessionVersion: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -4120,6 +4134,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
+              readonly sessionVersion: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -4163,6 +4181,7 @@ type ContractBase = Omit<
                 readonly role: { readonly column: 'role' };
                 readonly isActive: { readonly column: 'isActive' };
                 readonly mustChangePassword: { readonly column: 'mustChangePassword' };
+                readonly sessionVersion: { readonly column: 'sessionVersion' };
                 readonly createdAt: { readonly column: 'createdAt' };
               };
             };

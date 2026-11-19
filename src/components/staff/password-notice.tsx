@@ -19,7 +19,7 @@ export function PasswordNotice() {
           !
         </span>
         <span>
-          Akun kamu masih pakai password awal yang dibagikan bareng-bareng.{" "}
+          Akun kamu masih pakai password sementara dari admin.{" "}
           <b className="underline underline-offset-2">Ganti sekarang &rarr;</b>
         </span>
       </span>

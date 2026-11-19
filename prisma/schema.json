@@ -2464,6 +2464,13 @@
                   "namespaceId": "public",
                   "plane": "domain"
                 }
+              },
+              "sessionVersion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
@@ -2523,6 +2530,9 @@
                 },
                 "role": {
                   "column": "role"
+                },
+                "sessionVersion": {
+                  "column": "sessionVersion"
                 }
               },
               "namespaceId": "public",
@@ -4328,6 +4338,15 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "sessionVersion": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
                 }
               },
               "foreignKeys": [],
@@ -4433,7 +4452,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "0457b81c730e6f5e20904bb74e9110340be84611bc8eab86d1bb1a668fd006ce"
+    "storageHash": "ecca80cd6e4633f781d3e09cb0f555825ed7b69da19c9beafda48db8bfd5f166"
   },
   "execution": {
     "executionHash": "1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890",
