@@ -3,7 +3,7 @@ import { prisma as db } from "@/lib/prisma";
 import { getStockHistory } from "@/lib/queries/stock-history.query";
 import { cancelOrder, createOrder } from "@/lib/services/order.service";
 import { createProduct, updateProduct } from "@/lib/services/product.service";
-import { closeDatabase, makeUser, resetDatabase } from "@/lib/services/__tests__/helpers/test-db";
+import { closeDatabase, makeUser, openPreorderWindow, resetDatabase } from "@/lib/services/__tests__/helpers/test-db";
 
 beforeEach(async () => {
   await resetDatabase();
@@ -30,6 +30,7 @@ describe("the stock history", () => {
       paymentMethod: "CASH",
       customerName: "Rani",
       customerPhone: "081234561234",
+      schedule: await openPreorderWindow("09.00 - 10.00", 10),
       handledById: kasir.id,
       items: [{ productId: kopi.id, quantity: 2 }],
     });

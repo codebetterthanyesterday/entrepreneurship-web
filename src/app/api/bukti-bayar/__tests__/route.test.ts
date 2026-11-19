@@ -3,7 +3,7 @@ import { POST } from "@/app/api/bukti-bayar/route";
 import { prisma as db } from "@/lib/prisma";
 import { createOrder } from "@/lib/services/order.service";
 import { getSettings } from "@/lib/services/setting.service";
-import { closeDatabase, makeProduct, resetDatabase } from "@/lib/services/__tests__/helpers/test-db";
+import { closeDatabase, makeProduct, openPreorderWindow, resetDatabase } from "@/lib/services/__tests__/helpers/test-db";
 
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46]);
 
@@ -36,6 +36,7 @@ async function qrisOrder() {
     paymentStatus: "UNPAID",
     customerName: "Rani",
     customerPhone: "081234561234",
+    schedule: await openPreorderWindow("09.00 - 10.00", 10),
     paymentMethod: "QRIS",
     items: [{ productId: product.id, quantity: 1 }],
   });

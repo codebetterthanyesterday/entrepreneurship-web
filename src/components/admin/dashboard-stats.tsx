@@ -41,12 +41,6 @@ export function DashboardStats({ summary, channels }: DashboardStatsProps) {
             ? "belum ada transaksi"
             : `rata-rata ${formatRupiah(summary.averageOrderValue)} per pesanan`
         }
-        // The photobooth's takings, kept apart from food (BPB-098).
-        extra={
-          summary.photoboothRevenue > 0
-            ? `+ ${formatRupiah(summary.photoboothRevenue)} photobooth, terpisah`
-            : undefined
-        }
       />
 
       <StatCard

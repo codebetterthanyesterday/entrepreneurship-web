@@ -1,4 +1,3 @@
-import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { normaliseOrderNumber } from "@/lib/order-number";
 import { clientIp } from "@/lib/client-ip";
 import { LIMITS, checkRateLimit, hitRateLimit } from "@/lib/services/rate-limit.service";
@@ -65,12 +64,11 @@ export async function GET(request: Request): Promise<Response> {
       hitRateLimit(LIMITS.trackMissPerOrder, orderNumber),
     ]);
   }
-  const charges = order ? await findActiveCharges([order.id]) : null;
   const qrisImageUrl =
     order?.paymentMethod === "QRIS" ? ((await getSettings()).qrisImageUrl ?? null) : null;
   const body: TrackingResponse = order
     ? {
-        order: toTrackedOrder(order, charges?.get(order.id)),
+        order: toTrackedOrder(order),
         photoLink: photoboothLink(order, { withToken: true }),
         qrisImageUrl,
       }

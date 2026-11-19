@@ -11,7 +11,6 @@ import { DEFAULT_TAGLINE, getSiteIdentity } from "@/lib/queries/site.query";
 import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
 import { ButtonLink } from "@/components/ui/button";
-import { hasAnyPhotoboothCharge } from "@/lib/queries/external-charge.query";
 import { BRAND_NAME, pageTitle } from "@/lib/brand";
 import { PageHead } from "@/components/staff/page-head";
 
@@ -23,10 +22,9 @@ export default async function AdminSettingsPage() {
   await requireRole("ADMIN");
 
   const today = todayInJakarta();
-  const [settings, days, photoboothCharges, identity] = await Promise.all([
+  const [settings, days, identity] = await Promise.all([
     getSettings(),
     getScheduleForAdmin(today),
-    hasAnyPhotoboothCharge(),
     getSiteIdentity(),
   ]);
 
@@ -83,7 +81,7 @@ export default async function AdminSettingsPage() {
         </section>
 
         <div className="desktop:col-span-2">
-          <ExportPanel photobooth={photoboothCharges} />
+          <ExportPanel />
         </div>
       </div>
     </div>

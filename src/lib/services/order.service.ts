@@ -61,8 +61,6 @@ export interface CreateOrderInput {
   bundles?: readonly BundleLineInput[];
   customerName: string;
   customerPhone?: string | null;
-  /** Legacy: a one-day slot by its label. New preorders use `schedule`. */
-  pickupSlot?: string | null;
   /** A preorder's handover: where, any meeting-point note, and the time range booked. */
   schedule?: {
     location: HandoverLocation;
@@ -233,7 +231,7 @@ export function canTransition(from: OrderStatus, to: OrderStatus, role: UserRole
  * against the table, and then writing is not safe: two cashiers with the same
  * order open both read CONFIRMED, both pass `assertTransition`, and both write
  * — and if one of them was cancelling, the order ends up in the kitchen queue
- * with its stock already handed back and its pickup slot already released.
+ * with its stock already handed back and its time range already released.
  *
  * Zero rows affected means somebody else moved the order first.
  */
@@ -398,17 +396,17 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       throw new ValidationError("Booth lagi tutup, belum bisa terima pesanan");
     }
 
-    // (c) A preorder books a time range on an open date — or, for orders from
-    // before the schedule, a one-day slot by its label.
+    // (c) A preorder books a time range on an open date. One without a handover
+    // would reach no one, so it is refused rather than saved without a time.
+    if (input.channel === "PREORDER" && !input.schedule) {
+      throw new ValidationError("Pilih lokasi, tanggal, dan jamnya dulu ya", "serviceWindowId");
+    }
     const booked =
       input.channel === "PREORDER" && input.schedule
         ? await bookServiceWindow(tx, input.schedule, {
             cutoffMinute: settings?.orderCutoffMinute ?? DEFAULT_CUTOFF_MINUTE,
           })
         : null;
-    if (!booked && input.channel === "PREORDER" && input.pickupSlot) {
-      await bookPickupSlot(tx, input.pickupSlot);
-    }
 
     // (d) Money is computed from the price the product carries right now.
     const lines = items.map((item) => {
@@ -484,7 +482,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
       status,
       customerName: input.customerName,
       customerPhone: input.customerPhone ?? null,
-      pickupSlot: booked?.label ?? input.pickupSlot ?? null,
+      pickupSlot: booked?.label ?? null,
       serviceDate: booked?.date ?? null,
       serviceWindowId: booked?.windowId ?? null,
       handoverLocation: booked ? input.schedule!.location : null,
@@ -568,35 +566,6 @@ function formatShortfall(amount: number): string {
 }
 
 /**
- * Takes one place in a pickup slot.
- *
- * The `booked < quota` test lives inside the UPDATE, so the database is what
- * decides whether there is room. Counting existing orders and comparing the
- * count against the quota is not safe: two customers checking out at the same
- * moment both read a count that is still under the quota and both get in, and a
- * slot of 20 ends up holding 22. Zero rows affected means the slot filled up —
- * either it was already full, or another checkout won the race.
- */
-async function bookPickupSlot(tx: TxClient, label: string): Promise<void> {
-  const slot = await tx.orm.public.PickupSlot.where({ label }).first();
-
-  if (!slot || !slot.isActive) {
-    throw new ValidationError("Slot pengambilannya udah nggak tersedia", "pickupSlot");
-  }
-
-  const plan = db.raw
-    .sql`UPDATE "public"."pickupSlot" SET "booked" = "booked" + 1 WHERE "id" = ${slot.id} AND "isActive" = true AND "booked" < "quota"`
-    .affectedCount()
-    .build();
-
-  const { affectedRows } = await tx.execute(plan);
-
-  if (affectedRows === 0) {
-    throw new ValidationError(`Slot ${label} udah penuh, pilih jam lain ya`, "pickupSlot");
-  }
-}
-
-/**
  * Books one place in a time range on a service date, for a preorder.
  *
  * Everything the checkout shows is checked again here, inside the order's
@@ -661,16 +630,6 @@ async function bookServiceWindow(
 async function releaseServiceWindow(tx: TxClient, windowId: string): Promise<void> {
   const plan = db.raw
     .sql`UPDATE "public"."serviceWindow" SET "booked" = "booked" - 1 WHERE "id" = ${windowId} AND "booked" > 0`
-    .affectedCount()
-    .build();
-
-  await tx.execute(plan);
-}
-
-/** Gives a place back when an order that held one is cancelled. */
-async function releasePickupSlot(tx: TxClient, label: string): Promise<void> {
-  const plan = db.raw
-    .sql`UPDATE "public"."pickupSlot" SET "booked" = "booked" - 1 WHERE "label" = ${label} AND "booked" > 0`
     .affectedCount()
     .build();
 
@@ -836,7 +795,6 @@ export async function updateOrderDetails(
       if (schedule.serviceWindowId !== order.serviceWindowId) {
         const booked = await bookServiceWindow(tx, schedule, { staff: true });
         if (order.serviceWindowId) await releaseServiceWindow(tx, order.serviceWindowId);
-        else if (order.pickupSlot) await releasePickupSlot(tx, order.pickupSlot);
         changes.serviceWindowId = booked.windowId;
         changes.serviceDate = booked.date;
         changes.pickupSlot = booked.label;
@@ -945,12 +903,10 @@ export async function cancelOrder(
       });
     }
 
-    // The place this order held in its pickup slot goes back on the shelf too,
-    // otherwise cancellations would slowly starve the slot.
+    // The place this order held in its time range goes back on the shelf too,
+    // otherwise cancellations would slowly starve the range.
     if (order.channel === "PREORDER" && order.serviceWindowId) {
       await releaseServiceWindow(tx, order.serviceWindowId);
-    } else if (order.channel === "PREORDER" && order.pickupSlot) {
-      await releasePickupSlot(tx, order.pickupSlot);
     }
 
     return await loadOrderWithItems(tx, orderId);

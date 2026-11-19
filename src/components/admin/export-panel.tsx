@@ -22,12 +22,6 @@ const EXPORT_OPTIONS: readonly ExportOption[] = [
     label: "Rekap per menu",
     description: "Berapa porsi tiap menu terjual, sisa stoknya, dan pemasukannya",
   },
-  {
-    type: "photobooth",
-    label: "Tagihan photobooth (lama)",
-    description:
-      "Cetak foto dan HD yang dulu dibayar di booth, sebelum layanan foto digratiskan; yang dibatalkan tetap tercatat",
-  },
 ];
 
 /**
@@ -39,10 +33,7 @@ const EXPORT_OPTIONS: readonly ExportOption[] = [
  * endpoint checks the admin's role itself, so a link that someone copies out of
  * the page is no use to anyone else.
  */
-export function ExportPanel({ photobooth }: { photobooth: boolean }) {
-  // Since K-14 the photobooth is free and charges nothing, so its export is
-  // offered only while there is old charge data to export.
-  const options = EXPORT_OPTIONS.filter((option) => option.type !== "photobooth" || photobooth);
+export function ExportPanel() {
 
   return (
     <section className="flex flex-col gap-3">
@@ -56,7 +47,7 @@ export function ExportPanel({ photobooth }: { photobooth: boolean }) {
       </div>
 
       <div className="flex flex-col gap-2.5">
-        {options.map((option) => (
+        {EXPORT_OPTIONS.map((option) => (
           <a
             key={option.type}
             href={`/api/admin/export?type=${option.type}`}

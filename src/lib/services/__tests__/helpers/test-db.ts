@@ -1,4 +1,7 @@
 import { prisma as db } from "@/lib/prisma";
+import { Temporal } from "@js-temporal/polyfill";
+import { todayInJakarta } from "@/lib/schedule";
+import { openServiceDay } from "@/lib/services/schedule.service";
 import type { ProductPrepType, UserRole } from "@/types/order";
 
 /**
@@ -18,7 +21,6 @@ function assertTestDatabase(): void {
 
 const TABLES = [
   "productImage",
-  "externalCharge",
   "storedImage",
   "serviceWindow",
   "serviceDay",
@@ -30,12 +32,7 @@ const TABLES = [
   "order",
   "product",
   "category",
-  "pickupSlot",
   "user",
-  // Profile content, so a test that edits a text block or a list does not leave
-  // it behind for the next one.
-  "siteText",
-  "siteListItem",
   "rateLimit",
 ];
 
@@ -128,8 +125,33 @@ export async function makeUser(role: UserRole = "KASIR") {
   });
 }
 
-export async function makePickupSlot(label: string, quota: number) {
-  return await db.orm.public.PickupSlot.create({ label, quota, sortOrder: 1, isActive: true });
+/** Far enough ahead to be bookable whatever the cut-off, inside the checkout horizon. */
+export const PREORDER_DATE = Temporal.PlainDate.from(todayInJakarta()).add({ days: 10 }).toString();
+
+/** "09.00 - 10.00" as minutes after midnight. */
+function rangeMinutes(range: string): { startMinute: number; endMinute: number } {
+  const [start, end] = range.split(" - ").map((time) => {
+    const [hours, minutes] = time.split(".").map(Number);
+    return hours! * 60 + minutes!;
+  });
+  return { startMinute: start!, endMinute: end! };
+}
+
+/**
+ * Opens `PREORDER_DATE` (every place) with one time range of `quota` places,
+ * written like "09.00 - 10.00", and returns the handover a preorder books it
+ * with: what `createOrder` takes as `schedule`.
+ */
+export async function openPreorderWindow(range: string, quota: number) {
+  const { startMinute, endMinute } = rangeMinutes(range);
+  const day = await openServiceDay({
+    date: PREORDER_DATE,
+    locations: ["CAMPUS_B", "MARKET_DAY", "OTHER"],
+    windows: [{ startMinute, endMinute, quota }],
+  });
+  const window = await db.orm.public.ServiceWindow.where({ dayId: day.id, startMinute }).first();
+  if (!window) throw new Error(`Time range ${range} not opened`);
+  return { location: "MARKET_DAY" as const, detail: null, serviceWindowId: window.id };
 }
 
 export async function setStoreOpen(options: {
@@ -144,10 +166,11 @@ export async function deleteStoreSettings(): Promise<void> {
   await db.orm.public.StoreSetting.where({ id: 1 }).delete();
 }
 
-export async function slotByLabel(label: string) {
-  const slot = await db.orm.public.PickupSlot.where({ label }).first();
-  if (!slot) throw new Error(`Pickup slot ${label} not found`);
-  return slot;
+/** How many places of a time range are taken. */
+export async function bookedIn(serviceWindowId: string): Promise<number> {
+  const window = await db.orm.public.ServiceWindow.where({ id: serviceWindowId }).first();
+  if (!window) throw new Error(`Time range ${serviceWindowId} not found`);
+  return window.booked;
 }
 
 export async function itemsOf(orderId: string) {

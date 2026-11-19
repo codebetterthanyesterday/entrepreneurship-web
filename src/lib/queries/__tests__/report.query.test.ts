@@ -21,7 +21,7 @@ import type { OrderChannel, PaymentStatus } from "@/types/order";
 import {
   closeDatabase,
   db,
-  makePickupSlot,
+  openPreorderWindow,
   makeProduct,
   makeUser,
   resetDatabase,
@@ -48,7 +48,8 @@ async function place(options: {
   channel: OrderChannel;
   paymentStatus: PaymentStatus;
   items: readonly OrderLineInput[];
-  pickupSlot?: string;
+  /** A preorder's time range, opened on demand; "09.00 - 10.00" by default. */
+  range?: string;
 }) {
   return await createOrder({
     channel: options.channel,
@@ -56,7 +57,10 @@ async function place(options: {
     paymentMethod: "CASH",
     customerName: options.channel === "PREORDER" ? "Rani" : "Pelanggan booth",
     ...(options.channel === "PREORDER"
-      ? { customerPhone: "081234567890", pickupSlot: options.pickupSlot ?? "09.00 - 10.00" }
+      ? {
+          customerPhone: "081234567890",
+          schedule: await openPreorderWindow(options.range ?? "09.00 - 10.00", 100),
+        }
       : {}),
     items: options.items,
   });
@@ -153,7 +157,7 @@ describe("countUnfinishedPreorders", () => {
 
     const kasir = await makeUser("KASIR");
     const product = await makeProduct({ stock: 50, prepType: "READY_TO_SERVE" });
-    await makePickupSlot("09.00 - 10.00", 20);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 20);
 
     const preorder = () =>
       createOrder({
@@ -161,7 +165,8 @@ describe("countUnfinishedPreorders", () => {
         paymentStatus: "UNPAID",
         paymentMethod: "CASH",
         customerName: "Rani",
-        pickupSlot: "09.00 - 10.00",
+        customerPhone: "081234567890",
+        schedule,
         items: [{ productId: product.id, quantity: 1 }],
       });
 
@@ -194,7 +199,6 @@ describe("getSalesSummary", () => {
       activeProductCount: 0,
       averageOrderValue: 0,
       lowStockCount: 0,
-      photoboothRevenue: 0,
     });
   });
 
@@ -279,7 +283,6 @@ describe("getSalesSummary", () => {
 
 describe("getChannelBreakdown", () => {
   beforeEach(async () => {
-    await makePickupSlot("09.00 - 10.00", 20);
   });
 
   it("reads zero on both channels with nothing sold", async () => {
@@ -397,7 +400,6 @@ describe("getTopProducts", () => {
   });
 
   it("counts unsold-but-ordered portions while leaving their money out", async () => {
-    await makePickupSlot("09.00 - 10.00", 20);
     const product = await makeProduct({ name: "Risoles", price: 8_000, stock: 100 });
 
     await place({ channel: "PREORDER", paymentStatus: "UNPAID", items: [{ productId: product.id, quantity: 6 }] });
@@ -489,7 +491,6 @@ describe("getHourlySales", () => {
   });
 
   it("shows an hour whose orders are all still unpaid", async () => {
-    await makePickupSlot("09.00 - 10.00", 20);
     const product = await makeProduct({ price: 10_000, stock: 100 });
     const today = Temporal.Now.zonedDateTimeISO(JAKARTA).startOfDay();
 
@@ -532,7 +533,6 @@ describe("getOrderPipeline", () => {
   it("counts orders at the stage they are actually sitting at", async () => {
     const kasir = await makeUser("KASIR");
     const dapur = await makeUser("DAPUR");
-    await makePickupSlot("09.00 - 10.00", 20);
 
     const readyToServe = await makeProduct({ price: 5_000, stock: 100, prepType: "READY_TO_SERVE" });
     const needsPrep = await makeProduct({ price: 5_000, stock: 100, prepType: "NEEDS_PREP" });
@@ -579,7 +579,6 @@ describe("getOrderPipeline", () => {
 
 describe("getAllOrders", () => {
   beforeEach(async () => {
-    await makePickupSlot("09.00 - 10.00", 50);
   });
 
   it("reads an empty first page with no orders", async () => {
@@ -714,7 +713,6 @@ describe("getAllOrders", () => {
 
 describe("getAllOrders totals", () => {
   beforeEach(async () => {
-    await makePickupSlot("09.00 - 10.00", 50);
   });
 
   it("values the filtered orders whether or not they have been paid", async () => {
@@ -759,7 +757,6 @@ describe("getAllOrders totals", () => {
 
 describe("export queries", () => {
   beforeEach(async () => {
-    await makePickupSlot("09.00 - 10.00", 50);
   });
 
   it("lists every order oldest first, cancellations included", async () => {

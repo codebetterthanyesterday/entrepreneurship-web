@@ -31,15 +31,16 @@ const { createOrder, transitionStatus } = await import("@/lib/services/order.ser
 const { getAllOrders } = await import("@/lib/queries/report.query");
 const {
   closeDatabase,
-  makePickupSlot,
+  bookedIn,
   makeProduct,
   makeUser,
+  openPreorderWindow,
   resetDatabase,
-  slotByLabel,
   stockOf,
 } = await import("@/lib/services/__tests__/helpers/test-db");
 
 const SLOT = "09.00 - 10.00";
+let schedule: Awaited<ReturnType<typeof openPreorderWindow>>;
 
 async function signIn(role: "ADMIN" | "KASIR" | "DAPUR") {
   const user = await makeUser(role);
@@ -50,7 +51,7 @@ async function signIn(role: "ADMIN" | "KASIR" | "DAPUR") {
 beforeEach(async () => {
   await resetDatabase();
   session.user = null;
-  await makePickupSlot(SLOT, 20);
+  schedule = await openPreorderWindow(SLOT, 20);
 });
 
 afterAll(async () => {
@@ -64,7 +65,7 @@ async function placePreorder(productId: string, quantity = 2) {
     paymentMethod: "CASH",
     customerName: "Rani",
     customerPhone: "081234567890",
-    pickupSlot: SLOT,
+    schedule,
     items: [{ productId, quantity }],
   });
 }
@@ -105,17 +106,17 @@ describe("cancelOrderAction", () => {
     expect(await stockOf(product.id)).toBe(20);
   });
 
-  it("frees the place the preorder held in its pickup slot", async () => {
+  it("frees the place the preorder held in its time range", async () => {
     const product = await makeProduct({ stock: 20 });
     const order = await placePreorder(product.id);
-    expect((await slotByLabel(SLOT)).booked).toBe(1);
+    expect(await bookedIn(schedule.serviceWindowId)).toBe(1);
 
     await signIn("ADMIN");
     await cancelOrderAction({ orderId: order.id });
 
-    // Without this the slot would slowly starve: every cancellation would
+    // Without this the range would slowly starve: every cancellation would
     // leave its place permanently taken.
-    expect((await slotByLabel(SLOT)).booked).toBe(0);
+    expect(await bookedIn(schedule.serviceWindowId)).toBe(0);
   });
 
   it("leaves the order in the admin's list, marked cancelled", async () => {

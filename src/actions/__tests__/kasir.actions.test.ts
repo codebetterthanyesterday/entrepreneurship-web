@@ -34,9 +34,9 @@ type CashierPreorder = import("@/types/order-view").CashierPreorder;
 const {
   closeDatabase,
   db,
-  makePickupSlot,
   makeProduct,
   makeUser,
+  openPreorderWindow,
   resetDatabase,
 } = await import("@/lib/services/__tests__/helpers/test-db");
 
@@ -56,7 +56,7 @@ async function placePreorder(options: { prep?: boolean } = {}) {
     stock: 20,
     prepType: options.prep === false ? "READY_TO_SERVE" : "NEEDS_PREP",
   });
-  await makePickupSlot(SLOT, 20);
+  const schedule = await openPreorderWindow(SLOT, 20);
 
   return await createOrder({
     channel: "PREORDER",
@@ -64,7 +64,7 @@ async function placePreorder(options: { prep?: boolean } = {}) {
     paymentMethod: "CASH",
     customerName: "Salsa",
     customerPhone: "081234567890",
-    pickupSlot: SLOT,
+    schedule,
     items: [{ productId: product.id, quantity: 2 }],
   });
 }

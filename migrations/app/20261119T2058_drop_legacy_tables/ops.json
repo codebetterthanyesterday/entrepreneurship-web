@@ -1,0 +1,150 @@
+[
+  {
+    "id": "dropTable.externalCharge",
+    "label": "Drop table \"externalCharge\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "externalCharge"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"externalCharge\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"externalCharge\"",
+        "sql": "DROP TABLE \"public\".\"externalCharge\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"externalCharge\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"externalCharge\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropTable.pickupSlot",
+    "label": "Drop table \"pickupSlot\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "pickupSlot"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"pickupSlot\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pickupSlot\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"pickupSlot\"",
+        "sql": "DROP TABLE \"public\".\"pickupSlot\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"pickupSlot\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pickupSlot\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropTable.siteListItem",
+    "label": "Drop table \"siteListItem\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "siteListItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"siteListItem\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteListItem\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"siteListItem\"",
+        "sql": "DROP TABLE \"public\".\"siteListItem\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"siteListItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteListItem\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dropTable.siteText",
+    "label": "Drop table \"siteText\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "siteText"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"siteText\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteText\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"siteText\"",
+        "sql": "DROP TABLE \"public\".\"siteText\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"siteText\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"siteText\""
+        ]
+      }
+    ]
+  }
+]

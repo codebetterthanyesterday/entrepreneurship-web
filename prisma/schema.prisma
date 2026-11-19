@@ -65,12 +65,6 @@ enum StoredImageKind {
   BUNDLE = "BUNDLE"
 }
 
-// Layanan lain yang boleh menagih ke nota pesanan (BPB-098, keputusan K-05).
-enum ChargeSource {
-  @@type("pg/text@1")
-  PHOTOBOOTH = "PHOTOBOOTH"
-}
-
 enum StockReason {
   @@type("pg/text@1")
   INITIAL_STOCK = "INITIAL_STOCK"
@@ -181,7 +175,6 @@ model Order {
   items           OrderItem[]
   bundles         OrderBundle[]
   stockMovements  StockMovement[]
-  externalCharges ExternalCharge[]
 
   @@index([status])
   @@index([channel])
@@ -266,28 +259,6 @@ model OrderBundle {
   @@index([orderId])
 }
 
-// Tagihan dari layanan lain, misalnya cetak foto photobooth (BPB-098,
-// keputusan K-05 dan K-13). Sudah lunas saat dicatat: uangnya diterima kru
-// layanan itu. Tampil di nota terpisah dari makanan; totalAmount dan item
-// makanan tidak pernah diubah. Dibatalkan dengan voidedAt, tidak dihapus,
-// supaya tetap ada untuk audit.
-model ExternalCharge {
-  id          String       @id @default(uuid())
-  source      ChargeSource
-  // ID dari layanan pengirim (untuk photobooth: ID pesanan cetaknya). Unik,
-  // jadi kiriman ulang tidak pernah membuat baris kedua.
-  externalId  String       @unique
-  description String
-  amount      Int
-  paidAt      DateTime
-  voidedAt    DateTime?
-  createdAt   DateTime     @default(now())
-  orderId     String
-  order       Order        @relation(fields: [orderId], references: [id])
-
-  @@index([orderId])
-}
-
 model StockMovement {
   id        String      @id @default(uuid())
   // quantity bisa negatif untuk merepresentasikan pengurangan stok
@@ -325,7 +296,6 @@ model StoreSetting {
   chatCloseMinute   Int @default(1260)
   // Identitas toko di header, footer, dan layar pembuka: nama brand, satu
   // baris tagline, dan akun Instagram (tanpa "@"). Kosong = pakai bawaan
-  // (atau isian lama di SiteText, sampai tabel itu dibuang).
   brandName         String?
   tagline           String?
   instagram         String?
@@ -406,64 +376,4 @@ model ServiceWindow {
   @@index([dayId])
   @@check(expression: "booked >= 0", name: "service_window_booked_non_negative")
   @@check(expression: "booked <= quota", name: "service_window_booked_within_quota")
-}
-
-// Slot jam lama (satu hari, tanpa tanggal). Tidak dipakai pesanan baru sejak
-// jadwal layanan (ServiceDay/ServiceWindow); dibiarkan untuk pesanan lama.
-model PickupSlot {
-  id        String  @id @default(uuid())
-  // label, contoh "09.00 - 10.00"
-  label     String
-  quota     Int
-  // booked adalah penghitung pesanan aktif di slot ini. Dinaikkan lewat update
-  // bersyarat (booked < quota) supaya database yang mengevaluasi kuota, bukan
-  // aplikasi — menghitung baris lalu membandingkan bisa kebobolan saat dua
-  // pelanggan checkout bersamaan. Diturunkan lagi saat pesanan dibatalkan.
-  booked    Int     @default(0)
-  sortOrder Int
-  isActive  Boolean @default(true)
-
-  @@check(expression: "booked >= 0", name: "pickup_slot_booked_non_negative")
-  @@check(expression: "booked <= quota", name: "pickup_slot_booked_within_quota")
-}
-
-// ==========================================
-// PROFIL USAHA (CMS)
-// ==========================================
-
-model SiteText {
-  // key menamai satu blok teks yang bisa diedit, contoh "hero.title" atau
-  // "story.body". Nilai bawaannya ada di src/lib/site-content.ts, jadi halaman
-  // profil tetap tampil utuh di database yang baru — baris di sini hanya
-  // menimpa bawaan itu.
-  key       String @id
-  value     String
-  // version dinaikkan setiap kali blok disimpan, dan penyimpanan memakai UPDATE
-  // bersyarat pada versi yang dibaca editor. Dua admin yang mengedit blok sama
-  // bersamaan tidak saling menimpa tanpa sadar: yang kalah mengenai nol baris
-  // dan diberi tahu, bukan diam-diam menghapus tulisan orang lain. Versi 0
-  // berarti "belum ada baris", yaitu masih memakai nilai bawaan.
-  version   Int    @default(1)
-  updatedAt temporal.updatedAt()
-}
-
-model SiteListItem {
-  id        String  @id @default(uuid())
-  // section menentukan daftar mana baris ini milik, sekaligus kolom mana yang
-  // dipakai — satu tabel untuk tiga daftar yang bentuknya memang sama (gambar
-  // opsional, judul, satu baris keterangan, urutan):
-  //   "advantage" -> icon, title, body
-  //   "team"      -> title = nama, body = peran, imageUrl = foto
-  //   "gallery"   -> imageUrl, title = keterangan
-  section   String
-  icon      String?
-  imageUrl  String?
-  title     String
-  body      String?
-  // sortOrder ditukar antar dua baris saat item digeser naik/turun.
-  sortOrder Int
-  version   Int     @default(1)
-  updatedAt temporal.updatedAt()
-
-  @@index([section, sortOrder])
 }
