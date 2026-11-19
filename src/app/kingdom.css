@@ -46,6 +46,8 @@ html[data-theme="kingdom"] body > * {
      identity roles honest. */
   --k-navy: #1d2d55;
   --k-red: #e23a36;
+  /* The red for small type on white: --k-red reaches only 4.3:1 there. */
+  --k-red-deep: #c42b28;
   --k-yellow: #fcd96a;
   --k-gold: #cfa516;
   --k-cream: #fff3d1;

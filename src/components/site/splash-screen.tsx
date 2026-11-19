@@ -46,7 +46,7 @@ export function SplashScreen({ brandName, tagline }: SplashScreenProps) {
     >
       <div className="k-splash-hud">
         <span>
-          <b className="text-[var(--k-grass)]">●</b> <b className="text-[var(--k-red)]">WORLD 0-0</b>{" "}
+          <b className="text-[var(--k-grass)]">●</b> <b className="text-[var(--k-red-deep)]">WORLD 0-0</b>{" "}
           SNACK KINGDOM<span className="k-splash-wide"> PORTAL</span>
         </span>
         <span className="k-splash-wide">

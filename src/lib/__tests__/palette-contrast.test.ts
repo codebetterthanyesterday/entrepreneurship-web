@@ -279,3 +279,25 @@ describe("the brand palette", () => {
     expect(token("cream")).toBe("FBFBFB");
   });
 });
+
+describe("the splash screen's small print", () => {
+  // The kingdom scenery colours live in kingdom.css, outside the theme. The
+  // splash's HUD sets 10px pixel type in red on a white pill, so the red it
+  // uses there has to clear body-text contrast; the scenery red does not.
+  const KINGDOM_CSS = readFileSync(join(process.cwd(), "src/app/kingdom.css"), "utf-8");
+  const scenery = (name: string) => {
+    const hex = KINGDOM_CSS.match(new RegExp(`--k-${name}:\\s*#([0-9A-Fa-f]{6});`))?.[1];
+    if (!hex) throw new Error(`--k-${name} is not a hex in kingdom.css`);
+    return hex.toUpperCase();
+  };
+  const SPLASH = readFileSync(join(process.cwd(), "src/components/site/splash-screen.tsx"), "utf-8");
+
+  it("is red enough to read", () => {
+    expect(contrastRatio(scenery("red-deep"), WHITE)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(scenery("red"), WHITE)).toBeLessThan(4.5);
+  });
+
+  it("uses the readable red for the HUD's label", () => {
+    expect(SPLASH).toContain('text-[var(--k-red-deep)]">WORLD 0-0');
+  });
+});
