@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { E2E_BASE_URL, E2E_LOGIN_PATH, MENU, STAFF } from "./constants";
+import { E2E_BASE_URL, E2E_LOGIN_PATH, MENU, PAKET, STAFF } from "./constants";
 
 /*
  * The day as it happens, through the screens of a production build: a
@@ -296,6 +296,39 @@ test("an admin renames the store and adds its Instagram, and the customer pages 
   await page.goto("/");
   await expect(page.getByText(brand)).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Instagram:/ })).toHaveCount(0);
+
+  await admin.context().close();
+});
+
+test("an admin's photo becomes the paket's picture in the catalogue", async ({ page, browser }) => {
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/admin/menu");
+  await admin.getByRole("button", { name: `Ubah ${PAKET.name}` }).click();
+  const sheet = admin.getByRole("dialog", { name: "Ubah paket" });
+  const photo = await admin.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 800;
+    canvas.height = 600;
+    const context = canvas.getContext("2d")!;
+    context.fillStyle = "#d4a373";
+    context.fillRect(0, 0, 800, 600);
+    const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8));
+    return Array.from(new Uint8Array(await blob.arrayBuffer()));
+  });
+  await sheet.locator('input[type="file"]').setInputFiles({
+    name: "paket.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from(photo),
+  });
+  // The mobile and desktop runs share one database: the second run replaces the first's.
+  await expect(admin.getByText(/Foto paketnya udah (dipasang|diganti)/)).toBeVisible();
+  await expect(sheet.getByRole("img", { name: `Foto paket ${PAKET.name}` })).toHaveAttribute("src", /^\/gambar\//);
+
+  await skipSplash(page);
+  await page.goto("/");
+  await expect(page.locator(`img[src^="/gambar/"]`).first()).toBeVisible();
+  const src = await sheet.getByRole("img", { name: `Foto paket ${PAKET.name}` }).getAttribute("src");
+  await expect(page.locator(`img[src="${src}"]`).first()).toBeAttached();
 
   await admin.context().close();
 });

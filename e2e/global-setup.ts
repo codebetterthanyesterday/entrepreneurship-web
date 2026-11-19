@@ -1,10 +1,10 @@
 import { config as loadEnv } from "dotenv";
 import bcrypt from "bcryptjs";
-import { MENU, STAFF } from "./constants";
+import { MENU, PAKET, STAFF } from "./constants";
 
 /**
  * A known starting point for every e2e run, in DATABASE_URL_TEST: one menu
- * item that needs the kitchen, one date open for preorders two days ahead at
+ * item that needs the kitchen, a paket of it and a second item, one date open for preorders two days ahead at
  * Market Day and Kampus B, and a cashier, a kitchen and an admin account.
  *
  * The date is passed to the tests in E2E_SERVICE_DATE_LABEL, written the way
@@ -19,12 +19,21 @@ export default async function globalSetup() {
 
   const { Temporal } = await import("@js-temporal/polyfill");
   const { prisma: db } = await import("@/lib/prisma");
-  const { resetDatabase, makeProduct } = await import("@/lib/services/__tests__/helpers/test-db");
+  const { resetDatabase, makeBundle, makeProduct } = await import("@/lib/services/__tests__/helpers/test-db");
   const { openServiceDay } = await import("@/lib/services/schedule.service");
   const { formatServiceDate, todayInJakarta } = await import("@/lib/schedule");
 
   await resetDatabase();
-  await makeProduct({ name: MENU.name, price: MENU.price, stock: 20, prepType: "NEEDS_PREP" });
+  const menu = await makeProduct({ name: MENU.name, price: MENU.price, stock: 20, prepType: "NEEDS_PREP" });
+  const side = await makeProduct({ name: PAKET.side, price: 10_000, stock: 20, prepType: "READY_TO_SERVE" });
+  await makeBundle({
+    name: PAKET.name,
+    price: PAKET.price,
+    items: [
+      { productId: menu.id, quantity: 1 },
+      { productId: side.id, quantity: 1 },
+    ],
+  });
 
   const date = Temporal.PlainDate.from(todayInJakarta()).add({ days: 2 }).toString();
   await openServiceDay({

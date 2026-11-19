@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dropCheckConstraint.storedImage.storedImage_kind_check_c23614b6",
+    "label": "Drop check constraint \"storedImage_kind_check_c23614b6\" on \"storedImage\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "storedImage_kind_check_c23614b6",
+        "table": "storedImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"storedImage_kind_check_c23614b6\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_c23614b6",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"storedImage_kind_check_c23614b6\"",
+        "sql": "ALTER TABLE \"public\".\"storedImage\" DROP CONSTRAINT \"storedImage_kind_check_c23614b6\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"storedImage_kind_check_c23614b6\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_c23614b6",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.storedImage.storedImage_kind_check_9201d158",
+    "label": "Add check constraint \"storedImage_kind_check_9201d158\" on \"storedImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "storedImage_kind_check_9201d158",
+        "table": "storedImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"storedImage_kind_check_9201d158\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_9201d158",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"storedImage_kind_check_9201d158\"",
+        "sql": "ALTER TABLE \"public\".\"storedImage\" ADD CONSTRAINT \"storedImage_kind_check_9201d158\" CHECK (\"kind\" IN ('QRIS', 'PAYMENT_PROOF', 'PRODUCT', 'BUNDLE'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"storedImage_kind_check_9201d158\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_9201d158",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ]
+  }
+]

@@ -2,6 +2,7 @@ import { prisma as db } from "@/lib/prisma";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import type { TxClient } from "@/lib/db-types";
 import type { BundleInput } from "@/lib/validations/bundle.schema";
+import { imageIdOf } from "@/lib/stored-image";
 
 /**
  * Checks that every product a bundle names exists. A hidden product is
@@ -21,7 +22,6 @@ function bundleRow(input: BundleInput) {
     name: input.name,
     description: input.description || null,
     price: input.price,
-    imageUrl: input.imageUrl || null,
     isActive: input.isActive,
     sortOrder: input.sortOrder,
   };
@@ -105,7 +105,10 @@ export async function deleteBundle(id: string) {
       );
     }
 
-    // The contents go with it (`onDelete: Cascade` on BundleItem).
+    // The contents go with it (`onDelete: Cascade` on BundleItem), and so
+    // does its uploaded photo, which nothing else shows.
     await tx.orm.public.Bundle.where({ id }).delete();
+    const photo = imageIdOf(bundle.imageUrl);
+    if (photo) await tx.orm.public.StoredImage.where({ id: photo }).delete();
   });
 }

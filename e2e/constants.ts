@@ -14,3 +14,6 @@ export const STAFF = {
 
 /** The one menu item, which needs the kitchen. */
 export const MENU = { name: "Kopi Gladi E2E", price: 18_000 };
+
+/** A paket of the menu item and a second, ready-to-serve one, for the paket's photo. */
+export const PAKET = { name: "Paket Gladi E2E", price: 25_000, side: "Roti Gladi E2E" };

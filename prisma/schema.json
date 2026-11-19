@@ -235,6 +235,10 @@
               {
                 "name": "PRODUCT",
                 "value": "PRODUCT"
+              },
+              {
+                "name": "BUNDLE",
+                "value": "BUNDLE"
               }
             ]
           },
@@ -4256,8 +4260,8 @@
             "storedImage": {
               "checks": [
                 {
-                  "expression": "\"kind\" IN ('QRIS', 'PAYMENT_PROOF', 'PRODUCT')",
-                  "name": "storedImage_kind_check_c23614b6",
+                  "expression": "\"kind\" IN ('QRIS', 'PAYMENT_PROOF', 'PRODUCT', 'BUNDLE')",
+                  "name": "storedImage_kind_check_9201d158",
                   "prefix": "storedImage_kind_check"
                 },
                 {
@@ -4480,7 +4484,8 @@
               "values": [
                 "QRIS",
                 "PAYMENT_PROOF",
-                "PRODUCT"
+                "PRODUCT",
+                "BUNDLE"
               ]
             },
             "UserRole": {
@@ -4497,7 +4502,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "bc55a22041ca999ebbd127cec65345dcae12fc4223a65e03254c6bca6645131f"
+    "storageHash": "f468f23b87be644d6874c11c34a121befb41238f5ddcd72ed2bcfd0cb2e2e830"
   },
   "execution": {
     "executionHash": "1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890",
