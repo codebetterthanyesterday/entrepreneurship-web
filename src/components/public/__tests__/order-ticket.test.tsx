@@ -27,7 +27,6 @@ const ORDER: TrackedOrder = {
     { name: "Milk Tea Bean Curd", quantity: 1, priceAtOrder: 10000, subtotal: 10000 },
     { name: "Chicken Roll", quantity: 1, priceAtOrder: 15000, subtotal: 15000 },
   ],
-  photobooth: [],
 };
 
 function renderTicket(order: TrackedOrder, numberAs?: "h1" | "p") {

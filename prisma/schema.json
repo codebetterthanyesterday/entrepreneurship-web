@@ -16,10 +16,6 @@
       "model": "Category",
       "namespace": "public"
     },
-    "externalCharge": {
-      "model": "ExternalCharge",
-      "namespace": "public"
-    },
     "order": {
       "model": "Order",
       "namespace": "public"
@@ -30,10 +26,6 @@
     },
     "orderItem": {
       "model": "OrderItem",
-      "namespace": "public"
-    },
-    "pickupSlot": {
-      "model": "PickupSlot",
       "namespace": "public"
     },
     "product": {
@@ -54,14 +46,6 @@
     },
     "serviceWindow": {
       "model": "ServiceWindow",
-      "namespace": "public"
-    },
-    "siteListItem": {
-      "model": "SiteListItem",
-      "namespace": "public"
-    },
-    "siteText": {
-      "model": "SiteText",
       "namespace": "public"
     },
     "stockMovement": {
@@ -85,15 +69,6 @@
     "namespaces": {
       "public": {
         "enum": {
-          "ChargeSource": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "PHOTOBOOTH",
-                "value": "PHOTOBOOTH"
-              }
-            ]
-          },
           "HandoverLocation": {
             "codecId": "pg/text@1",
             "members": [
@@ -534,130 +509,6 @@
               "table": "category"
             }
           },
-          "ExternalCharge": {
-            "fields": {
-              "amount": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "createdAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "description": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "externalId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "orderId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "paidAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "source": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                },
-                "valueSet": {
-                  "entityKind": "enum",
-                  "entityName": "ChargeSource",
-                  "namespaceId": "public",
-                  "plane": "domain"
-                }
-              },
-              "voidedAt": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {
-              "order": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "orderId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Order",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "amount": {
-                  "column": "amount"
-                },
-                "createdAt": {
-                  "column": "createdAt"
-                },
-                "description": {
-                  "column": "description"
-                },
-                "externalId": {
-                  "column": "externalId"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "orderId": {
-                  "column": "orderId"
-                },
-                "paidAt": {
-                  "column": "paidAt"
-                },
-                "source": {
-                  "column": "source"
-                },
-                "voidedAt": {
-                  "column": "voidedAt"
-                }
-              },
-              "namespaceId": "public",
-              "table": "externalCharge"
-            }
-          },
           "Order": {
             "fields": {
               "cashReceived": {
@@ -886,21 +737,6 @@
                 },
                 "to": {
                   "model": "OrderBundle",
-                  "namespace": "public"
-                }
-              },
-              "externalCharges": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "orderId"
-                  ]
-                },
-                "to": {
-                  "model": "ExternalCharge",
                   "namespace": "public"
                 }
               },
@@ -1309,77 +1145,6 @@
               },
               "namespaceId": "public",
               "table": "orderItem"
-            }
-          },
-          "PickupSlot": {
-            "fields": {
-              "booked": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "isActive": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/bool@1",
-                  "kind": "scalar"
-                }
-              },
-              "label": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "quota": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "sortOrder": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {},
-            "storage": {
-              "fields": {
-                "booked": {
-                  "column": "booked"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "isActive": {
-                  "column": "isActive"
-                },
-                "label": {
-                  "column": "label"
-                },
-                "quota": {
-                  "column": "quota"
-                },
-                "sortOrder": {
-                  "column": "sortOrder"
-                }
-              },
-              "namespaceId": "public",
-              "table": "pickupSlot"
             }
           },
           "Product": {
@@ -1900,158 +1665,6 @@
               },
               "namespaceId": "public",
               "table": "serviceWindow"
-            }
-          },
-          "SiteListItem": {
-            "fields": {
-              "body": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "icon": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "imageUrl": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "section": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "sortOrder": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "title": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "version": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {},
-            "storage": {
-              "fields": {
-                "body": {
-                  "column": "body"
-                },
-                "icon": {
-                  "column": "icon"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "imageUrl": {
-                  "column": "imageUrl"
-                },
-                "section": {
-                  "column": "section"
-                },
-                "sortOrder": {
-                  "column": "sortOrder"
-                },
-                "title": {
-                  "column": "title"
-                },
-                "updatedAt": {
-                  "column": "updatedAt"
-                },
-                "version": {
-                  "column": "version"
-                }
-              },
-              "namespaceId": "public",
-              "table": "siteListItem"
-            }
-          },
-          "SiteText": {
-            "fields": {
-              "key": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "value": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "version": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {},
-            "storage": {
-              "fields": {
-                "key": {
-                  "column": "key"
-                },
-                "updatedAt": {
-                  "column": "updatedAt"
-                },
-                "value": {
-                  "column": "value"
-                },
-                "version": {
-                  "column": "version"
-                }
-              },
-              "namespaceId": "public",
-              "table": "siteText"
             }
           },
           "StockMovement": {
@@ -2801,112 +2414,6 @@
                 }
               ]
             },
-            "externalCharge": {
-              "checks": [
-                {
-                  "expression": "\"source\" IN ('PHOTOBOOTH')",
-                  "name": "externalCharge_source_check_2aad0134",
-                  "prefix": "externalCharge_source_check"
-                }
-              ],
-              "columns": {
-                "amount": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "createdAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "description": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "externalId": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "orderId": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "paidAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "source": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false,
-                  "valueSet": {
-                    "entityKind": "valueSet",
-                    "entityName": "ChargeSource",
-                    "namespaceId": "public",
-                    "plane": "storage"
-                  }
-                },
-                "voidedAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "nativeType": "timestamptz",
-                  "nullable": true
-                }
-              },
-              "foreignKeys": [
-                {
-                  "source": {
-                    "columns": [
-                      "orderId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "externalCharge"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "order"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "orderId"
-                  ],
-                  "name": "externalCharge_orderId_idx_d284871b",
-                  "prefix": "externalCharge_orderId_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "externalId"
-                  ]
-                }
-              ]
-            },
             "order": {
               "checks": [
                 {
@@ -3436,68 +2943,6 @@
               },
               "uniques": []
             },
-            "pickupSlot": {
-              "checks": [
-                {
-                  "expression": "booked >= 0",
-                  "name": "pickup_slot_booked_non_negative_d907661a",
-                  "prefix": "pickup_slot_booked_non_negative"
-                },
-                {
-                  "expression": "booked <= quota",
-                  "name": "pickup_slot_booked_within_quota_8c716e51",
-                  "prefix": "pickup_slot_booked_within_quota"
-                }
-              ],
-              "columns": {
-                "booked": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 0
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "isActive": {
-                  "codecId": "pg/bool@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": true
-                  },
-                  "nativeType": "bool",
-                  "nullable": false
-                },
-                "label": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "quota": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "sortOrder": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [],
-              "indexes": [],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": []
-            },
             "product": {
               "checks": [
                 {
@@ -3897,113 +3342,6 @@
                   ]
                 }
               ]
-            },
-            "siteListItem": {
-              "columns": {
-                "body": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
-                "icon": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "imageUrl": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
-                "section": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "sortOrder": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "title": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "updatedAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "version": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 1
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [],
-              "indexes": [
-                {
-                  "columns": [
-                    "section",
-                    "sortOrder"
-                  ],
-                  "name": "siteListItem_section_sortOrder_idx_c9c27fde",
-                  "prefix": "siteListItem_section_sortOrder_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": []
-            },
-            "siteText": {
-              "columns": {
-                "key": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "updatedAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "value": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "version": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 1
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [],
-              "indexes": [],
-              "primaryKey": {
-                "columns": [
-                  "key"
-                ]
-              },
-              "uniques": []
             },
             "stockMovement": {
               "checks": [
@@ -4415,12 +3753,6 @@
             }
           },
           "valueSet": {
-            "ChargeSource": {
-              "kind": "valueSet",
-              "values": [
-                "PHOTOBOOTH"
-              ]
-            },
             "HandoverLocation": {
               "kind": "valueSet",
               "values": [
@@ -4502,10 +3834,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "f468f23b87be644d6874c11c34a121befb41238f5ddcd72ed2bcfd0cb2e2e830"
+    "storageHash": "4841e92899260c39310a5a7bae6aca5bfacbeeabdcba56dde70ba74391d76a19"
   },
   "execution": {
-    "executionHash": "1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890",
+    "executionHash": "e4ab7a8bab3057ab0b7745bedb484df99fbce887df2f37fecad04b627b152aac",
     "mutations": {
       "defaults": [
         {
@@ -4564,17 +3896,6 @@
           "ref": {
             "column": "id",
             "namespace": "public",
-            "table": "externalCharge"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
             "table": "order"
           }
         },
@@ -4613,17 +3934,6 @@
             "column": "id",
             "namespace": "public",
             "table": "orderItem"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
-            "table": "pickupSlot"
           }
         },
         {
@@ -4683,47 +3993,6 @@
             "column": "id",
             "namespace": "public",
             "table": "serviceWindow"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
-            "table": "siteListItem"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "instantNow",
-            "kind": "generator"
-          },
-          "onUpdate": {
-            "id": "instantNow",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "updatedAt",
-            "namespace": "public",
-            "table": "siteListItem"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "instantNow",
-            "kind": "generator"
-          },
-          "onUpdate": {
-            "id": "instantNow",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "updatedAt",
-            "namespace": "public",
-            "table": "siteText"
           }
         },
         {

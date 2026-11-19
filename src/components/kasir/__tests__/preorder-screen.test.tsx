@@ -30,17 +30,10 @@ vi.mock("@/components/kasir/qr-scanner", () => ({
 
 const { PreorderScreen } = await import("@/components/kasir/preorder-screen");
 const { ToastProvider } = await import("@/components/ui/use-toast");
-const { formatRupiah } = await import("@/lib/utils");
 
 afterEach(cleanup);
 
 const NO_SCHEDULE = { days: [], cutoffMinute: 21 * 60 };
-
-/**
- * formatRupiah's output as Testing Library sees page text: it turns the
- * non-breaking space after "Rp" into a plain one before matching.
- */
-const rp = (amount: number) => formatRupiah(amount).replace(/\u00a0/g, " ");
 
 function preorder(overrides: Partial<CashierPreorder> = {}): CashierPreorder {
   return {
@@ -66,7 +59,6 @@ function preorder(overrides: Partial<CashierPreorder> = {}): CashierPreorder {
     items: [
       { name: "Es Kopi Aren", quantity: 2, priceAtOrder: 18_000, subtotal: 36_000, needsPrep: false },
     ],
-    photobooth: [],
     ...overrides,
   };
 }
@@ -79,31 +71,6 @@ function open(order: CashierPreorder) {
   );
   fireEvent.click(screen.getByText(order.customerName));
 }
-
-describe("PreorderScreen: photobooth charges (BPB-098)", () => {
-  it("shows them as already paid at the booth, apart from the food the cashier collects", () => {
-    open(
-      preorder({
-        photobooth: [{ key: "c1", description: "Cetak 4R ×2", amount: 16_000 }],
-      }),
-    );
-
-    const section = screen.getByRole("region", { name: /Photobooth/ });
-    expect(within(section).getByText("lunas di booth")).toBeTruthy();
-    expect(within(section).getByText("Cetak 4R ×2")).toBeTruthy();
-    expect(within(section).getByText(/Jangan ditagih lagi/)).toBeTruthy();
-    expect(within(section).getByText(rp(52_000))).toBeTruthy();
-
-    // What the cashier collects is still the food total.
-    const total = screen.getAllByText("Total").at(0)!.parentElement!;
-    expect(within(total).getByText(rp(36_000))).toBeTruthy();
-  });
-
-  it("says nothing about the photobooth when there are no charges", () => {
-    open(preorder());
-    expect(screen.queryByRole("region", { name: /Photobooth/ })).toBeNull();
-  });
-});
 
 describe("PreorderScreen: chatting the customer", () => {
   const FUTURE = "2099-01-10";
@@ -193,4 +160,3 @@ describe("PreorderScreen: scanning the customer's ticket", () => {
     expect(scanner.open).toBe(true);
   });
 });
-

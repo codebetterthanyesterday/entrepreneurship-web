@@ -2,7 +2,6 @@
 import * as React from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { formatRupiah } from "@/lib/utils";
 import { ChannelSplitCard } from "@/components/admin/channel-split-card";
 import { DashboardStats } from "@/components/admin/dashboard-stats";
 import { HourlySalesCard } from "@/components/admin/hourly-sales-card";
@@ -18,12 +17,6 @@ import type {
 
 afterEach(cleanup);
 
-/**
- * formatRupiah's output as Testing Library sees page text: it turns the
- * non-breaking space after "Rp" into a plain one before matching.
- */
-const rp = (amount: number) => formatRupiah(amount).replace(/\u00a0/g, " ");
-
 function summary(overrides: Partial<SalesSummary> = {}): SalesSummary {
   return {
     totalRevenue: 450_000,
@@ -33,7 +26,6 @@ function summary(overrides: Partial<SalesSummary> = {}): SalesSummary {
     activeProductCount: 9,
     averageOrderValue: 25_000,
     lowStockCount: 2,
-    photoboothRevenue: 0,
     ...overrides,
   };
 }
@@ -290,34 +282,5 @@ describe("PipelineCard", () => {
       "0%",
       `${(5 / 9) * 100}%`,
     ]);
-  });
-});
-
-describe("DashboardStats: photobooth revenue (BPB-098)", () => {
-  it("shows it on the takings card, apart from the food total", () => {
-    render(
-      <DashboardStats
-        summary={summary({ photoboothRevenue: 47_000 })}
-        channels={{
-          preorder: { orderCount: 10, revenue: 300_000 },
-          onsite: { orderCount: 8, revenue: 150_000 },
-        } as ChannelBreakdown}
-      />,
-    );
-    expect(screen.getByText(rp(450_000))).toBeTruthy();
-    expect(screen.getByText(`+ ${rp(47_000)} photobooth, terpisah`)).toBeTruthy();
-  });
-
-  it("leaves the line out when the photobooth has taken nothing", () => {
-    render(
-      <DashboardStats
-        summary={summary()}
-        channels={{
-          preorder: { orderCount: 10, revenue: 300_000 },
-          onsite: { orderCount: 8, revenue: 150_000 },
-        } as ChannelBreakdown}
-      />,
-    );
-    expect(screen.queryByText(/photobooth, terpisah/)).toBeNull();
   });
 });

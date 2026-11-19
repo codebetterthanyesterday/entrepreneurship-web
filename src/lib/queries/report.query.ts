@@ -85,11 +85,6 @@ export interface SalesSummary {
   averageOrderValue: number;
   /** Active products at or below the configured low-stock threshold. */
   lowStockCount: number;
-  /**
-   * Rupiah the photobooth took on preorder notes (BPB-098): paid charges,
-   * voided ones left out. Never part of `totalRevenue`, which stays food.
-   */
-  photoboothRevenue: number;
 }
 
 /**
@@ -132,10 +127,7 @@ export async function getSalesSummary(): Promise<SalesSummary> {
       (SELECT COUNT(*)::int
          FROM "public"."product"
         WHERE "isActive"
-          AND "stock" <= ${lowStockThreshold})               AS "lowStockCount",
-      (SELECT COALESCE(SUM("amount"), 0)::int
-         FROM "public"."externalCharge"
-        WHERE "voidedAt" IS NULL)                            AS "photoboothRevenue"
+          AND "stock" <= ${lowStockThreshold})               AS "lowStockCount"
   `
     .returnsRow({
       totalRevenue: "pg/int4@1",
@@ -144,7 +136,6 @@ export async function getSalesSummary(): Promise<SalesSummary> {
       remainingStock: "pg/int4@1",
       activeProductCount: "pg/int4@1",
       lowStockCount: "pg/int4@1",
-      photoboothRevenue: "pg/int4@1",
     })
     .build();
 
@@ -162,7 +153,6 @@ export async function getSalesSummary(): Promise<SalesSummary> {
     activeProductCount: row?.activeProductCount ?? 0,
     averageOrderValue: orderCount === 0 ? 0 : Math.round(totalRevenue / orderCount),
     lowStockCount: row?.lowStockCount ?? 0,
-    photoboothRevenue: row?.photoboothRevenue ?? 0,
   };
 }
 
@@ -551,8 +541,6 @@ export interface OrderExportRow {
   paymentMethod: string;
   paymentStatus: PaymentStatus;
   totalAmount: number;
-  /** Paid photobooth charges on the note, kept apart from the food total. */
-  photoboothAmount: number;
   createdAt: string;
 }
 
@@ -571,13 +559,6 @@ export async function getOrdersForExport(): Promise<OrderExportRow[]> {
     (order) => order.createdAt.asc(),
     (order) => order.id.asc(),
   ]).all();
-  const charges = await db.orm.public.ExternalCharge.where((charge) =>
-    charge.voidedAt.isNull(),
-  ).all();
-  const photobooth = new Map<string, number>();
-  for (const charge of charges) {
-    photobooth.set(charge.orderId, (photobooth.get(charge.orderId) ?? 0) + charge.amount);
-  }
 
   return orders.map((order) => ({
     orderNumber: order.orderNumber,
@@ -592,38 +573,7 @@ export async function getOrdersForExport(): Promise<OrderExportRow[]> {
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     totalAmount: order.totalAmount,
-    photoboothAmount: photobooth.get(order.id) ?? 0,
     createdAt: toSheetTime(order.createdAt),
-  }));
-}
-
-export interface PhotoboothChargeExportRow {
-  orderNumber: string;
-  customerName: string;
-  description: string;
-  amount: number;
-  paidAt: string;
-  /** Empty while the charge stands. */
-  voidedAt: string;
-}
-
-/**
- * Every photobooth charge, oldest first (BPB-098). Voided ones are kept with
- * the time they were voided, so the sheet can account for a payment the
- * photobooth crew took back; leave them out when adding up.
- */
-export async function getPhotoboothChargesForExport(): Promise<PhotoboothChargeExportRow[]> {
-  const charges = await db.orm.public.ExternalCharge.include("order")
-    .orderBy([(charge) => charge.paidAt.asc(), (charge) => charge.createdAt.asc()])
-    .all();
-
-  return charges.map((charge) => ({
-    orderNumber: charge.order.orderNumber,
-    customerName: charge.order.customerName,
-    description: charge.description,
-    amount: charge.amount,
-    paidAt: toSheetTime(charge.paidAt),
-    voidedAt: charge.voidedAt ? toSheetTime(charge.voidedAt) : "",
   }));
 }
 

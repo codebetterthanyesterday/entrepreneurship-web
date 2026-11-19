@@ -35,8 +35,7 @@ export interface OrderTicketProps {
  * design draws it.
  *
  * The lines and totals are `OrderReceipt`, not a second list drawn here, so
- * photobooth charges and the combined total show up on the ticket the same way
- * they do everywhere else.
+ * the ticket reads the same way as every other view of the bill.
  *
  * The QR holds the order number and nothing else. It is drawn from our own
  * string through `uqr`, never from user input, which is what makes handing the
@@ -129,7 +128,6 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
             detail: item.contents ?? null,
           }))}
           total={order.totalAmount}
-          photobooth={order.photobooth}
           title="Rincian loot bag"
         />
 

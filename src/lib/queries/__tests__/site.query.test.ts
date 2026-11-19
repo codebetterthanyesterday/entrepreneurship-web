@@ -1,5 +1,4 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { prisma as db } from "@/lib/prisma";
 import { BRAND_NAME } from "@/lib/brand";
 import { DEFAULT_TAGLINE, getSiteIdentity } from "@/lib/queries/site.query";
 import { updateSettings } from "@/lib/services/setting.service";
@@ -7,7 +6,6 @@ import { closeDatabase, resetDatabase } from "@/lib/services/__tests__/helpers/t
 
 beforeEach(async () => {
   await resetDatabase();
-  await db.orm.public.SiteText.where((row) => row.key.in(["hero.title", "footer.tagline", "contact.instagram"])).deleteAll();
 });
 
 afterAll(async () => {
@@ -29,11 +27,9 @@ describe("the store's identity", () => {
     });
   });
 
-  it("falls back, field by field, to what the retired profile editor saved, then to the default", async () => {
-    await db.orm.public.SiteText.create({ key: "hero.title", value: "Nama Lama", version: 1 });
-    await db.orm.public.SiteText.create({ key: "contact.instagram", value: "@lama.id", version: 1 });
-    await updateSettings({ instagram: "baru.id" });
+  it("falls back to the default for a field the admin left empty", async () => {
+    await updateSettings({ brandName: "Kedai Kelinci", tagline: "", instagram: "@baru.id" });
 
-    expect(await getSiteIdentity()).toEqual({ brandName: "Nama Lama", tagline: DEFAULT_TAGLINE, instagram: "baru.id" });
+    expect(await getSiteIdentity()).toEqual({ brandName: "Kedai Kelinci", tagline: DEFAULT_TAGLINE, instagram: "baru.id" });
   });
 });

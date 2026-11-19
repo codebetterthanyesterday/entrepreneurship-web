@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
-import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { findByNumber, toTrackedOrder } from "@/lib/queries/order.query";
 import { OrderTicket } from "@/components/public/order-ticket";
 import { cn } from "@/lib/utils";
@@ -33,8 +32,8 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
   const found = await findByNumber(normaliseOrderNumber(decodeURIComponent(orderNumber)));
   if (!found) notFound();
 
-  const [charges, settings] = await Promise.all([findActiveCharges([found.id]), getSettings()]);
-  const order = toTrackedOrder(found, charges.get(found.id));
+  const settings = await getSettings();
+  const order = toTrackedOrder(found);
   // No token here: this page opens with the order number alone.
   const photoLink = photoboothLink(found, { withToken: false });
 

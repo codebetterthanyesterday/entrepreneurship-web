@@ -19,9 +19,9 @@ import { getSettings } from "@/lib/services/setting.service";
 import {
   closeDatabase,
   db,
-  makePickupSlot,
   makeProduct,
   makeUser,
+  openPreorderWindow,
   resetDatabase,
 } from "@/lib/services/__tests__/helpers/test-db";
 
@@ -35,7 +35,7 @@ async function placeOrder(options: { phone?: string | null; prep?: boolean } = {
     stock: 20,
     prepType: options.prep === false ? "READY_TO_SERVE" : "NEEDS_PREP",
   });
-  await makePickupSlot(SLOT, 20);
+  const schedule = await openPreorderWindow(SLOT, 20);
 
   return await createOrder({
     channel: "PREORDER",
@@ -43,7 +43,7 @@ async function placeOrder(options: { phone?: string | null; prep?: boolean } = {
     paymentMethod: "CASH",
     customerName: "Pelanggan Uji",
     customerPhone: options.phone === undefined ? PHONE : options.phone,
-    pickupSlot: SLOT,
+    schedule,
     items: [{ productId: product.id, quantity: 2 }],
   });
 }
@@ -189,8 +189,8 @@ describe("findPreordersForCashier", () => {
       stock: 50,
       prepType: "NEEDS_PREP",
     });
-    await makePickupSlot("09.00 - 10.00", 20);
-    await makePickupSlot("10.00 - 11.00", 20);
+    const nine = await openPreorderWindow("09.00 - 10.00", 20);
+    const ten = await openPreorderWindow("10.00 - 11.00", 20);
     // A QRIS preorder needs a QRIS on show.
     await getSettings();
     await db.orm.public.StoreSetting.where({ id: 1 }).update({
@@ -203,7 +203,7 @@ describe("findPreordersForCashier", () => {
       paymentMethod: "QRIS",
       customerName: "Salsa Amelia",
       customerPhone: PHONE,
-      pickupSlot: "10.00 - 11.00",
+      schedule: ten,
       items: [{ productId: racik.id, quantity: 2 }],
     });
 
@@ -213,14 +213,14 @@ describe("findPreordersForCashier", () => {
       paymentMethod: "CASH",
       customerName: "Rizky",
       customerPhone: PHONE,
-      pickupSlot: "09.00 - 10.00",
+      schedule: nine,
       items: [{ productId: ready.id, quantity: 1 }],
     });
 
     return { salsa, rizky, ready, racik };
   }
 
-  it("returns only preorders, ordered by pickup slot", async () => {
+  it("returns only preorders, ordered by time range", async () => {
     const { salsa, rizky, ready } = await makeCounterOrders();
 
     await createOrder({
@@ -361,7 +361,7 @@ describe("findKitchenQueue", () => {
 
   it("puts the longest wait first, by queue time rather than order time", async () => {
     const product = await makeProduct({ stock: 50, prepType: "NEEDS_PREP" });
-    await makePickupSlot(SLOT, 20);
+    const schedule = await openPreorderWindow(SLOT, 20);
 
     // Placed first, but it only reaches the kitchen when the customer turns up.
     const preorder = await createOrder({
@@ -370,7 +370,7 @@ describe("findKitchenQueue", () => {
       paymentMethod: "CASH",
       customerName: "Preorder pagi",
       customerPhone: PHONE,
-      pickupSlot: SLOT,
+      schedule,
       items: [{ productId: product.id, quantity: 1 }],
     });
 

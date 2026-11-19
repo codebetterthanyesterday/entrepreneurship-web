@@ -7,7 +7,6 @@ import { lastFourDigits } from "@/lib/remembered-order";
 import { kitchenLineName, pricedLines } from "@/lib/order-lines";
 import type {
   CashierPreorder,
-  ExtraChargeLine,
   KitchenStatus,
   KitchenTicket,
   TrackedOrder,
@@ -98,10 +97,7 @@ export async function findForTracking(
  * from the product row, which may have been repriced since. What the customer
  * is shown has to match what they actually agreed to pay.
  */
-export function toTrackedOrder(
-  order: OrderWithItems,
-  photobooth: readonly ExtraChargeLine[] = [],
-): TrackedOrder {
+export function toTrackedOrder(order: OrderWithItems): TrackedOrder {
   return {
     orderNumber: order.orderNumber,
     customerName: order.customerName,
@@ -121,7 +117,6 @@ export function toTrackedOrder(
       subtotal: line.subtotal,
       contents: line.contents,
     })),
-    photobooth: [...photobooth],
   };
 }
 
@@ -202,10 +197,7 @@ export async function findPreordersForCashier(
  * snapshot taken at checkout. The cashier collects what the customer agreed to
  * pay, not what the product costs today.
  */
-export function toCashierPreorder(
-  order: OrderWithItems,
-  photobooth: readonly ExtraChargeLine[] = [],
-): CashierPreorder {
+export function toCashierPreorder(order: OrderWithItems): CashierPreorder {
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -231,7 +223,6 @@ export function toCashierPreorder(
       contents: line.contents,
       needsPrep: line.needsPrep,
     })),
-    photobooth: [...photobooth],
   };
 }
 

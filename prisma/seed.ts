@@ -35,25 +35,7 @@ async function main() {
     await db.orm.public.Category.where({ id: catMakanan.id }).update({ sortOrder: 2 });
   }
 
-  // 3. Pickup Slots
-  const slots = [
-    { label: '09.00 - 10.00', quota: 20, sortOrder: 1 },
-    { label: '10.00 - 11.00', quota: 20, sortOrder: 2 },
-    { label: '11.00 - 12.00', quota: 20, sortOrder: 3 },
-    { label: '12.00 - 13.00', quota: 20, sortOrder: 4 },
-  ];
-
-  for (const s of slots) {
-    const slot = await db.orm.public.PickupSlot.where({ label: s.label }).first();
-    if (!slot) {
-      await db.orm.public.PickupSlot.create(s);
-      console.log(`Created PickupSlot: ${s.label}`);
-    } else {
-      await db.orm.public.PickupSlot.where({ id: slot.id }).update({ quota: s.quota, sortOrder: s.sortOrder });
-    }
-  }
-
-  // 4. Users — not here.
+  // 3. Users — not here.
   //
   // The crew's accounts live in `prisma/accounts.ts` (`npm run accounts`), which
   // is also what retires the ones that have left. If this file kept creating its

@@ -4,10 +4,8 @@ import { csvAttachmentHeader, toCsv, type CsvColumn } from "@/lib/csv";
 import {
   getOrderItemsForExport,
   getOrdersForExport,
-  getPhotoboothChargesForExport,
   getProductRecapForExport,
   type OrderExportRow,
-  type PhotoboothChargeExportRow,
   type OrderItemExportRow,
   type ProductExportRow,
 } from "@/lib/queries/report.query";
@@ -54,8 +52,6 @@ function label(map: Readonly<Record<string, string>>, value: string): string {
   return map[value] ?? value;
 }
 
-const PHOTOBOOTH_COLUMN = "Tagihan Photobooth";
-
 const ORDER_COLUMNS: readonly CsvColumn<OrderExportRow>[] = [
   { header: "Nomor Pesanan", value: (row) => row.orderNumber },
   { header: "Kanal", value: (row) => label(CHANNEL_LABEL, row.channel) },
@@ -72,20 +68,7 @@ const ORDER_COLUMNS: readonly CsvColumn<OrderExportRow>[] = [
   { header: "Metode Bayar", value: (row) => row.paymentMethod },
   { header: "Status Bayar", value: (row) => label(PAYMENT_STATUS_LABEL, row.paymentStatus) },
   { header: "Total", value: (row) => row.totalAmount },
-  // Separate from Total (food): paid to the photobooth crew (BPB-098). Left
-  // out of an export with no photobooth charges in it, which since K-14 (the
-  // booth is free) is every new one.
-  { header: PHOTOBOOTH_COLUMN, value: (row) => row.photoboothAmount },
   { header: "Waktu Dibuat", value: (row) => row.createdAt },
-];
-
-const PHOTOBOOTH_COLUMNS: readonly CsvColumn<PhotoboothChargeExportRow>[] = [
-  { header: "Nomor Pesanan", value: (row) => row.orderNumber },
-  { header: "Nama Pelanggan", value: (row) => row.customerName },
-  { header: "Keterangan", value: (row) => row.description },
-  { header: "Jumlah", value: (row) => row.amount },
-  { header: "Waktu Lunas", value: (row) => row.paidAt },
-  { header: "Waktu Dibatalkan", value: (row) => row.voidedAt },
 ];
 
 const ITEM_COLUMNS: readonly CsvColumn<OrderItemExportRow>[] = [
@@ -106,17 +89,11 @@ const PRODUCT_COLUMNS: readonly CsvColumn<ProductExportRow>[] = [
   { header: "Total Pemasukan", value: (row) => row.revenue },
 ];
 
-/** The four things an admin can pull, keyed by the `type` query parameter. */
+/** The three things an admin can pull, keyed by the `type` query parameter. */
 const EXPORTS = {
   orders: {
     filePrefix: "pesanan",
-    build: async () => {
-      const rows = await getOrdersForExport();
-      const columns = rows.some((row) => row.photoboothAmount > 0)
-        ? ORDER_COLUMNS
-        : ORDER_COLUMNS.filter((column) => column.header !== PHOTOBOOTH_COLUMN);
-      return toCsv(columns, rows);
-    },
+    build: async () => toCsv(ORDER_COLUMNS, await getOrdersForExport()),
   },
   items: {
     filePrefix: "rincian-item",
@@ -125,10 +102,6 @@ const EXPORTS = {
   products: {
     filePrefix: "rekap-menu",
     build: async () => toCsv(PRODUCT_COLUMNS, await getProductRecapForExport()),
-  },
-  photobooth: {
-    filePrefix: "tagihan-photobooth",
-    build: async () => toCsv(PHOTOBOOTH_COLUMNS, await getPhotoboothChargesForExport()),
   },
 } as const;
 

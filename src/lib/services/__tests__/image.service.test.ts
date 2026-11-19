@@ -6,7 +6,7 @@ import { createOrder, markAsPaid } from "@/lib/services/order.service";
 import { getSettings } from "@/lib/services/setting.service";
 import { findStoredImage } from "@/lib/queries/image.query";
 import { imageIdOf } from "@/lib/stored-image";
-import { closeDatabase, makeProduct, makeUser, resetDatabase } from "./helpers/test-db";
+import { closeDatabase, makeProduct, makeUser, openPreorderWindow, resetDatabase } from "./helpers/test-db";
 
 /** A tiny but real PNG header followed by filler: enough for the type check. */
 const png = (filler = 1) =>
@@ -31,6 +31,7 @@ async function preorder(paymentMethod: "CASH" | "QRIS") {
     paymentStatus: "UNPAID",
     customerName: "Rani",
     customerPhone: "081234561234",
+    schedule: await openPreorderWindow("09.00 - 10.00", 10),
     paymentMethod,
     items: [{ productId: product.id, quantity: 1 }],
   });

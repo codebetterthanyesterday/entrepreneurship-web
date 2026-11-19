@@ -13,6 +13,7 @@ import {
   itemsOf,
   makeBundle,
   makeProduct,
+  openPreorderWindow,
   makeUser,
   movementsFor,
   resetDatabase,
@@ -185,7 +186,13 @@ describe("cancelling an order with a paket", () => {
     const { roll, tea, combo } = await littlePowerCombo();
     const admin = await makeUser("ADMIN");
     const order = await createOrder(
-      onsite({ bundles: [{ bundleId: combo.id, quantity: 2 }], channel: "PREORDER", paymentStatus: "UNPAID" }),
+      onsite({
+        bundles: [{ bundleId: combo.id, quantity: 2 }],
+        channel: "PREORDER",
+        paymentStatus: "UNPAID",
+        customerPhone: "081234561234",
+        schedule: await openPreorderWindow("09.00 - 10.00", 10),
+      }),
     );
 
     await cancelOrder(order.id, { id: admin.id, role: admin.role });

@@ -23,15 +23,10 @@ const { GET } = await import("@/app/api/admin/export/route");
 const { createOrder } = await import("@/lib/services/order.service");
 const {
   closeDatabase,
-  makePickupSlot,
   makeProduct,
   makeUser,
   resetDatabase,
 } = await import("@/lib/services/__tests__/helpers/test-db");
-const { recordPhotoboothCharge, voidPhotoboothCharge } = await import(
-  "@/lib/services/external-charge.service"
-);
-const { Temporal } = await import("@js-temporal/polyfill");
 
 async function signIn(role: "ADMIN" | "KASIR") {
   const user = await makeUser(role);
@@ -153,7 +148,7 @@ describe("export contents", () => {
     expect(row).not.toContain("IN_QUEUE");
   });
 
-  it("leaves the photobooth column out when there are no photobooth charges (K-14)", async () => {
+  it("has no photobooth column: the booth is free and charges nothing (K-14)", async () => {
     const product = await makeProduct({ price: 10_000, stock: 20 });
     await createOrder({
       channel: "ONSITE",
@@ -245,67 +240,5 @@ describe("export contents", () => {
 
     expect(row).toContain("Batagor");
     expect(row).toContain("40");
-  });
-});
-
-describe("photobooth charges in the exports (BPB-098)", () => {
-  beforeEach(async () => {
-    await signIn("ADMIN");
-  });
-
-  async function preorderWithCharges() {
-    await makePickupSlot("09.00 - 10.00", 100);
-    const product = await makeProduct({ price: 18_000, stock: 20 });
-    const order = await createOrder({
-      channel: "PREORDER",
-      paymentStatus: "PAID",
-      paymentMethod: "CASH",
-      customerName: "Nadia Prameswari",
-      customerPhone: "081234560042",
-      pickupSlot: "09.00 - 10.00",
-      items: [{ productId: product.id, quantity: 2 }],
-    });
-    for (const [externalId, amount] of [
-      ["11111111-1111-4111-8111-111111111111", 8_000],
-      ["22222222-2222-4222-8222-222222222222", 15_000],
-    ] as const) {
-      await recordPhotoboothCharge({
-        externalId,
-        orderNumber: order.orderNumber,
-        description: "Cetak 4R ×1",
-        amount,
-        paidAt: Temporal.Instant.from("2026-12-05T03:00:00Z"),
-      });
-    }
-    await voidPhotoboothCharge(
-      "22222222-2222-4222-8222-222222222222",
-      Temporal.Instant.from("2026-12-05T04:00:00Z"),
-    );
-    return order;
-  }
-
-  it("the order export keeps the photobooth in its own column beside the food total", async () => {
-    await preorderWithCharges();
-    const [header, row] = await records(await GET(request("orders")));
-    const columns = header!.split(",");
-    const fields = row!.split(",");
-    expect(fields[columns.indexOf("Total")]).toBe("36000");
-    // Only the charge that stands; the voided one is out.
-    expect(fields[columns.indexOf("Tagihan Photobooth")]).toBe("8000");
-  });
-
-  it("the photobooth export lists each charge, the voided one marked", async () => {
-    const { orderNumber } = await preorderWithCharges();
-    const response = await GET(request("photobooth"));
-    expect(response.headers.get("Content-Disposition")).toContain("tagihan-photobooth");
-
-    const [header, ...rows] = await records(response);
-    expect(header).toBe(
-      "Nomor Pesanan,Nama Pelanggan,Keterangan,Jumlah,Waktu Lunas,Waktu Dibatalkan",
-    );
-    expect(rows).toEqual([
-      `${orderNumber},Nadia Prameswari,Cetak 4R ×1,8000,2026-12-05 10:00,`,
-      `${orderNumber},Nadia Prameswari,Cetak 4R ×1,15000,2026-12-05 10:00,2026-12-05 11:00`,
-    ]);
   });
 });

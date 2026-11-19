@@ -7,7 +7,7 @@ const NEXT_SECRET = "n".repeat(32) + "-rotated-in";
 const { GET: getOne } = await import("@/app/api/internal/v1/preorders/[orderNumber]/route");
 const { GET: getFeed } = await import("@/app/api/internal/v1/preorders/route");
 const { createOrder, cancelOrder } = await import("@/lib/services/order.service");
-const { closeDatabase, db, makePickupSlot, makeProduct, makeUser, resetDatabase } =
+const { closeDatabase, db, makeProduct, makeUser, openPreorderWindow, resetDatabase } =
   await import("@/lib/services/__tests__/helpers/test-db");
 
 type Body = { ok: boolean; data?: unknown; error?: string; field?: string };
@@ -41,6 +41,7 @@ async function body(response: Response): Promise<Body> {
 
 let kopi: { id: string };
 let croffle: { id: string };
+let schedule: Awaited<ReturnType<typeof openPreorderWindow>>;
 
 async function preorder(name = "Nadia Prameswari", phone = "081234560042") {
   return await createOrder({
@@ -51,7 +52,7 @@ async function preorder(name = "Nadia Prameswari", phone = "081234560042") {
     ],
     customerName: name,
     customerPhone: phone,
-    pickupSlot: "09.00 - 10.00",
+    schedule,
     paymentMethod: "CASH",
     paymentStatus: "UNPAID",
   });
@@ -77,7 +78,7 @@ beforeEach(async () => {
   await resetDatabase();
   kopi = await makeProduct({ name: "Es Kopi Aren", stock: 100 });
   croffle = await makeProduct({ name: "Croffle Gula Aren", stock: 100 });
-  await makePickupSlot("09.00 - 10.00", 100);
+  schedule = await openPreorderWindow("09.00 - 10.00", 100);
 });
 
 afterAll(async () => {

@@ -7,15 +7,15 @@ import { ExportPanel } from "@/components/admin/export-panel";
 afterEach(cleanup);
 
 describe("ExportPanel", () => {
-  it("offers the old photobooth charges only while there are some (K-14)", () => {
-    render(<ExportPanel photobooth={false} />);
-    expect(screen.queryByText(/Tagihan photobooth/)).toBeNull();
-    expect(screen.getByText("Daftar pesanan")).toBeDefined();
-
-    cleanup();
-    render(<ExportPanel photobooth />);
-    const link = screen.getByText(/Tagihan photobooth/).closest("a");
-    expect(link?.getAttribute("href")).toBe("/api/admin/export?type=photobooth");
-    expect(screen.queryByText(/Cetak foto dan HD yang dibayar di booth photobooth/)).toBeNull();
+  it("offers the three reports, each as a download link", () => {
+    render(<ExportPanel />);
+    for (const [label, type] of [
+      ["Daftar pesanan", "orders"],
+      ["Rincian item", "items"],
+      ["Rekap per menu", "products"],
+    ]) {
+      expect(screen.getByText(label!).closest("a")?.getAttribute("href")).toBe(`/api/admin/export?type=${type}`);
+    }
+    expect(screen.queryByText(/photobooth/i)).toBeNull();
   });
 });

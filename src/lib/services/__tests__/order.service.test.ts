@@ -17,8 +17,8 @@ import {
   db,
   deleteStoreSettings,
   itemsOf,
-  slotByLabel,
-  makePickupSlot,
+  bookedIn,
+  openPreorderWindow,
   makeProduct,
   makeUser,
   movementsFor,
@@ -166,7 +166,7 @@ describe("generateOrderNumber — uniqueness", () => {
 
   it("prefixes each channel's numbers with its own code", async () => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot("09.00 - 10.00", 10);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
 
     const onsite = await createOrder(
       onsiteOrder({ items: [{ productId: product.id, quantity: 1 }] }),
@@ -175,7 +175,8 @@ describe("generateOrderNumber — uniqueness", () => {
       onsiteOrder({
         channel: "PREORDER",
         paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
+        customerPhone: "081234561234",
+        schedule,
         items: [{ productId: product.id, quantity: 1 }],
       }),
     );
@@ -321,7 +322,7 @@ describe("cancelOrder", () => {
 describe("createOrder — closed channels", () => {
   it("refuses a preorder while preorder is closed", async () => {
     const product = await makeProduct({ stock: 5 });
-    await makePickupSlot("09.00 - 10.00", 10);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
     await setStoreOpen({ preorderOpen: false });
 
     await expect(
@@ -329,7 +330,8 @@ describe("createOrder — closed channels", () => {
         onsiteOrder({
           channel: "PREORDER",
           paymentStatus: "UNPAID",
-          pickupSlot: "09.00 - 10.00",
+          customerPhone: "081234561234",
+          schedule,
           items: [{ productId: product.id, quantity: 1 }],
         }),
       ),
@@ -462,50 +464,6 @@ describe("markAsPaid", () => {
   });
 });
 
-describe("createOrder — pickup slot quota", () => {
-  it("refuses a preorder once the slot is full", async () => {
-    const product = await makeProduct({ stock: 50 });
-    await makePickupSlot("09.00 - 10.00", 2);
-
-    const preorder = (): CreateOrderInput =>
-      onsiteOrder({
-        channel: "PREORDER",
-        paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
-        items: [{ productId: product.id, quantity: 1 }],
-      });
-
-    await createOrder(preorder());
-    await createOrder(preorder());
-
-    await expect(createOrder(preorder())).rejects.toThrow(/udah penuh/);
-    expect(await countOrders()).toBe(2);
-  });
-
-  it("frees the slot again when an order is cancelled", async () => {
-    const kasir = await makeUser("KASIR");
-    const product = await makeProduct({ stock: 50 });
-    await makePickupSlot("09.00 - 10.00", 1);
-
-    const preorder = (): CreateOrderInput =>
-      onsiteOrder({
-        channel: "PREORDER",
-        paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
-        items: [{ productId: product.id, quantity: 1 }],
-      });
-
-    const first = await createOrder(preorder());
-    await expect(createOrder(preorder())).rejects.toThrow(/udah penuh/);
-
-    await cancelOrder(first.id, { id: kasir.id, role: "KASIR" });
-
-    const second = await createOrder(preorder());
-    expect(second.orderNumber).toMatch(/^PO-/);
-    expect(second.orderNumber).not.toBe(first.orderNumber);
-  });
-});
-
 describe("createOrder — inactive and missing products", () => {
   it("refuses a hidden menu", async () => {
     const product = await makeProduct({ name: "Disembunyikan", stock: 5, isActive: false });
@@ -532,13 +490,14 @@ describe("createOrder — preorder lifecycle", () => {
   it("starts a preorder at CONFIRMED whatever its items are", async () => {
     const ready = await makeProduct({ prepType: "READY_TO_SERVE", stock: 5 });
     const racik = await makeProduct({ prepType: "NEEDS_PREP", stock: 5 });
-    await makePickupSlot("09.00 - 10.00", 10);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
 
     const siapSaja = await createOrder(
       onsiteOrder({
         channel: "PREORDER",
         paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
+        customerPhone: "081234561234",
+        schedule,
         items: [{ productId: ready.id, quantity: 1 }],
       }),
     );
@@ -546,7 +505,8 @@ describe("createOrder — preorder lifecycle", () => {
       onsiteOrder({
         channel: "PREORDER",
         paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
+        customerPhone: "081234561234",
+        schedule,
         items: [{ productId: racik.id, quantity: 1 }],
       }),
     );
@@ -561,14 +521,15 @@ describe("createOrder — preorder lifecycle", () => {
     const kasir = await makeUser("KASIR");
     const racik = await makeProduct({ prepType: "NEEDS_PREP", stock: 5 });
     const ready = await makeProduct({ prepType: "READY_TO_SERVE", stock: 5 });
-    await makePickupSlot("09.00 - 10.00", 10);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
 
     const preorder = (productId: string) =>
       createOrder(
         onsiteOrder({
           channel: "PREORDER",
           paymentStatus: "UNPAID",
-          pickupSlot: "09.00 - 10.00",
+          customerPhone: "081234561234",
+          schedule,
           items: [{ productId, quantity: 1 }],
         }),
       );
@@ -590,13 +551,14 @@ describe("createOrder — preorder lifecycle", () => {
   it("can be cancelled from CONFIRMED, putting the stock back", async () => {
     const kasir = await makeUser("KASIR");
     const product = await makeProduct({ stock: 6 });
-    await makePickupSlot("09.00 - 10.00", 10);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
 
     const order = await createOrder(
       onsiteOrder({
         channel: "PREORDER",
         paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
+        customerPhone: "081234561234",
+        schedule,
         items: [{ productId: product.id, quantity: 2 }],
       }),
     );
@@ -606,38 +568,6 @@ describe("createOrder — preorder lifecycle", () => {
 
     expect(cancelled.status).toBe("CANCELLED");
     expect(await stockOf(product.id)).toBe(6);
-  });
-});
-
-describe("createOrder — pickup slot quota under concurrency", () => {
-  it("never lets a slot be booked past its quota", async () => {
-    const product = await makeProduct({ stock: 500 });
-    await makePickupSlot("09.00 - 10.00", 5);
-
-    const preorder = (): CreateOrderInput =>
-      onsiteOrder({
-        channel: "PREORDER",
-        paymentStatus: "UNPAID",
-        pickupSlot: "09.00 - 10.00",
-        items: [{ productId: product.id, quantity: 1 }],
-      });
-
-    // Twenty customers check out at the same instant against a quota of five.
-    const results = await Promise.allSettled(
-      Array.from({ length: 20 }, () => createOrder(preorder())),
-    );
-
-    const fulfilled = results.filter((result) => result.status === "fulfilled");
-    const rejected = results.filter((result) => result.status === "rejected");
-
-    expect(fulfilled).toHaveLength(5);
-    expect(rejected).toHaveLength(15);
-    expect(
-      rejected.every((result) =>
-        /udah penuh/.test(String((result as PromiseRejectedResult).reason?.message)),
-      ),
-    ).toBe(true);
-    expect(await countOrders()).toBe(5);
   });
 });
 
@@ -721,7 +651,7 @@ describe("createOrder — duplicate lines", () => {
 describe("createOrder — missing settings fails closed", () => {
   it("refuses both channels when the settings row is absent", async () => {
     const product = await makeProduct({ stock: 5 });
-    await makePickupSlot("09.00 - 10.00", 10);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
     await deleteStoreSettings();
 
     await expect(
@@ -733,7 +663,8 @@ describe("createOrder — missing settings fails closed", () => {
         onsiteOrder({
           channel: "PREORDER",
           paymentStatus: "UNPAID",
-          pickupSlot: "09.00 - 10.00",
+          customerPhone: "081234561234",
+          schedule,
           items: [{ productId: product.id, quantity: 1 }],
         }),
       ),
@@ -744,48 +675,60 @@ describe("createOrder — missing settings fails closed", () => {
   });
 });
 
-describe("pickup slot booked counter", () => {
-  const preorderIn = (label: string, productId: string): CreateOrderInput =>
+describe("a time range's booked counter", () => {
+  const preorderIn = (
+    schedule: CreateOrderInput["schedule"],
+    productId: string,
+  ): CreateOrderInput =>
     onsiteOrder({
       channel: "PREORDER",
       paymentStatus: "UNPAID",
-      pickupSlot: label,
+      customerPhone: "081234561234",
+      schedule,
       items: [{ productId, quantity: 1 }],
     });
 
-  it("tracks the number of live orders in the slot", async () => {
+  it("tracks the number of live orders in the range", async () => {
     const kasir = await makeUser("KASIR");
     const product = await makeProduct({ stock: 50 });
-    await makePickupSlot("09.00 - 10.00", 5);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 5);
 
-    const first = await createOrder(preorderIn("09.00 - 10.00", product.id));
-    await createOrder(preorderIn("09.00 - 10.00", product.id));
+    const first = await createOrder(preorderIn(schedule, product.id));
+    await createOrder(preorderIn(schedule, product.id));
 
-    expect((await slotByLabel("09.00 - 10.00")).booked).toBe(2);
+    expect(await bookedIn(schedule.serviceWindowId)).toBe(2);
 
     await cancelOrder(first.id, { id: kasir.id, role: "KASIR" });
 
-    expect((await slotByLabel("09.00 - 10.00")).booked).toBe(1);
+    expect(await bookedIn(schedule.serviceWindowId)).toBe(1);
   });
 
   it("is not touched by a transaction that rolls back", async () => {
     const product = await makeProduct({ name: "Habis", stock: 0 });
-    await makePickupSlot("09.00 - 10.00", 5);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 5);
 
-    await expect(createOrder(preorderIn("09.00 - 10.00", product.id))).rejects.toBeInstanceOf(
+    await expect(createOrder(preorderIn(schedule, product.id))).rejects.toBeInstanceOf(
       InsufficientStockError,
     );
 
-    expect((await slotByLabel("09.00 - 10.00")).booked).toBe(0);
+    expect(await bookedIn(schedule.serviceWindowId)).toBe(0);
   });
 
   it("is not touched by on-site orders", async () => {
     const product = await makeProduct({ stock: 10 });
-    await makePickupSlot("09.00 - 10.00", 5);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 5);
 
     await createOrder(onsiteOrder({ items: [{ productId: product.id, quantity: 1 }] }));
 
-    expect((await slotByLabel("09.00 - 10.00")).booked).toBe(0);
+    expect(await bookedIn(schedule.serviceWindowId)).toBe(0);
+  });
+
+  it("refuses a preorder with no time range, which would reach no one", async () => {
+    const product = await makeProduct({ stock: 10 });
+
+    await expect(createOrder(preorderIn(null, product.id))).rejects.toThrow(/Pilih lokasi, tanggal, dan jamnya/);
+    expect(await countOrders()).toBe(0);
+    expect(await stockOf(product.id)).toBe(10);
   });
 });
 
@@ -800,22 +743,20 @@ describe("pickup slot booked counter", () => {
  * inside the UPDATE can separate them.
  */
 describe("transitionStatus — two screens acting at the same instant", () => {
-  const SLOT = "09.00 - 10.00";
-
   async function preorderWithPrep() {
     const product = await makeProduct({ price: 18_000, stock: 20, prepType: "NEEDS_PREP" });
-    await makePickupSlot(SLOT, 20);
+    const schedule = await openPreorderWindow("09.00 - 10.00", 20);
 
     const order = await createOrder(
       onsiteOrder({
         channel: "PREORDER",
         paymentStatus: "UNPAID",
-        pickupSlot: SLOT,
+        schedule,
         items: [{ productId: product.id, quantity: 2 }],
       }),
     );
 
-    return { order, product };
+    return { order, product, windowId: schedule.serviceWindowId };
   }
 
   it("applies the same move once when both screens send it together", async () => {
@@ -839,7 +780,7 @@ describe("transitionStatus — two screens acting at the same instant", () => {
     for (let attempt = 0; attempt < 3; attempt++) {
       await resetDatabase();
       const kasir = await makeUser("KASIR");
-      const { order, product } = await preorderWithPrep();
+      const { order, product, windowId } = await preorderWithPrep();
       const actor = { id: kasir.id, role: "KASIR" as const };
 
       expect(await stockOf(product.id)).toBe(18);
@@ -854,13 +795,13 @@ describe("transitionStatus — two screens acting at the same instant", () => {
       // The units this order took come back once. Returning them twice would
       // leave the product holding more than it ever had.
       expect(await stockOf(product.id)).toBe(20);
-      expect((await slotByLabel(SLOT)).booked).toBe(0);
+      expect(await bookedIn(windowId)).toBe(0);
     }
   });
 
   it("never cancels and queues the same order at once", async () => {
     const kasir = await makeUser("KASIR");
-    const { order, product } = await preorderWithPrep();
+    const { order, product, windowId } = await preorderWithPrep();
     const actor = { id: kasir.id, role: "KASIR" as const };
 
     const results = await Promise.allSettled([
@@ -870,20 +811,20 @@ describe("transitionStatus — two screens acting at the same instant", () => {
 
     // Exactly one of the two is applied. Letting both through used to leave the
     // order sitting in the kitchen queue with its stock already handed back and
-    // its pickup slot already released — two drinks made and given away that
+    // its time range already released — two drinks made and given away that
     // the system believed had never been sold.
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
 
     const final = (await db.orm.public.Order.where({ id: order.id }).first())!;
-    const slot = await slotByLabel(SLOT);
+    const booked = await bookedIn(windowId);
 
     if (final.status === "CANCELLED") {
       expect(await stockOf(product.id)).toBe(20);
-      expect(slot.booked).toBe(0);
+      expect(booked).toBe(0);
     } else {
       expect(final.status).toBe("IN_QUEUE");
       expect(await stockOf(product.id)).toBe(18);
-      expect(slot.booked).toBe(1);
+      expect(booked).toBe(1);
     }
   });
 });

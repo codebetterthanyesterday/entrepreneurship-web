@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 const { GET } = await import("@/app/api/lacak/route");
 const { createOrder } = await import("@/lib/services/order.service");
 const { claimLinkToken } = await import("@/lib/photobooth-link");
-const { closeDatabase, makePickupSlot, makeProduct, resetDatabase } =
+const { closeDatabase, makeProduct, openPreorderWindow, resetDatabase } =
   await import("@/lib/services/__tests__/helpers/test-db");
 
 const SECRET = "rahasia-tautan-klaim-0123456789abcdef";
@@ -37,13 +37,13 @@ let orderNumber: string;
 beforeEach(async () => {
   await resetDatabase();
   const kopi = await makeProduct({ name: "Es Kopi Aren", stock: 10 });
-  await makePickupSlot("09.00 - 10.00", 10);
+  const schedule = await openPreorderWindow("09.00 - 10.00", 10);
   const order = await createOrder({
     channel: "PREORDER",
     items: [{ productId: kopi.id, quantity: 1 }],
     customerName: "Nadia Prameswari",
     customerPhone: "081234560042",
-    pickupSlot: "09.00 - 10.00",
+    schedule,
     paymentMethod: "CASH",
     paymentStatus: "UNPAID",
   });
