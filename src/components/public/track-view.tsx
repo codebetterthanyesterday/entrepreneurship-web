@@ -22,6 +22,7 @@ import { Confetti } from "./confetti";
 import { JourneyHero } from "./journey";
 import { ChatLink } from "./whatsapp-chat";
 import { chatOrderOf } from "@/lib/whatsapp";
+import { isDelivered } from "@/lib/schedule";
 import type { OrderStatus } from "@/types/order";
 import type { TrackedOrder } from "@/types/order-view";
 
@@ -322,7 +323,7 @@ const GUIDE = [
   {
     tag: "Checkpoints",
     title: "3. Pantau tiap checkpoint",
-    body: "Lihat posisi pesananmu dari masuk, dikonfirmasi, diracik, sampai siap diambil.",
+    body: "Lihat posisi pesananmu dari masuk, dikonfirmasi, diracik, sampai siap diserahkan.",
     tone: "var(--color-sky-deep)",
   },
 ] as const;
@@ -385,6 +386,7 @@ function FoundOrder({
   onSwitch: () => void;
 }) {
   const cancelled = order.status === "CANCELLED";
+  const delivered = isDelivered(order);
   const live = !isFinalStatus(order.status);
 
   return (
@@ -412,11 +414,17 @@ function FoundOrder({
           </div>
 
           <div className="mt-3 tablet:mt-4">
-            <OrderStage status={order.status} needsPrep={order.needsPrep} titleAs="h1" chatOrder={chatOrderOf(order)}>
+            <OrderStage
+              status={order.status}
+              needsPrep={order.needsPrep}
+              delivered={delivered}
+              titleAs="h1"
+              chatOrder={chatOrderOf(order)}
+            >
               {order.status === "READY" && (
                 <p className="mx-auto mt-4 inline-flex flex-col items-center rounded-[20px] bg-white/[0.06] px-6 py-3 tablet:mt-6 tablet:py-4">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/60">
-                    Tunjukin ke kasir
+                    {delivered ? "Tunjukin ke tim kami" : "Tunjukin ke kasir"}
                   </span>
                   <span className="display-2 mt-1 text-white tabular-nums">
                     {order.orderNumber}
@@ -458,6 +466,7 @@ function FoundOrder({
                 qrisImageUrl={qrisImageUrl}
                 paymentStatus={order.paymentStatus}
                 hasPaymentProof={order.hasPaymentProof}
+                delivered={delivered}
                 phoneLast4={phoneLast4}
                 onProofSent={onProofSent}
                 className="mb-7"
@@ -475,7 +484,7 @@ function FoundOrder({
                   <span className="k-mono text-[10.5px] text-sky-deep">Order progression</span>
                 </p>
                 <h2 className="k-section-title mt-2">Perjalanan pesanan</h2>
-                <OrderTimeline status={order.status} needsPrep={order.needsPrep} />
+                <OrderTimeline status={order.status} needsPrep={order.needsPrep} delivered={delivered} />
               </div>
             )}
 

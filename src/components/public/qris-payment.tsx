@@ -17,6 +17,8 @@ export interface QrisPaymentProps {
   qrisImageUrl: string | null;
   paymentStatus: PaymentStatus;
   hasPaymentProof: boolean;
+  /** Taken to the customer rather than collected (see `isDelivered`). */
+  delivered?: boolean;
   /** Known on the tracker, which asked for them; read from this device otherwise. */
   phoneLast4?: string;
   /** After a proof is sent: the tracker re-polls; elsewhere the page refreshes. */
@@ -38,6 +40,7 @@ export function QrisPayment({
   qrisImageUrl,
   paymentStatus,
   hasPaymentProof,
+  delivered = false,
   phoneLast4,
   onProofSent,
   className,
@@ -58,7 +61,9 @@ export function QrisPayment({
         </span>
         <span>
           <span className="block font-bold text-ok">Lunas via QRIS</span>
-          <span className="block text-[13px] text-ink-soft">Pembayaranmu udah dicek kasir. Tinggal ambil pesanannya.</span>
+          <span className="block text-[13px] text-ink-soft">{delivered
+              ? "Pembayaranmu udah dicek kasir. Tinggal tunggu pesanannya diantar."
+              : "Pembayaranmu udah dicek kasir. Tinggal ambil pesanannya."}</span>
         </span>
       </section>
     );
@@ -105,8 +110,9 @@ export function QrisPayment({
           </div>
         ) : (
           <p className="rounded-[14px] bg-warn-soft p-3 text-[13.5px] leading-relaxed text-warn">
-            QRIS-nya lagi nggak bisa ditampilkan. Bayar langsung ke kasir pas ambil ya, sebut
-            nomor pesananmu.
+            {delivered
+              ? "QRIS-nya lagi nggak bisa ditampilkan. Bayar tunai ke tim kami pas pesanannya diantar ya, sebut nomor pesananmu."
+              : "QRIS-nya lagi nggak bisa ditampilkan. Bayar langsung ke kasir pas ambil ya, sebut nomor pesananmu."}
           </p>
         )}
 

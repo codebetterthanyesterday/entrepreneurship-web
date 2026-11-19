@@ -7,7 +7,7 @@ import { pageTitle } from "@/lib/brand";
 
 export const metadata = {
   title: pageTitle("Menu"),
-  description: "Pilih menu, pesan sekarang, ambil pas Market Day.",
+  description: "Pilih menu, pesan sekarang, ambil di Market Day atau kami antar.",
 };
 
 // Stock and the preorder switch change during the event, and this page reads

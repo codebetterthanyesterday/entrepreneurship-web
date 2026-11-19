@@ -5,6 +5,7 @@ import {
   describeHandover,
   formatServiceDate,
   isBookable,
+  isDelivered,
   isValidWindow,
   needsLocationReview,
   parseServiceDate,
@@ -78,6 +79,20 @@ describe("needsLocationReview", () => {
     expect(needsLocationReview({ handoverLocation: "OTHER", locationReviewedAt: "x" })).toBe(false);
     expect(needsLocationReview({ handoverLocation: "OTHER", status: "CANCELLED" })).toBe(false);
     expect(needsLocationReview({ handoverLocation: "CAMPUS_B" })).toBe(false);
+  });
+});
+
+describe("isDelivered", () => {
+  it("brings a campus or Lainnya order, and leaves a Market Day one at the booth", () => {
+    expect(isDelivered({ handoverLocation: "CAMPUS_B" })).toBe(true);
+    expect(isDelivered({ handoverLocation: "CAMPUS_C" })).toBe(true);
+    expect(isDelivered({ handoverLocation: "OTHER" })).toBe(true);
+    expect(isDelivered({ handoverLocation: "MARKET_DAY" })).toBe(false);
+  });
+
+  it("treats a booth sale and an order from before the schedule as collected", () => {
+    expect(isDelivered({ handoverLocation: null })).toBe(false);
+    expect(isDelivered({})).toBe(false);
   });
 });
 

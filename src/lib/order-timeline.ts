@@ -42,6 +42,16 @@ export const TIMELINE_STAGES: readonly TimelineStage[] = [
 ];
 
 /**
+ * What changes when the team takes the order to the customer: there is no
+ * booth to come to, so the waiting, the ready and the goodbye say so.
+ */
+const DELIVERED_STAGE_TEXT: Partial<Record<TimelineStageId, Pick<TimelineStage, "title" | "detail">>> = {
+  confirmed: { title: "Udah dikonfirmasi", detail: "Pesanan kamu dikunci, tinggal tunggu jadwal antar" },
+  ready: { title: "Siap diantar!", detail: "Kami antar sesuai jadwal, siapin nomor pesanannya ya" },
+  done: { title: "Selesai, makasih ya!", detail: "Sampai jumpa di pesanan berikutnya" },
+};
+
+/**
  * Which stage an order is sitting on. CANCELLED has no stage — a cancelled
  * order is shown on its own rather than as a point on the timeline.
  */
@@ -66,10 +76,13 @@ export interface TimelineStep extends TimelineStage {
  * The timeline to draw for one order.
  *
  * An order with nothing to make skips the "Lagi diracik" stage entirely — it
- * would otherwise promise a step that is never going to happen.
+ * would otherwise promise a step that is never going to happen. A delivered
+ * order (see `isDelivered`) is told it will be brought, not to come and get it.
  */
-export function buildTimeline(status: OrderStatus, needsPrep: boolean): TimelineStep[] {
-  const stages = TIMELINE_STAGES.filter((stage) => stage.id !== "prep" || needsPrep);
+export function buildTimeline(status: OrderStatus, needsPrep: boolean, delivered = false): TimelineStep[] {
+  const stages = TIMELINE_STAGES.filter((stage) => stage.id !== "prep" || needsPrep).map((stage) =>
+    delivered && DELIVERED_STAGE_TEXT[stage.id] ? { ...stage, ...DELIVERED_STAGE_TEXT[stage.id] } : stage,
+  );
   const currentId = STAGE_OF_STATUS[status];
   const currentIndex = stages.findIndex((stage) => stage.id === currentId);
 
@@ -98,8 +111,8 @@ export interface StageSummary {
  * how much of the way it has come. Derived from `buildTimeline` so the stage and
  * the full timeline under it can never disagree about the current step.
  */
-export function summariseStage(status: OrderStatus, needsPrep: boolean): StageSummary {
-  const steps = buildTimeline(status, needsPrep);
+export function summariseStage(status: OrderStatus, needsPrep: boolean, delivered = false): StageSummary {
+  const steps = buildTimeline(status, needsPrep, delivered);
   const currentIndex = steps.findIndex((step) => step.state === "current");
 
   if (currentIndex === -1) return { steps, current: null, progress: 0 };
