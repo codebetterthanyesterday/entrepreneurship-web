@@ -42,96 +42,13 @@ async function main() {
   // own three demo logins, running the seed would quietly bring a retired
   // account back to life. On a fresh database, run both:
   //
-  //   npm run seed       # catalogue, categories, pickup slots
+  //   npm run seed       # settings and categories
   //   npm run accounts   # the people
   console.log('Users: run `npm run accounts` (kept out of the seed on purpose)');
 
-  // 5 & 6. Products & StockMovements
-  const products = [
-    { name: 'Strawberry Matcha Latte', price: 22000, stock: 12, prepType: 'NEEDS_PREP' as const, categoryId: catMinuman.id },
-    { name: 'Es Kopi Susu Gula Aren', price: 18000, stock: 20, prepType: 'NEEDS_PREP' as const, categoryId: catMinuman.id },
-    { name: 'Lemonade Butterfly Pea', price: 19000, stock: 10, prepType: 'NEEDS_PREP' as const, categoryId: catMinuman.id },
-    { name: 'Croffle Butter Sugar', price: 20000, stock: 3, prepType: 'NEEDS_PREP' as const, categoryId: catMakanan.id },
-    { name: 'Dubai Chocolate Bar', price: 35000, stock: 8, prepType: 'READY_TO_SERVE' as const, categoryId: catMakanan.id },
-    { name: 'Cookies Lumer Cokelat', price: 15000, stock: 0, prepType: 'READY_TO_SERVE' as const, categoryId: catMakanan.id },
-    { name: 'Puding Susu Cup', price: 12000, stock: 16, prepType: 'READY_TO_SERVE' as const, categoryId: catMakanan.id },
-  ];
-
-  for (const p of products) {
-    let product = await db.orm.public.Product.where({ name: p.name }).first();
-    if (!product) {
-      product = await db.orm.public.Product.create(p);
-      console.log(`Created Product: ${p.name}`);
-
-      if (p.stock > 0) {
-        // Initial Stock Movement
-        await db.orm.public.StockMovement.create({
-          productId: product.id,
-          quantity: p.stock,
-          reason: 'INITIAL_STOCK',
-        });
-      }
-    } else {
-      await db.orm.public.Product.where({ id: product.id }).update({
-        price: p.price,
-        prepType: p.prepType,
-        categoryId: p.categoryId,
-        // we don't forcefully update stock here to avoid overwriting real data later on
-      });
-    }
-  }
-
-  // Paket hemat. Created once by name and left alone afterwards, like the
-  // products' stock, so an admin's edits survive a re-seed.
-  const bundles = [
-    {
-      name: 'Little Power Combo',
-      description: 'Croffle renyah ditemani es kopi susu gula aren. Paduan manis yang pas!',
-      price: 32000,
-      sortOrder: 1,
-      items: [
-        { name: 'Croffle Butter Sugar', quantity: 1 },
-        { name: 'Es Kopi Susu Gula Aren', quantity: 1 },
-      ],
-    },
-    {
-      name: 'Super Power Combo',
-      description: 'Paket lengkap buat pesta ngemil bareng party anggota!',
-      price: 60000,
-      sortOrder: 2,
-      items: [
-        { name: 'Dubai Chocolate Bar', quantity: 1 },
-        { name: 'Puding Susu Cup', quantity: 1 },
-        { name: 'Strawberry Matcha Latte', quantity: 1 },
-      ],
-    },
-  ];
-
-  for (const b of bundles) {
-    const existing = await db.orm.public.Bundle.where({ name: b.name }).first();
-    if (existing) continue;
-
-    const contents = [];
-    for (const item of b.items) {
-      const product = await db.orm.public.Product.where({ name: item.name }).first();
-      if (product) contents.push({ productId: product.id, quantity: item.quantity });
-    }
-    if (contents.length !== b.items.length) {
-      console.log(`Skipped Bundle: ${b.name} (a product in it is missing)`);
-      continue;
-    }
-
-    const bundle = await db.orm.public.Bundle.create({
-      name: b.name,
-      description: b.description,
-      price: b.price,
-      sortOrder: b.sortOrder,
-    });
-    for (const content of contents) {
-      await db.orm.public.BundleItem.create({ bundleId: bundle.id, ...content });
-    }
-    console.log(`Created Bundle: ${b.name}`);
-  }
+  // 4. No menu and no paket. The real menu is entered by the admin in
+  // Admin → Menu & stok; sample items here would come back next to it every
+  // time the seed is run again.
 
   console.log('Seed completed.');
   await db.close();
