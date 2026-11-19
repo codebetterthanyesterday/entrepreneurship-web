@@ -332,3 +332,23 @@ test("an admin's photo becomes the paket's picture in the catalogue", async ({ p
 
   await admin.context().close();
 });
+
+test("an admin's stock correction shows in the menu's stock history, with who made it", async ({ browser }) => {
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/admin/menu");
+  await admin.getByRole("button", { name: `Ubah ${MENU.name}` }).click();
+  await admin.getByRole("button", { name: "+5", exact: true }).click();
+  await admin.getByRole("button", { name: "Simpan perubahan" }).click();
+  await expect(admin.getByText("Menunya udah diperbarui!")).toBeVisible();
+
+  await admin.getByRole("button", { name: `Ubah ${MENU.name}` }).click();
+  await admin.getByRole("link", { name: "Lihat riwayat stok menu ini" }).click();
+  await expect(admin.getByRole("heading", { name: "Riwayat stok" })).toBeVisible();
+  await expect(admin.getByText(new RegExp(`untuk ${MENU.name} · stok sekarang`))).toBeVisible();
+  const newest = admin.getByRole("list", { name: "Riwayat stok" }).getByRole("listitem").first();
+  await expect(newest).toContainText("Diubah admin");
+  await expect(newest).toContainText("E2E ADMIN");
+  await expect(newest.getByLabel("Tambah 5")).toBeVisible();
+
+  await admin.context().close();
+});

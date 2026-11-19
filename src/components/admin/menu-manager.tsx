@@ -87,6 +87,9 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
             <ButtonLink href="/admin/menu/kategori" size="sm" variant="flat" className="flex-none">
               Kategori
             </ButtonLink>
+            <ButtonLink href="/admin/menu/riwayat" size="sm" variant="flat" className="flex-none">
+              Riwayat
+            </ButtonLink>
             <Button size="sm" variant="primary" onClick={() => openSheet(null)} className="flex-none">
               + Menu
             </Button>
