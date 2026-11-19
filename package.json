@@ -14,7 +14,8 @@
     "seed": "npx tsx prisma/seed.ts",
     "accounts": "npx tsx prisma/accounts.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
@@ -33,6 +34,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@prisma/cli-engine": "^0.4.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
