@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Chip } from "@/components/ui/chip";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/use-toast";
 import { createProductAction, updateProductAction } from "@/actions/product.actions";
@@ -83,9 +83,14 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
         title="Menu & stok"
         lede="Ketuk menu buat ubah stok, harga, atau sembunyikan dari katalog"
         actions={
-          <Button size="sm" variant="primary" onClick={() => openSheet(null)} className="flex-none">
-            + Menu
-          </Button>
+          <div className="flex flex-none gap-2">
+            <ButtonLink href="/admin/menu/kategori" size="sm" variant="flat" className="flex-none">
+              Kategori
+            </ButtonLink>
+            <Button size="sm" variant="primary" onClick={() => openSheet(null)} className="flex-none">
+              + Menu
+            </Button>
+          </div>
         }
       />
 
