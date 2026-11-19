@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Sheet } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -182,6 +183,14 @@ export function ProductFormSheet({
             </button>
           </div>
           {fieldError("stock") && <p className="text-sm text-hot">{fieldError("stock")}</p>}
+          {product && (
+            <Link
+              href={`/admin/menu/riwayat?menu=${product.id}`}
+              className="mt-1 inline-flex min-h-[44px] items-center self-start text-[13px] font-semibold text-ink-soft underline underline-offset-2 hover:text-ink"
+            >
+              Lihat riwayat stok menu ini
+            </Link>
+          )}
         </div>
 
         {categories.length > 0 && (
