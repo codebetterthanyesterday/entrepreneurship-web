@@ -9,6 +9,7 @@ export const E2E_LOGIN_PATH = "/masuk-e2e-rahasia-uji";
 export const STAFF = {
   KASIR: { email: "kasir@e2e.test", password: "kasir-e2e-2026" },
   DAPUR: { email: "dapur@e2e.test", password: "dapur-e2e-2026" },
+  ADMIN: { email: "admin@e2e.test", password: "admin-e2e-2026" },
 } as const;
 
 /** The one menu item, which needs the kitchen. */

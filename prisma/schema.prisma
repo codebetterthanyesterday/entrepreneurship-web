@@ -60,6 +60,7 @@ enum StoredImageKind {
   @@type("pg/text@1")
   QRIS = "QRIS"
   PAYMENT_PROOF = "PAYMENT_PROOF"
+  PRODUCT = "PRODUCT"
 }
 
 // Layanan lain yang boleh menagih ke nota pesanan (BPB-098, keputusan K-05).
@@ -127,6 +128,7 @@ model Product {
   orderItems     OrderItem[]
   stockMovements StockMovement[]
   bundleItems    BundleItem[]
+  images         ProductImage[]
 
   @@index([categoryId])
   @@index([isActive])
@@ -329,8 +331,26 @@ model StoredImage {
   data      Bytes
   byteSize  Int
   createdAt DateTime        @default(now())
+  productImage ProductImage?
 
   @@check(expression: "octet_length(data) BETWEEN 1 AND 3145728", name: "stored_image_size_limit")
+}
+
+// Foto sebuah menu, nol atau lebih, berurutan (`sortOrder` 0, 1, 2, ...).
+// Isinya disimpan di `StoredImage` (jenis PRODUCT). Foto pertama disalin ke
+// `Product.imageUrl` sebagai sampul, supaya semua layar yang sudah membaca
+// `imageUrl` (katalog, keranjang, kasir, dasbor, isi paket) ikut tanpa diubah.
+// Lihat `src/lib/services/product-image.service.ts`.
+model ProductImage {
+  id        String      @id @default(uuid())
+  productId String
+  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageId   String      @unique
+  image     StoredImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  sortOrder Int
+  createdAt DateTime    @default(now())
+
+  @@index([productId])
 }
 
 // Penghitung untuk pembatas laju endpoint publik: checkout, unggah bukti bayar,

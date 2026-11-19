@@ -6,8 +6,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 /**
  * An image kept in the database (`StoredImage`).
  *
- * The booth's QRIS is public: every customer paying by QRIS has to see it, and
- * a new upload is a new id, so the address is cached for good. A payment
+ * The booth's QRIS and the menu's photos are public: every customer sees them,
+ * and a new upload is a new id, so the address is cached for good, by the
+ * browser and by Vercel's CDN alike, which keeps a busy menu from reading the
+ * same bytes out of the database over and over. A payment
  * proof is not: it shows a customer's transaction, so only staff at the till
  * (and admins) get it, never cached by anything shared. Every miss is the same
  * 404, so the route says nothing about which ids exist.
@@ -34,7 +36,9 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
       "Cache-Control":
-        image.kind === "QRIS" ? "public, max-age=31536000, immutable" : "private, no-store",
+        image.kind === "PAYMENT_PROOF"
+          ? "private, no-store"
+          : "public, max-age=31536000, s-maxage=31536000, immutable",
     },
   });
 }

@@ -13,7 +13,8 @@ import { MAX_IMAGE_BYTES, imageIdOf, imagePath, sniffImage, type ImageMime } fro
  * transaction, so each setting and each order holds at most one.
  */
 
-function checked(bytes: Uint8Array): ImageMime {
+/** The type of an uploaded image, or a `ValidationError` the uploader can read. */
+export function checkedImage(bytes: Uint8Array): ImageMime {
   if (bytes.length === 0) throw new ValidationError("Gambarnya kosong. Coba pilih lagi ya", "file");
   if (bytes.length > MAX_IMAGE_BYTES) {
     throw new ValidationError("Gambarnya kegedean. Maksimal 3 MB ya", "file");
@@ -25,7 +26,7 @@ function checked(bytes: Uint8Array): ImageMime {
 
 /** The admin's QRIS: stored, put into the settings, the previous one removed. */
 export async function setQrisImage(bytes: Uint8Array): Promise<{ url: string }> {
-  const mimeType = checked(bytes);
+  const mimeType = checkedImage(bytes);
 
   return await db.transaction(async (tx) => {
     const settings = await tx.orm.public.StoreSetting.where({ id: 1 }).first();
@@ -90,7 +91,7 @@ export async function attachPaymentProof(input: {
     throw new ValidationError("Pesanan ini udah dibatalkan");
   }
 
-  const mimeType = checked(input.bytes);
+  const mimeType = checkedImage(input.bytes);
 
   return await db.transaction(async (tx) => {
     const image = await tx.orm.public.StoredImage.create({

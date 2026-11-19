@@ -4,6 +4,7 @@ import * as React from "react";
 import { Sheet } from "@/components/ui/sheet";
 import { cn, formatRupiah } from "@/lib/utils";
 import { ProductVisual } from "./product-card";
+import { ProductGallery } from "./product-gallery";
 import type { PublicProduct } from "@/types/admin";
 
 export interface ProductDetailSheetProps {
@@ -60,11 +61,22 @@ export function ProductDetailSheet({
         )}
 
         <div className="relative mt-3 overflow-hidden rounded-[16px]">
-          <ProductVisual
-            product={product}
-            live
-            className="h-40 w-full min-[380px]:h-48 desktop:h-52"
-          />
+          {product.images && product.images.length > 1 ? (
+            <ProductGallery
+              name={product.name}
+              images={product.images}
+              className="h-52 w-full min-[380px]:h-60 desktop:h-72"
+            />
+          ) : (
+            <ProductVisual
+              product={product}
+              live
+              className={cn(
+                "w-full",
+                product.imageUrl ? "h-52 min-[380px]:h-60 desktop:h-72" : "h-40 min-[380px]:h-48 desktop:h-52",
+              )}
+            />
+          )}
           <div className="absolute left-2.5 top-2.5 flex gap-1.5">
             {isLow && <span className="k-pill">Hot item</span>}
             <span className="k-pill k-pill-yellow">{product.categoryName ?? "Menu"}</span>

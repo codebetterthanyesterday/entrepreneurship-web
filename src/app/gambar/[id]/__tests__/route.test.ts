@@ -9,7 +9,7 @@ import { closeDatabase, resetDatabase } from "@/lib/services/__tests__/helpers/t
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 
-async function store(kind: "QRIS" | "PAYMENT_PROOF") {
+async function store(kind: "QRIS" | "PAYMENT_PROOF" | "PRODUCT") {
   return await db.orm.public.StoredImage.create({ kind, mimeType: "image/png", data: PNG, byteSize: PNG.length });
 }
 
@@ -34,6 +34,14 @@ describe("GET /gambar/[id]", () => {
     expect(response.headers.get("cache-control")).toContain("immutable");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(PNG);
+  });
+
+  it("serves a menu photo to anyone, cached for good by the browser and the CDN", async () => {
+    const photo = await store("PRODUCT");
+    const response = await get(photo.id);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("public, max-age=31536000, s-maxage=31536000, immutable");
   });
 
   it("shows a payment proof only to the till, and to nobody else says it exists", async () => {

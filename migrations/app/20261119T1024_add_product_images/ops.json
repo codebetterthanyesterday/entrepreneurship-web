@@ -1,0 +1,290 @@
+[
+  {
+    "id": "dropCheckConstraint.storedImage.storedImage_kind_check_f11fda7f",
+    "label": "Drop check constraint \"storedImage_kind_check_f11fda7f\" on \"storedImage\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "storedImage_kind_check_f11fda7f",
+        "table": "storedImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"storedImage_kind_check_f11fda7f\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_f11fda7f",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"storedImage_kind_check_f11fda7f\"",
+        "sql": "ALTER TABLE \"public\".\"storedImage\" DROP CONSTRAINT \"storedImage_kind_check_f11fda7f\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"storedImage_kind_check_f11fda7f\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_f11fda7f",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.productImage",
+    "label": "Create table \"productImage\"",
+    "summary": "Creates table \"productImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "productImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"productImage\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"productImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"productImage\"",
+        "sql": "CREATE TABLE \"public\".\"productImage\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"imageId\" text NOT NULL,\n  \"productId\" text NOT NULL,\n  \"sortOrder\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"productImage\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"productImage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.productImage.productImage_imageId_key",
+    "label": "Add unique constraint on \"productImage\" (imageId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "productImage_imageId_key",
+        "table": "productImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"productImage_imageId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "productImage_imageId_key",
+          "public",
+          "\"public\".\"productImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"productImage_imageId_key\"",
+        "sql": "ALTER TABLE \"public\".\"productImage\" ADD CONSTRAINT \"productImage_imageId_key\" UNIQUE (\"imageId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"productImage_imageId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "productImage_imageId_key",
+          "public",
+          "\"public\".\"productImage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.storedImage.storedImage_kind_check_c23614b6",
+    "label": "Add check constraint \"storedImage_kind_check_c23614b6\" on \"storedImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "storedImage_kind_check_c23614b6",
+        "table": "storedImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"storedImage_kind_check_c23614b6\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_c23614b6",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"storedImage_kind_check_c23614b6\"",
+        "sql": "ALTER TABLE \"public\".\"storedImage\" ADD CONSTRAINT \"storedImage_kind_check_c23614b6\" CHECK (\"kind\" IN ('QRIS', 'PAYMENT_PROOF', 'PRODUCT'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"storedImage_kind_check_c23614b6\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "storedImage_kind_check_c23614b6",
+          "public",
+          "\"public\".\"storedImage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.productImage.productImage_productId_idx_5858600a",
+    "label": "Create index \"productImage_productId_idx_5858600a\" on \"productImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "productImage_productId_idx_5858600a",
+        "table": "productImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"productImage_productId_idx_5858600a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"productImage_productId_idx_5858600a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"productImage_productId_idx_5858600a\"",
+        "sql": "CREATE INDEX \"productImage_productId_idx_5858600a\" ON \"public\".\"productImage\" (\"productId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"productImage_productId_idx_5858600a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"productImage_productId_idx_5858600a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.productImage.productImage_productId_fkey",
+    "label": "Add foreign key \"productImage_productId_fkey\" on \"productImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "productImage_productId_fkey",
+        "table": "productImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"productImage_productId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "productImage_productId_fkey",
+          "public",
+          "\"public\".\"productImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"productImage_productId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"productImage\"\nADD CONSTRAINT \"productImage_productId_fkey\"\nFOREIGN KEY (\"productId\")\nREFERENCES \"public\".\"product\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"productImage_productId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "productImage_productId_fkey",
+          "public",
+          "\"public\".\"productImage\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.productImage.productImage_imageId_fkey",
+    "label": "Add foreign key \"productImage_imageId_fkey\" on \"productImage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "productImage_imageId_fkey",
+        "table": "productImage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"productImage_imageId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "productImage_imageId_fkey",
+          "public",
+          "\"public\".\"productImage\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"productImage_imageId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"productImage\"\nADD CONSTRAINT \"productImage_imageId_fkey\"\nFOREIGN KEY (\"imageId\")\nREFERENCES \"public\".\"storedImage\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"productImage_imageId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "productImage_imageId_fkey",
+          "public",
+          "\"public\".\"productImage\""
+        ]
+      }
+    ]
+  }
+]
