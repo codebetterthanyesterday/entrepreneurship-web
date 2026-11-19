@@ -135,3 +135,48 @@ export const cancelOrderSchema = z.object({
   orderId: z.string().min(1, "Pesanannya nggak ketemu"),
   reason: z.string().max(200, "Alasannya kepanjangan").nullable().optional(),
 });
+
+/**
+ * What a cashier or admin sends to correct an order (`updateOrderDetails`):
+ * the name, the WhatsApp number, and optionally a new handover. Prices,
+ * items and payment are not here: they are not corrected, the order is
+ * cancelled and placed again.
+ */
+export const updateOrderDetailsSchema = z
+  .object({
+    orderId: z.string().min(1, "Pesanannya nggak ketemu"),
+    customerName: z
+      .string()
+      .trim()
+      .min(2, "Isi nama dulu ya")
+      .max(60, "Namanya kepanjangan, maksimal 60 huruf"),
+    // Empty means none; a walk-in may have no number.
+    customerPhone: z
+      .string()
+      .trim()
+      .transform((value) => (value === "" ? null : value))
+      .pipe(z.string().regex(/^0\d{8,13}$/, "Nomor WhatsApp-nya belum betul").nullable()),
+    schedule: z
+      .object({
+        handoverLocation: z.enum(HANDOVER_LOCATIONS, { message: "Pilih lokasi serah terimanya dulu ya" }),
+        handoverDetail: z
+          .string()
+          .trim()
+          .max(HANDOVER_DETAIL_MAX, "Detail lokasinya kepanjangan")
+          .transform((value) => (value === "" ? null : value))
+          .nullable(),
+        serviceWindowId: z
+          .string({ message: "Pilih tanggal dan jamnya dulu ya" })
+          .min(1, "Pilih tanggal dan jamnya dulu ya"),
+      })
+      .nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.schedule?.handoverLocation === "OTHER" && (data.schedule.handoverDetail?.length ?? 0) < OTHER_DETAIL_MIN) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["handoverDetail"],
+        message: "Tulis lokasinya lengkap ya, biar kami bisa cek jangkauannya",
+      });
+    }
+  });

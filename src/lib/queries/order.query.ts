@@ -212,6 +212,7 @@ export function toCashierPreorder(
     customerName: order.customerName,
     pickupSlot: order.pickupSlot,
     ...handoverView(order),
+    serviceWindowId: order.serviceWindowId ?? null,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     paymentProofUrl: order.paymentProofUrl,

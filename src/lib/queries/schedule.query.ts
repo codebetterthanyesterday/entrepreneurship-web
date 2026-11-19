@@ -38,9 +38,13 @@ const HORIZON_DAYS = 90;
  * holding at least one time range, and not past their cut-off (21.00 WIB the
  * day before, by default). Full ranges are kept and marked, so the customer
  * sees they exist; a date whose every range is full is kept too.
+ *
+ * With `staff`, every open date from today on, cut-off or not: what a cashier
+ * may move an order to.
  */
 export async function getBookableSchedule(
   now: Temporal.Instant = Temporal.Now.instant(),
+  { staff = false }: { staff?: boolean } = {},
 ): Promise<BookableSchedule> {
   const settings = await db.orm.public.StoreSetting.where({ id: 1 }).first();
   const cutoffMinute = settings?.orderCutoffMinute ?? DEFAULT_CUTOFF_MINUTE;
@@ -56,7 +60,9 @@ export async function getBookableSchedule(
     .all();
 
   const days = rows
-    .filter((day) => isBookable(day.date, cutoffMinute, now))
+    // Staff moving an order are not held to the customer's cut-off, only to
+    // today and later (`updateOrderDetails`).
+    .filter((day) => staff || isBookable(day.date, cutoffMinute, now))
     .map((day) => ({
       date: day.date,
       locations: day.locations.filter(isHandoverLocation),

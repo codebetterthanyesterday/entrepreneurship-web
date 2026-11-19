@@ -34,6 +34,8 @@ import type { CashierPreorder } from "@/types/order-view";
 import { PaymentSheet, type PaymentSubmission } from "./payment-sheet";
 import { CustomerChat } from "@/components/staff/customer-chat";
 import { needsLocationNotice } from "@/lib/customer-chat";
+import { OrderEditSheet, canEditOrder } from "@/components/staff/order-edit-sheet";
+import type { BookableSchedule } from "@/lib/queries/schedule.query";
 
 /**
  * The kitchen moves orders from its own screen, so this list would otherwise go
@@ -56,12 +58,14 @@ export interface PreorderScreenProps {
   qrisImageUrl: string | null;
   /** The name messages to customers are signed with. */
   brand: string;
+  /** Every open date from today on, for moving a preorder (`OrderEditSheet`). */
+  schedule: BookableSchedule;
 }
 
 /** A preorder as the chat templates read it. */
 const chatView = (order: CashierPreorder) => ({ ...order, hasPaymentProof: order.paymentProofUrl !== null });
 
-export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScreenProps) {
+export function PreorderScreen({ preorders, qrisImageUrl, brand, schedule }: PreorderScreenProps) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -75,6 +79,7 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScree
   const [rejectReason, setRejectReason] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [payOpen, setPayOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
   const [scanOpen, setScanOpen] = React.useState(false);
   const [isWorking, setIsWorking] = React.useState(false);
 
@@ -344,7 +349,7 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScree
       {/* Never both at once: the payment sheet replaces the detail sheet rather
           than stacking on top of it, and settling the bill puts the detail
           sheet back — now showing the order's next action. */}
-      {selected && action && !payOpen && (
+      {selected && action && !payOpen && !editOpen && (
         <Sheet
           open
           onClose={() => setSelectedId(null)}
@@ -517,6 +522,12 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScree
               brand={brand}
               className="border-t-2 border-dashed border-line pt-3 mt-1"
             />
+
+            {canEditOrder(selected) && (
+              <Button variant="ghost" size="sm" fullWidth onClick={() => setEditOpen(true)}>
+                Ubah nama, nomor, atau jadwal
+              </Button>
+            )}
           </div>
         </Sheet>
       )}
@@ -533,6 +544,21 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScree
           }}
           onClose={closePayment}
           onSubmit={takePayment}
+        />
+      )}
+
+      {/* Replaces the detail sheet like the payment sheet does, and puts it
+          back on close, now showing the corrected order. */}
+      {selected && editOpen && (
+        <OrderEditSheet
+          order={{ ...selected, channel: "PREORDER" }}
+          schedule={schedule}
+          onClose={() => setEditOpen(false)}
+          onSaved={(orderNumber) => {
+            setEditOpen(false);
+            toast(`Data ${orderNumber} udah diperbarui`);
+            router.refresh();
+          }}
         />
       )}
     </div>

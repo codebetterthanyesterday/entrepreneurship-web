@@ -4,13 +4,19 @@ import { revalidatePath } from "next/cache";
 import { toActionError, type ActionResult } from "@/lib/action-result";
 import { requireRole, toActor } from "@/lib/session";
 import { z } from "zod";
-import { cancelOrderSchema, markAsPaidSchema, transitionStatusSchema } from "@/lib/validations/order.schema";
+import {
+  cancelOrderSchema,
+  markAsPaidSchema,
+  transitionStatusSchema,
+  updateOrderDetailsSchema,
+} from "@/lib/validations/order.schema";
 import {
   cancelOrder,
   confirmHandoverLocation,
   markAsPaid,
   markLocationNotified,
   transitionStatus,
+  updateOrderDetails,
 } from "@/lib/services/order.service";
 import { findOrderById } from "@/lib/queries/order.query";
 import { ValidationError } from "@/lib/errors";
@@ -138,5 +144,42 @@ export async function markLocationNotifiedAction(
     return { ok: true, data: result };
   } catch (error) {
     return toActionError(error, "markLocationNotifiedAction");
+  }
+}
+
+/**
+ * Corrects an order's name, WhatsApp number or handover at the customer's
+ * request, from the cashier's preorder sheet or the admin's order list. The
+ * acting staff member comes from the session.
+ */
+export async function updateOrderDetailsAction(
+  input: unknown,
+): Promise<ActionResult<{ orderNumber: string }>> {
+  try {
+    const user = await requireRole("KASIR", "ADMIN");
+    const data = updateOrderDetailsSchema.parse(input);
+
+    const order = await updateOrderDetails(
+      data.orderId,
+      {
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        schedule: data.schedule && {
+          location: data.schedule.handoverLocation,
+          detail: data.schedule.handoverDetail,
+          serviceWindowId: data.schedule.serviceWindowId,
+        },
+      },
+      toActor(user),
+    );
+
+    revalidateCounterAndKitchen();
+    revalidatePath("/admin/pesanan");
+    // The schedule's remaining places changed for the checkout too.
+    revalidatePath("/checkout");
+
+    return { ok: true, data: { orderNumber: order.orderNumber } };
+  } catch (error) {
+    return toActionError(error, "updateOrderDetailsAction");
   }
 }

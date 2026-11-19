@@ -220,3 +220,47 @@ test("an admin's new category becomes a shelf, and deleting it keeps its menu on
 
   await admin.context().close();
 });
+
+test("a cashier corrects a customer's name and moves their handover, and the tracker follows", async ({ page, browser }) => {
+  const dateLabel = process.env.E2E_SERVICE_DATE_LABEL!;
+  const phone = `0813${String(Date.now()).slice(-8)}`;
+  const name = `Salah Ketik ${Date.now()}`;
+  const fixed = `Nama Benar ${Date.now()}`;
+  await skipSplash(page);
+
+  // The customer orders for Market Day, with a typo in their name.
+  await page.goto("/");
+  await page.getByRole("button", { name: `Tambah 1 ${MENU.name} ke keranjang` }).click();
+  await page.goto("/checkout");
+  await page.getByLabel("Nama kamu").fill(name);
+  await page.getByLabel("Nomor WhatsApp").fill(phone);
+  await page.getByRole("button", { name: /^Market Day/ }).click();
+  await page.getByRole("button", { name: new RegExp(dateLabel.split(", ")[1]!) }).click();
+  await page.getByRole("button", { name: /^10\.00 - 11\.00/ }).click();
+  await page.getByRole("button", { name: "Tunai pas ambil" }).click();
+  await page.getByRole("button", { name: "Kirim pesanan" }).first().click();
+  await page.waitForURL(/\/pesanan\//);
+  const number = decodeURIComponent(page.url().split("/pesanan/")[1]!);
+
+  // They ask the cashier to fix the name and bring it to Kampus B instead.
+  const till = await signInStaff(browser, STAFF.KASIR);
+  await till.goto("/kasir/preorder");
+  await till.getByLabel("Cari nomor pesanan atau nama pelanggan").fill(number);
+  await till.getByRole("button", { name: new RegExp(name) }).first().click();
+  await till.getByRole("button", { name: "Ubah nama, nomor, atau jadwal" }).click();
+  const edit = till.getByRole("dialog", { name: `Ubah pesanan ${number}` });
+  await edit.getByLabel("Nama pelanggan").fill(fixed);
+  await edit.getByRole("button", { name: /^Kampus B/ }).click();
+  await edit.getByRole("button", { name: /^10\.00 - 11\.00/ }).click();
+  await edit.getByRole("button", { name: "Simpan perubahan" }).click();
+  await expect(till.getByText(`Data ${number} udah diperbarui`)).toBeVisible();
+  const sheet = till.getByRole("dialog", { name: `Pesanan ${number}` });
+  await expect(sheet.getByText(new RegExp(fixed))).toBeVisible();
+  await expect(sheet.getByText(/Kampus B/)).toBeVisible();
+
+  // The customer's tracker shows the new place.
+  await page.goto("/lacak");
+  await expect(page.getByText(/Kampus B/).first()).toBeVisible();
+
+  await till.context().close();
+});

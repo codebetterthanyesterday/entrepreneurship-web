@@ -15,6 +15,8 @@ import type { OrderStatus } from "@/types/order";
 import type { AdminOrder } from "@/types/order-view";
 import { CustomerChat } from "@/components/staff/customer-chat";
 import { needsLocationNotice } from "@/lib/customer-chat";
+import { OrderEditSheet, canEditOrder } from "@/components/staff/order-edit-sheet";
+import type { BookableSchedule } from "@/lib/queries/schedule.query";
 
 /** Status names as staff say them, matching the dashboard and the kitchen. */
 const STATUS_LABEL: Readonly<Record<OrderStatus, string>> = {
@@ -124,6 +126,8 @@ export interface OrderBrowserProps {
   orders: readonly AdminOrder[];
   /** The name messages to customers are signed with. */
   brand: string;
+  /** Every open date from today on, for moving a preorder (`OrderEditSheet`). */
+  schedule: BookableSchedule;
 }
 
 /**
@@ -134,10 +138,11 @@ export interface OrderBrowserProps {
  * view can be bookmarked. This component owns the two things that genuinely
  * need the browser: opening a detail sheet, and cancelling.
  */
-export function OrderBrowser({ orders, brand }: OrderBrowserProps) {
+export function OrderBrowser({ orders, brand, schedule }: OrderBrowserProps) {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = React.useState(false);
   const [isCancelling, setIsCancelling] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -196,7 +201,7 @@ export function OrderBrowser({ orders, brand }: OrderBrowserProps) {
       </div>
 
       <Sheet
-        open={selected !== null}
+        open={selected !== null && !editing}
         onClose={closeSheet}
         title={selected ? `Pesanan ${selected.orderNumber}` : undefined}
       >
@@ -291,6 +296,12 @@ export function OrderBrowser({ orders, brand }: OrderBrowserProps) {
               </dl>
             </section>
 
+            {canEditOrder(selected) && !confirmingCancel && (
+              <Button variant="flat" size="sm" fullWidth onClick={() => setEditing(true)}>
+                Ubah nama, nomor, atau jadwal
+              </Button>
+            )}
+
             {selected.canCancel && (
               <section className="flex flex-col gap-2.5">
                 {confirmingCancel ? (
@@ -335,6 +346,21 @@ export function OrderBrowser({ orders, brand }: OrderBrowserProps) {
           </div>
         )}
       </Sheet>
+
+      {/* In place of the detail sheet, which comes back on close showing the
+          corrected order. */}
+      {selected && editing && (
+        <OrderEditSheet
+          order={selected}
+          schedule={schedule}
+          onClose={() => setEditing(false)}
+          onSaved={(orderNumber) => {
+            setEditing(false);
+            toast(`Data ${orderNumber} udah diperbarui`);
+            router.refresh();
+          }}
+        />
+      )}
     </>
   );
 }

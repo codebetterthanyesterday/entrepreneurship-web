@@ -5,6 +5,7 @@ import {
   OTHER_DETAIL_MIN,
   isBookable,
   needsLocationReview,
+  todayInJakarta,
   windowLabel,
   type HandoverLocation,
 } from "@/lib/schedule";
@@ -401,11 +402,9 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     // before the schedule, a one-day slot by its label.
     const booked =
       input.channel === "PREORDER" && input.schedule
-        ? await bookServiceWindow(
-            tx,
-            input.schedule,
-            settings?.orderCutoffMinute ?? DEFAULT_CUTOFF_MINUTE,
-          )
+        ? await bookServiceWindow(tx, input.schedule, {
+            cutoffMinute: settings?.orderCutoffMinute ?? DEFAULT_CUTOFF_MINUTE,
+          })
         : null;
     if (!booked && input.channel === "PREORDER" && input.pickupSlot) {
       await bookPickupSlot(tx, input.pickupSlot);
@@ -606,10 +605,17 @@ async function bookPickupSlot(tx: TxClient, label: string): Promise<void> {
  * same way as the old slots, with `booked < quota` inside the UPDATE, so two
  * customers taking the last place at once cannot both get it.
  */
+/**
+ * Who is booking decides the deadline: a customer is held to the cut-off (by
+ * default 21.00 WIB the day before), staff moving an order only to "not in
+ * the past" — they are the ones who decide the kitchen can still make it.
+ */
+type BookingDeadline = { cutoffMinute: number } | { staff: true };
+
 async function bookServiceWindow(
   tx: TxClient,
   schedule: { location: HandoverLocation; detail?: string | null; serviceWindowId: string },
-  cutoffMinute: number,
+  deadline: BookingDeadline,
 ): Promise<{ date: string; label: string; windowId: string }> {
   const window = await tx.orm.public.ServiceWindow.where({ id: schedule.serviceWindowId })
     .include("day")
@@ -625,9 +631,11 @@ async function bookServiceWindow(
       "serviceWindowId",
     );
   }
-  if (!isBookable(day.date, cutoffMinute)) {
+  if ("staff" in deadline ? day.date < todayInJakarta() : !isBookable(day.date, deadline.cutoffMinute)) {
     throw new ValidationError(
-      "Pemesanan untuk tanggal itu udah ditutup. Pilih tanggal berikutnya ya",
+      "staff" in deadline
+        ? "Tanggal itu udah lewat, pilih hari ini atau sesudahnya"
+        : "Pemesanan untuk tanggal itu udah ditutup. Pilih tanggal berikutnya ya",
       "serviceWindowId",
     );
   }
@@ -746,6 +754,121 @@ export async function markLocationNotified(orderId: string): Promise<{ orderNumb
     await db.orm.public.Order.where({ id: orderId }).update({ locationNotifiedAt: Temporal.Now.instant() });
   }
   return { orderNumber: order.orderNumber };
+}
+
+/** What staff may correct on an order: who it is for, and when and where it is handed over. */
+export interface OrderDetailsInput {
+  customerName: string;
+  customerPhone: string | null;
+  /** A preorder's handover; null keeps it as it is (and is the only choice for walk-ins). */
+  schedule: { location: HandoverLocation; detail: string | null; serviceWindowId: string } | null;
+}
+
+/** Statuses in which a name or number can still be corrected: not handed over, not cancelled. */
+const EDITABLE_STATUSES: readonly OrderStatus[] = ["CONFIRMED", "IN_QUEUE", "IN_PROGRESS", "READY"];
+
+/**
+ * Staff correct an order's details at the customer's request: their name,
+ * their WhatsApp number, and — for a preorder the customer has not come for
+ * yet (CONFIRMED) — the date, time range and place of the handover.
+ *
+ * A new time range is booked like a checkout (held to its quota, on an open
+ * date that serves the place) but not to the customer's cut-off: staff decide
+ * whether the kitchen can still make it. The old range gets its place back in
+ * the same transaction. A "Lainnya" place written by staff counts as checked.
+ *
+ * The row is updated on condition that its status has not moved meanwhile,
+ * and through the ORM so `updatedAt` moves: the photobooth refreshes its copy
+ * of the name and the last four digits from that.
+ */
+export async function updateOrderDetails(
+  orderId: string,
+  input: OrderDetailsInput,
+  actor: Actor,
+): Promise<OrderWithItems> {
+  return await db.transaction(async (tx) => {
+    const order = await tx.orm.public.Order.where({ id: orderId }).first();
+    if (!order) throw new NotFoundError("Pesanannya nggak ketemu");
+    if (!EDITABLE_STATUSES.includes(order.status as OrderStatus)) {
+      throw new ValidationError(
+        order.status === "CANCELLED"
+          ? "Pesanan yang udah dibatalin nggak bisa diubah"
+          : "Pesanan yang udah diserahkan nggak bisa diubah",
+      );
+    }
+    if (order.channel === "PREORDER" && !input.customerPhone) {
+      throw new ValidationError("Nomor WhatsApp-nya harus diisi", "customerPhone");
+    }
+
+    const changes: {
+      customerName: string;
+      customerPhone: string | null;
+      serviceWindowId?: string;
+      serviceDate?: string;
+      pickupSlot?: string;
+      handoverLocation?: HandoverLocation;
+      handoverDetail?: string | null;
+      locationReviewedAt?: Temporal.Instant;
+      handledById?: string;
+    } = {
+      customerName: input.customerName,
+      customerPhone: input.customerPhone,
+    };
+
+    const schedule = input.schedule;
+    const scheduleChanged =
+      schedule !== null &&
+      (schedule.serviceWindowId !== order.serviceWindowId ||
+        schedule.location !== order.handoverLocation ||
+        (schedule.detail ?? null) !== (order.handoverDetail ?? null));
+
+    if (schedule && scheduleChanged) {
+      if (order.channel !== "PREORDER") {
+        throw new ValidationError("Pesanan di booth nggak punya jadwal serah terima");
+      }
+      if (order.status !== "CONFIRMED") {
+        throw new ValidationError(
+          "Pelanggannya udah datang, jadwal dan lokasinya nggak bisa diubah lagi",
+          "serviceWindowId",
+        );
+      }
+
+      if (schedule.serviceWindowId !== order.serviceWindowId) {
+        const booked = await bookServiceWindow(tx, schedule, { staff: true });
+        if (order.serviceWindowId) await releaseServiceWindow(tx, order.serviceWindowId);
+        else if (order.pickupSlot) await releasePickupSlot(tx, order.pickupSlot);
+        changes.serviceWindowId = booked.windowId;
+        changes.serviceDate = booked.date;
+        changes.pickupSlot = booked.label;
+      } else {
+        // Same range, another place: the date still has to serve it.
+        const window = await tx.orm.public.ServiceWindow.where({ id: schedule.serviceWindowId })
+          .include("day")
+          .first();
+        if (!window?.day.locations.includes(schedule.location)) {
+          throw new ValidationError(
+            `Tanggal itu nggak melayani ${HANDOVER_LABEL[schedule.location]}, pilih tanggal lain ya`,
+            "serviceWindowId",
+          );
+        }
+        if (schedule.location === "OTHER" && (schedule.detail?.trim().length ?? 0) < OTHER_DETAIL_MIN) {
+          throw new ValidationError("Tulis lokasinya lengkap ya, biar kami bisa cek jangkauannya", "handoverDetail");
+        }
+      }
+
+      changes.handoverLocation = schedule.location;
+      changes.handoverDetail = schedule.detail?.trim() || null;
+      if (schedule.location === "OTHER") {
+        changes.locationReviewedAt = Temporal.Now.instant();
+        changes.handledById = actor.id;
+      }
+    }
+
+    const updated = await tx.orm.public.Order.where({ id: orderId, status: order.status }).update(changes);
+    if (!updated) throw new ValidationError("Pesanan ini barusan berubah, muat ulang dulu ya");
+
+    return await loadOrderWithItems(tx, orderId);
+  });
 }
 
 // ---------------------------------------------------------------------------

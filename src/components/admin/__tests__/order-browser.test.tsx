@@ -38,6 +38,7 @@ function order(overrides: Partial<AdminOrder> = {}): AdminOrder {
     id: "o1",
     orderNumber: "PO-0001",
     channel: "PREORDER",
+    serviceWindowId: null,
     status: "CONFIRMED",
     customerName: "Rani",
     customerPhone: "081234567890",
@@ -73,7 +74,7 @@ function order(overrides: Partial<AdminOrder> = {}): AdminOrder {
 function renderBrowser(orders: AdminOrder[]) {
   return render(
     <ToastProvider>
-      <OrderBrowser orders={orders} brand="Bunnyè" />
+      <OrderBrowser orders={orders} brand="Bunnyè" schedule={{ days: [], cutoffMinute: 21 * 60 }} />
       {/* The app renders the toast in the root layout; the browser only calls it. */}
       <Toast />
     </ToastProvider>,
