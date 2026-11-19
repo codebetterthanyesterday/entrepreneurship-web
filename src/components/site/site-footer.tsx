@@ -16,6 +16,7 @@ const LINKS = [
   { href: "/keranjang", label: "World 2: Item Inventory" },
   { href: "/checkout", label: "World 3: Adventurer Info" },
   { href: "/lacak", label: "World 4: Order Tracker" },
+  { href: "/privasi", label: "Privasi & data kamu" },
 ];
 
 /**
