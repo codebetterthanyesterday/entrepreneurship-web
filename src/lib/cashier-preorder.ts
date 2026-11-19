@@ -1,4 +1,5 @@
 import { formatRupiah } from "@/lib/utils";
+import { orderNumberIn } from "@/lib/order-number";
 import type { OrderStatus } from "@/types/order";
 import type { CashierPreorder } from "@/types/order-view";
 
@@ -58,6 +59,40 @@ export function matchesPreorderSearch(order: CashierPreorder, search: string): b
     order.orderNumber.toLowerCase().includes(term) ||
     order.customerName.toLowerCase().includes(term)
   );
+}
+
+// ---------------------------------------------------------------------------
+// Scanning the customer's ticket
+// ---------------------------------------------------------------------------
+
+export type ScanResult =
+  | { kind: "found"; order: CashierPreorder }
+  | { kind: "message"; message: string };
+
+/**
+ * What the cashier's scanner does with a QR it has read: open that preorder,
+ * or say why not. Matched on the number alone, ignoring the list's filters and
+ * search, because a customer holding up a ticket is the order to open.
+ *
+ * The usual mistake is the QRIS payment code, which customers carry on the
+ * same page, so the message for "not a ticket" names it.
+ */
+export function preorderFromScan(text: string, preorders: readonly CashierPreorder[]): ScanResult {
+  const number = orderNumberIn(text);
+  if (!number) {
+    return {
+      kind: "message",
+      message: "Ini bukan QR tiket pesanan. Minta pelanggan buka tiketnya (bukan QR bayar), lalu scan lagi.",
+    };
+  }
+
+  const order = preorders.find((candidate) => candidate.orderNumber === number);
+  if (order) return { kind: "found", order };
+
+  if (number.startsWith("OS-")) {
+    return { kind: "message", message: `${number} itu pesanan di booth, bukan preorder.` };
+  }
+  return { kind: "message", message: `${number} nggak ada di daftar preorder. Cek lagi nomornya sama pelanggan.` };
 }
 
 // ---------------------------------------------------------------------------

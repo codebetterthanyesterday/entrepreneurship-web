@@ -25,8 +25,10 @@ import {
   PREORDER_FILTERS,
   PREORDER_STATUS,
   matchesPreorderSearch,
+  preorderFromScan,
   resolvePreorderAction,
 } from "@/lib/cashier-preorder";
+import { QrScanner } from "./qr-scanner";
 import { formatRupiah } from "@/lib/utils";
 import type { CashierPreorder } from "@/types/order-view";
 import { PaymentSheet, type PaymentSubmission } from "./payment-sheet";
@@ -73,6 +75,7 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScree
   const [rejectReason, setRejectReason] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [payOpen, setPayOpen] = React.useState(false);
+  const [scanOpen, setScanOpen] = React.useState(false);
   const [isWorking, setIsWorking] = React.useState(false);
 
   React.useEffect(() => {
@@ -182,16 +185,47 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand }: PreorderScree
 
   const action = selected ? resolvePreorderAction(selected) : null;
 
+  const closeScanner = React.useCallback(() => setScanOpen(false), []);
+
+  /**
+   * A ticket's QR opens that order's sheet straight away, whatever the list is
+   * filtered to: the customer at the counter is the order to deal with.
+   */
+  const handleScan = React.useCallback(
+    (text: string) => {
+      const result = preorderFromScan(text, preorders);
+      if (result.kind === "message") return result.message;
+      navigator.vibrate?.(60);
+      setScanOpen(false);
+      setSelectedId(result.order.id);
+      toast(`${result.order.orderNumber} dibuka`);
+      return null;
+    },
+    [preorders, toast],
+  );
+
   return (
     <div className="flex flex-col gap-3">
-      <input
-        type="search"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Cari nomor pesanan atau nama pelanggan"
-        aria-label="Cari nomor pesanan atau nama pelanggan"
-        className="ui-field bg-white border-[1.5px] border-line rounded-[14px] min-h-[50px] px-4 text-ink text-[16px] placeholder:text-ink-soft/60 transition-colors focus:border-pink"
-      />
+      <div className="flex gap-2">
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Cari nomor pesanan atau nama pelanggan"
+          aria-label="Cari nomor pesanan atau nama pelanggan"
+          className="ui-field min-w-0 flex-1 bg-white border-[1.5px] border-line rounded-[14px] min-h-[50px] px-4 text-ink text-[16px] placeholder:text-ink-soft/60 transition-colors focus:border-pink"
+        />
+        <button
+          type="button"
+          onClick={() => setScanOpen(true)}
+          className="flex min-h-[50px] flex-none items-center gap-2 rounded-[14px] bg-pink-deep px-4 text-[14px] font-semibold text-white transition hover:brightness-95"
+        >
+          <ScanGlyph />
+          Scan QR
+        </button>
+      </div>
+
+      <QrScanner open={scanOpen} onClose={closeScanner} onScan={handleScan} />
 
       <div className="flex gap-2 overflow-x-auto pt-1 pb-2.5 -mx-3.5 px-3.5 [scrollbar-width:none] tablet:mx-0 tablet:px-0 tablet:flex-wrap">
         {PREORDER_FILTERS.map((filter) => (
@@ -522,4 +556,20 @@ function packingList(orders: CashierPreorder[]) {
     ...group,
     items: [...group.items.entries()].map(([name, quantity]) => ({ name, quantity })),
   }));
+}
+
+/** Four corners of a viewfinder around a square. */
+function ScanGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 flex-none">
+      <path
+        d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <rect x="8.5" y="8.5" width="7" height="7" rx="1" fill="currentColor" />
+    </svg>
+  );
 }
