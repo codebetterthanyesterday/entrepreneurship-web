@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'4e5c776254ae065fe1d3dfa8eaccf6be792d93ddd754bb2f92e1a61b30454fc2'>;
+  StorageHashBase<'0457b81c730e6f5e20904bb74e9110340be84611bc8eab86d1bb1a668fd006ce'>;
 export type ExecutionHash =
-  ExecutionHashBase<'2237e05b4e45077ca9d3cde4b5ce91bacce3c0621a9e066f075cdf7bbf1ebed3'>;
+  ExecutionHashBase<'1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -342,6 +342,13 @@ export type FieldOutputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly categoryId: CodecTypes['pg/text@1']['output'] | null;
     };
+    readonly ProductImage: {
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly productId: CodecTypes['pg/text@1']['output'];
+      readonly imageId: CodecTypes['pg/text@1']['output'];
+      readonly sortOrder: CodecTypes['pg/int4@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly RateLimit: {
       readonly key: CodecTypes['pg/text@1']['output'];
       readonly windowStart: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -391,7 +398,7 @@ export type FieldOutputTypes = {
     };
     readonly StoredImage: {
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
       readonly mimeType: CodecTypes['pg/text@1']['output'];
       readonly data: CodecTypes['pg/bytea@1']['output'];
       readonly byteSize: CodecTypes['pg/int4@1']['output'];
@@ -524,6 +531,13 @@ export type FieldInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly categoryId: CodecTypes['pg/text@1']['input'] | null;
     };
+    readonly ProductImage: {
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly productId: CodecTypes['pg/text@1']['input'];
+      readonly imageId: CodecTypes['pg/text@1']['input'];
+      readonly sortOrder: CodecTypes['pg/int4@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly RateLimit: {
       readonly key: CodecTypes['pg/text@1']['input'];
       readonly windowStart: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -573,7 +587,7 @@ export type FieldInputTypes = {
     };
     readonly StoredImage: {
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
       readonly mimeType: CodecTypes['pg/text@1']['input'];
       readonly data: CodecTypes['pg/bytea@1']['input'];
       readonly byteSize: CodecTypes['pg/int4@1']['input'];
@@ -706,6 +720,13 @@ export type StorageColumnTypes = {
       readonly stock: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
+    readonly productImage: {
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly imageId: CodecTypes['pg/text@1']['output'];
+      readonly productId: CodecTypes['pg/text@1']['output'];
+      readonly sortOrder: CodecTypes['pg/int4@1']['output'];
+    };
     readonly rateLimit: {
       readonly count: CodecTypes['pg/int4@1']['output'];
       readonly key: CodecTypes['pg/text@1']['output'];
@@ -758,7 +779,7 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly data: CodecTypes['pg/bytea@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
       readonly mimeType: CodecTypes['pg/text@1']['output'];
     };
     readonly storeSetting: {
@@ -888,6 +909,13 @@ export type StorageColumnInputTypes = {
       readonly stock: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
+    readonly productImage: {
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly imageId: CodecTypes['pg/text@1']['input'];
+      readonly productId: CodecTypes['pg/text@1']['input'];
+      readonly sortOrder: CodecTypes['pg/int4@1']['input'];
+    };
     readonly rateLimit: {
       readonly count: CodecTypes['pg/int4@1']['input'];
       readonly key: CodecTypes['pg/text@1']['input'];
@@ -940,7 +968,7 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly data: CodecTypes['pg/bytea@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly kind: 'QRIS' | 'PAYMENT_PROOF';
+      readonly kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
       readonly mimeType: CodecTypes['pg/text@1']['input'];
     };
     readonly storeSetting: {
@@ -1004,9 +1032,11 @@ export namespace Models {
     categoryId: CodecTypes['pg/text@1']['output'] | null;
     bundleItems: public_BundleItem[];
     category: public_Category | null;
+    images: public_ProductImage[];
     orderItems: public_OrderItem[];
     stockMovements: public_StockMovement[];
-    readonly [RelationKeys]?: 'bundleItems' | 'category' | 'orderItems' | 'stockMovements';
+    readonly [RelationKeys]?:
+      'bundleItems' | 'category' | 'images' | 'orderItems' | 'stockMovements';
   };
   export type public_Order = {
     id: CodecTypes['pg/text@1']['output'];
@@ -1135,12 +1165,23 @@ export namespace Models {
   };
   export type public_StoredImage = {
     id: CodecTypes['pg/text@1']['output'];
-    kind: 'QRIS' | 'PAYMENT_PROOF';
+    kind: 'QRIS' | 'PAYMENT_PROOF' | 'PRODUCT';
     mimeType: CodecTypes['pg/text@1']['output'];
     data: CodecTypes['pg/bytea@1']['output'];
     byteSize: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    readonly [RelationKeys]?: never;
+    productImage: public_ProductImage | null;
+    readonly [RelationKeys]?: 'productImage';
+  };
+  export type public_ProductImage = {
+    id: CodecTypes['pg/text@1']['output'];
+    productId: CodecTypes['pg/text@1']['output'];
+    imageId: CodecTypes['pg/text@1']['output'];
+    sortOrder: CodecTypes['pg/int4@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    image: public_StoredImage;
+    product: public_Product;
+    readonly [RelationKeys]?: 'image' | 'product';
   };
   export type public_RateLimit = {
     key: CodecTypes['pg/text@1']['output'];
@@ -1212,6 +1253,7 @@ export declare const models: {
     StockMovement: Models.public_StockMovement;
     StoreSetting: Models.public_StoreSetting;
     StoredImage: Models.public_StoredImage;
+    ProductImage: Models.public_ProductImage;
     RateLimit: Models.public_RateLimit;
     ServiceDay: Models.public_ServiceDay;
     ServiceWindow: Models.public_ServiceWindow;
@@ -2014,6 +2056,72 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly productImage: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly productId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly imageId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly sortOrder: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['imageId'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'productImage_productId_idx_5858600a';
+                  readonly prefix: 'productImage_productId_idx';
+                  readonly columns: readonly ['productId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'productImage';
+                    readonly columns: readonly ['productId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'product';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'productImage';
+                    readonly columns: readonly ['imageId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'storedImage';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly rateLimit: {
               columns: {
                 readonly key: {
@@ -2573,7 +2681,7 @@ type ContractBase = Omit<
             };
             readonly StoredImageKind: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['QRIS', 'PAYMENT_PROOF'];
+              readonly values: readonly ['QRIS', 'PAYMENT_PROOF', 'PRODUCT'];
             };
             readonly UserRole: {
               readonly kind: 'valueSet';
@@ -2619,6 +2727,10 @@ type ContractBase = Omit<
     readonly storedImage: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'StoredImage';
+    };
+    readonly productImage: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'ProductImage';
     };
     readonly rateLimit: { readonly namespace: 'public' & NamespaceId; readonly model: 'RateLimit' };
     readonly serviceDay: {
@@ -3414,6 +3526,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly images: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ProductImage';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['productId'];
+                };
+              };
               readonly orderItems: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3452,6 +3575,70 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly categoryId: { readonly column: 'categoryId' };
+              };
+            };
+          };
+          readonly ProductImage: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly productId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly imageId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly sortOrder: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly image: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'StoredImage';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['imageId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly product: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Product';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['productId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'productImage';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly productId: { readonly column: 'productId' };
+                readonly imageId: { readonly column: 'imageId' };
+                readonly sortOrder: { readonly column: 'sortOrder' };
+                readonly createdAt: { readonly column: 'createdAt' };
               };
             };
           };
@@ -3807,7 +3994,20 @@ type ContractBase = Omit<
                 };
               };
             };
-            readonly relations: Record<string, never>;
+            readonly relations: {
+              readonly productImage: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ProductImage';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['imageId'];
+                };
+              };
+            };
             readonly storage: {
               readonly table: 'storedImage';
               readonly namespaceId: 'public';
@@ -4030,6 +4230,7 @@ type ContractBase = Omit<
             readonly members: readonly [
               { readonly name: 'QRIS'; readonly value: 'QRIS' },
               { readonly name: 'PAYMENT_PROOF'; readonly value: 'PAYMENT_PROOF' },
+              { readonly name: 'PRODUCT'; readonly value: 'PRODUCT' },
             ];
           };
           readonly ChargeSource: {
@@ -4173,6 +4374,14 @@ type ContractBase = Omit<
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'instantNow' };
           readonly onUpdate: { readonly kind: 'generator'; readonly id: 'instantNow' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'productImage';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
         },
         {
           readonly ref: {

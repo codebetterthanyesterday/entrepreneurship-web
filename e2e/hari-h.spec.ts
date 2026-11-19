@@ -103,3 +103,42 @@ test("an order page for an order that does not exist is a real 404", async ({ re
   expect((await request.get("/pesanan/PO-ZZZZZZ")).status()).toBe(404);
   expect((await request.get("/pesanan/bukan-nomor")).status()).toBe(404);
 });
+
+test("an admin's photos become the menu's cover and its gallery", async ({ page, browser }) => {
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/admin/menu");
+  await admin.getByRole("button", { name: `Ubah ${MENU.name}` }).click();
+  // Two real JPEGs, drawn in the browser: the server checks the bytes.
+  const photos = await admin.evaluate(async () => {
+    const make = async (colour: string) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 480;
+      const context = canvas.getContext("2d")!;
+      context.fillStyle = colour;
+      context.fillRect(0, 0, 640, 480);
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8));
+      return Array.from(new Uint8Array(await blob.arrayBuffer()));
+    };
+    return [await make("#c08552"), await make("#5b8c5a")];
+  });
+  await admin.locator('input[type="file"][multiple]').setInputFiles(
+    photos.map((bytes, index) => ({ name: `foto-${index + 1}.jpg`, mimeType: "image/jpeg", buffer: Buffer.from(bytes) })),
+  );
+  await expect(admin.getByText("2 foto udah ditambah")).toBeVisible();
+  await expect(admin.getByText("Sampul")).toBeVisible();
+
+  // A customer sees the cover on the card and both photos in the sheet.
+  await skipSplash(page);
+  await page.goto("/");
+  const card = page.getByRole("button", { name: `Lihat ${MENU.name}` });
+  await expect(card.locator("img")).toHaveAttribute("src", /^\/gambar\//);
+  await card.click();
+  // The mobile and desktop runs share one database, so the second run finds
+  // the first run's photos too: two or more, never one.
+  await expect(page.getByRole("img", { name: new RegExp(`^${MENU.name}, foto 1 dari [2-6]$`) })).toBeVisible();
+  await expect(page.getByText(/^1\/[2-6]$/)).toBeVisible();
+
+  await admin.context().close();
+});
+

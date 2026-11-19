@@ -5,7 +5,7 @@ import { MENU, STAFF } from "./constants";
 /**
  * A known starting point for every e2e run, in DATABASE_URL_TEST: one menu
  * item that needs the kitchen, one date open for preorders two days ahead at
- * Market Day and Kampus B, and a cashier and a kitchen account.
+ * Market Day and Kampus B, and a cashier, a kitchen and an admin account.
  *
  * The date is passed to the tests in E2E_SERVICE_DATE_LABEL, written the way
  * the checkout labels it.
@@ -38,7 +38,7 @@ export default async function globalSetup() {
       name: `E2E ${role}`,
       email: account.email,
       password: await bcrypt.hash(account.password, 10),
-      role: role as "KASIR" | "DAPUR",
+      role: role as "KASIR" | "DAPUR" | "ADMIN",
     });
   }
 

@@ -8,7 +8,10 @@ export interface AdminProduct {
   stock: number;
   prepType: PrepType;
   isActive: boolean;
+  /** The cover: the first photo, or an address pasted in before uploads. */
   imageUrl: string | null;
+  /** Every uploaded photo, in order; the first is the cover. */
+  images: { id: string; url: string }[];
   categoryId: string | null;
   categoryName: string | null;
   sold: number;
@@ -35,6 +38,12 @@ export interface PublicProduct {
   price: number;
   stock: number;
   prepType: PrepType;
+  /** The cover: the first photo, or an address pasted in before uploads. */
   imageUrl: string | null;
+  /**
+   * Every photo's address, in order, for the product's own sheet. Only the
+   * catalogue loads them; elsewhere the cover is enough.
+   */
+  images?: string[];
   categoryName: string | null;
 }

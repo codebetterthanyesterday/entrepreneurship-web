@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Stepper } from "@/components/ui/stepper";
 import { cn } from "@/lib/utils";
 import type { AdminCategory, AdminProduct, PrepType } from "@/types/admin";
+import { ProductPhotos } from "./product-photos";
 
 const NEW_PRODUCT_STOCK = 10;
 const QUICK_ADD = [5, 10, 25];
@@ -24,6 +25,12 @@ export interface ProductFormSheetProps {
   open: boolean;
   /** `null` puts the sheet in "Menu baru" mode. */
   product: AdminProduct | null;
+  /**
+   * The product's photos as the server has them now. Passed apart from
+   * `product`, which is the copy taken when the sheet opened, so a photo just
+   * added or moved shows without closing the sheet.
+   */
+  images?: { id: string; url: string }[];
   categories: AdminCategory[];
   isSaving: boolean;
   error: { message: string; field?: string } | null;
@@ -82,6 +89,7 @@ function Segmented<T extends string | boolean>({
 export function ProductFormSheet({
   open,
   product,
+  images,
   categories,
   isSaving,
   error,
@@ -222,6 +230,14 @@ export function ProductFormSheet({
             { value: false, label: "Sembunyikan" },
           ]}
         />
+
+        {isEditing ? (
+          <ProductPhotos productId={product.id} productName={product.name} images={images ?? product.images} />
+        ) : (
+          <p className="text-[12.5px] text-ink-soft">
+            Foto menu bisa ditambahkan setelah menunya disimpan: buka lagi menunya, lalu <b>Tambah foto</b>.
+          </p>
+        )}
 
         <div className="flex flex-col gap-2 pt-1">
           <Button type="submit" variant="primary" fullWidth isLoading={isSaving}>

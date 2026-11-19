@@ -135,6 +135,7 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
         <ProductFormSheet
           open
           product={editing}
+          images={editing ? products.find((product) => product.id === editing.id)?.images : undefined}
           categories={categories}
           isSaving={isSaving}
           error={error}

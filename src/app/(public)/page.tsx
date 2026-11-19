@@ -1,4 +1,5 @@
 import { getActiveBundles } from "@/lib/queries/bundle.query";
+import { findProductImages } from "@/lib/queries/product-image.query";
 import { getActiveProducts, getCategories } from "@/lib/queries/product.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { Catalog } from "@/components/public/catalog";
@@ -31,6 +32,7 @@ export default async function CatalogPage() {
 
   // Plain values only — Prisma rows carry Temporal instants that cannot cross
   // the server/client boundary.
+  const photos = await findProductImages(products.map((product) => product.id));
   const items: PublicProduct[] = products.map((product) => ({
     id: product.id,
     name: product.name,
@@ -39,6 +41,7 @@ export default async function CatalogPage() {
     stock: product.stock,
     prepType: product.prepType,
     imageUrl: product.imageUrl ?? null,
+    images: (photos.get(product.id) ?? []).map((photo) => photo.url),
     categoryName: product.category?.name ?? null,
   }));
 

@@ -16,6 +16,8 @@ import {
   updateProduct,
 } from "@/lib/services/product.service";
 import { adjustStock } from "@/lib/services/stock.service";
+import { moveProductImage, removeProductImage } from "@/lib/services/product-image.service";
+import { revalidateProductPhotos } from "@/lib/revalidate-product";
 
 const idSchema = z.string().min(1, "Menunya nggak ketemu");
 
@@ -24,6 +26,37 @@ function revalidateCatalog() {
   revalidatePath("/admin/menu");
   // The catalogue is the home page.
   revalidatePath("/");
+}
+
+const photoSchema = z.object({
+  productId: idSchema,
+  imageId: z.string().uuid("Fotonya nggak ketemu"),
+});
+
+/** Removes one of a product's photos for good. */
+export async function removeProductImageAction(input: unknown): Promise<ActionResult<{ removed: true }>> {
+  try {
+    await requireRole("ADMIN");
+    const data = photoSchema.parse(input);
+    await removeProductImage(data.productId, data.imageId);
+    revalidateProductPhotos();
+    return { ok: true, data: { removed: true } };
+  } catch (error) {
+    return toActionError(error, "removeProductImageAction");
+  }
+}
+
+/** Moves a photo one place earlier or later; the first is the cover. */
+export async function moveProductImageAction(input: unknown): Promise<ActionResult<{ moved: true }>> {
+  try {
+    await requireRole("ADMIN");
+    const data = photoSchema.extend({ by: z.union([z.literal(-1), z.literal(1)]) }).parse(input);
+    await moveProductImage(data.productId, data.imageId, data.by);
+    revalidateProductPhotos();
+    return { ok: true, data: { moved: true } };
+  } catch (error) {
+    return toActionError(error, "moveProductImageAction");
+  }
 }
 
 export async function createProductAction(input: unknown): Promise<ActionResult<{ id: string }>> {

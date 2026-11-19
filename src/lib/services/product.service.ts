@@ -101,6 +101,13 @@ export async function deleteProduct(id: string) {
       .build();
 
     await tx.execute(clearTrail);
+    // Its photos' bytes go too; their ProductImage rows follow by cascade.
+    await tx.execute(
+      db.raw
+        .sql`DELETE FROM "public"."storedImage" WHERE "id" IN (SELECT "imageId" FROM "public"."productImage" WHERE "productId" = ${id})`
+        .affectedCount()
+        .build(),
+    );
     await tx.orm.public.Product.where({ id }).delete();
   });
 }

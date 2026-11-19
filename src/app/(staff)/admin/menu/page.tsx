@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/session";
+import { findProductImages } from "@/lib/queries/product-image.query";
 import { getAllProducts, getCategories, getProductSalesCounts } from "@/lib/queries/product.query";
 import { getSettings } from "@/lib/services/setting.service";
 import { MenuManager } from "@/components/admin/menu-manager";
@@ -24,6 +25,8 @@ export default async function AdminMenuPage() {
     getBundleSalesCounts(),
   ]);
 
+  const photos = await findProductImages(products.map((product) => product.id));
+
   // Map to plain values — Prisma rows carry Temporal instants that cannot cross
   // the server/client boundary.
   const items: AdminProduct[] = products.map((product) => ({
@@ -34,6 +37,7 @@ export default async function AdminMenuPage() {
     prepType: product.prepType,
     isActive: product.isActive,
     imageUrl: product.imageUrl ?? null,
+    images: photos.get(product.id) ?? [],
     categoryId: product.categoryId ?? null,
     categoryName: product.category?.name ?? null,
     sold: salesCounts[product.id] ?? 0,
