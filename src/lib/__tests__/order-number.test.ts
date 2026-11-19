@@ -6,6 +6,7 @@ import {
   newOrderNumber,
   normaliseOrderNumber,
   orderNumberIn,
+  orderPageNumber,
   randomOrderCode,
 } from "@/lib/order-number";
 
@@ -92,3 +93,23 @@ describe("orderNumberIn — what the cashier's scanner reads", () => {
     expect(orderNumberIn(text)).toBeNull();
   });
 });
+
+describe("orderPageNumber — which order an order page is for", () => {
+  it("reads the number from an order page's path, however it was typed", () => {
+    expect(orderPageNumber("/pesanan/PO-7KX4QM")).toBe("PO-7KX4QM");
+    expect(orderPageNumber("/pesanan/po-7kx4qm")).toBe("PO-7KX4QM");
+    expect(orderPageNumber("/pesanan/PO-0015/")).toBe("PO-0015");
+  });
+
+  it("says an order page names nothing an order could be called, without asking the database", () => {
+    expect(orderPageNumber("/pesanan/asal")).toBeNull();
+    expect(orderPageNumber("/pesanan/%E0%A4%A")).toBeNull();
+  });
+
+  it("leaves every other path alone", () => {
+    expect(orderPageNumber("/lacak")).toBeUndefined();
+    expect(orderPageNumber("/pesanan")).toBeUndefined();
+    expect(orderPageNumber("/pesanan/PO-0015/lain")).toBeUndefined();
+  });
+});
+

@@ -24,14 +24,14 @@ const EXPORT_OPTIONS: readonly ExportOption[] = [
   },
   {
     type: "photobooth",
-    label: "Tagihan photobooth",
+    label: "Tagihan photobooth (lama)",
     description:
-      "Cetak foto dan HD yang dibayar di booth photobooth, terpisah dari makanan; yang dibatalkan tetap tercatat",
+      "Cetak foto dan HD yang dulu dibayar di booth, sebelum layanan foto digratiskan; yang dibatalkan tetap tercatat",
   },
 ];
 
 /**
- * The four report attachments, as plain download links.
+ * The report attachments, as plain download links.
  *
  * Anchors rather than buttons with a fetch: a CSV download is exactly what an
  * `<a download>` is for, the browser handles the save dialog and the filename
@@ -39,7 +39,11 @@ const EXPORT_OPTIONS: readonly ExportOption[] = [
  * endpoint checks the admin's role itself, so a link that someone copies out of
  * the page is no use to anyone else.
  */
-export function ExportPanel() {
+export function ExportPanel({ photobooth }: { photobooth: boolean }) {
+  // Since K-14 the photobooth is free and charges nothing, so its export is
+  // offered only while there is old charge data to export.
+  const options = EXPORT_OPTIONS.filter((option) => option.type !== "photobooth" || photobooth);
+
   return (
     <section className="flex flex-col gap-3">
       <div>
@@ -52,7 +56,7 @@ export function ExportPanel() {
       </div>
 
       <div className="flex flex-col gap-2.5">
-        {EXPORT_OPTIONS.map((option) => (
+        {options.map((option) => (
           <a
             key={option.type}
             href={`/api/admin/export?type=${option.type}`}

@@ -4,6 +4,7 @@ import {
   findForTracking,
   findKitchenQueue,
   findPreordersForCashier,
+  orderNumberExists,
   toCashierPreorder,
   toKitchenTicket,
   toTrackedOrder,
@@ -68,6 +69,15 @@ describe("findByNumber", () => {
 
   it("returns null for a number that does not exist", async () => {
     expect(await findByNumber("PO-9999")).toBeNull();
+  });
+});
+
+describe("orderNumberExists — what the proxy asks before an order page", () => {
+  it("knows an order that exists, and one that does not", async () => {
+    const created = await placeOrder();
+
+    expect(await orderNumberExists(created.orderNumber)).toBe(true);
+    expect(await orderNumberExists("PO-ZZZZZZ")).toBe(false);
   });
 });
 

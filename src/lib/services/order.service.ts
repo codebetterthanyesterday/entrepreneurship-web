@@ -162,26 +162,32 @@ export function mergeOrderLines(items: readonly OrderLineInput[]): OrderLineInpu
  * entry per legal edge, listing the roles allowed to walk it. A constant map is
  * auditable at a glance in a way nested conditionals are not — and anything
  * absent from it is rejected, whether or not a button for it reached a screen.
+ *
+ * ADMIN walks every edge the till and the kitchen walk. An admin running the
+ * event steps behind the counter or the pass when someone takes a break, and
+ * the staff routes (`@/lib/routes`) already let them open both screens; a
+ * screen whose buttons then failed for them helped nobody. KASIR and DAPUR
+ * still keep to their own edges.
  */
 export const TRANSITIONS: Readonly<
   Record<OrderStatus, Readonly<Partial<Record<OrderStatus, readonly UserRole[]>>>>
 > = {
   CONFIRMED: {
-    IN_QUEUE: ["KASIR"],
-    DONE: ["KASIR"],
+    IN_QUEUE: ["KASIR", "ADMIN"],
+    DONE: ["KASIR", "ADMIN"],
     CANCELLED: ["ADMIN", "KASIR"],
   },
   IN_QUEUE: {
-    IN_PROGRESS: ["DAPUR"],
+    IN_PROGRESS: ["DAPUR", "ADMIN"],
     CANCELLED: ["ADMIN", "KASIR"],
   },
   IN_PROGRESS: {
-    IN_QUEUE: ["DAPUR"],
-    READY: ["DAPUR"],
+    IN_QUEUE: ["DAPUR", "ADMIN"],
+    READY: ["DAPUR", "ADMIN"],
   },
   READY: {
-    IN_PROGRESS: ["DAPUR"],
-    DONE: ["KASIR", "DAPUR"],
+    IN_PROGRESS: ["DAPUR", "ADMIN"],
+    DONE: ["KASIR", "DAPUR", "ADMIN"],
   },
   DONE: {},
   CANCELLED: {},

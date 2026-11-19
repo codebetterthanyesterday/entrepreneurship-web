@@ -12,6 +12,7 @@ import { getSettings } from "@/lib/services/setting.service";
 import { ChatCard } from "@/components/public/whatsapp-chat";
 import { chatOrderOf } from "@/lib/whatsapp";
 import { isDelivered } from "@/lib/schedule";
+import { normaliseOrderNumber } from "@/lib/order-number";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +23,14 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { orderNumber } = await params;
-  return { title: pageTitle(`Pesanan ${decodeURIComponent(orderNumber)}`) };
+  return { title: pageTitle(`Pesanan ${normaliseOrderNumber(decodeURIComponent(orderNumber))}`) };
 }
 
 export default async function OrderConfirmationPage({ params }: PageProps) {
   const { orderNumber } = await params;
 
-  const found = await findByNumber(decodeURIComponent(orderNumber));
+  // Read the way the proxy does, so a link typed in lower case finds its order.
+  const found = await findByNumber(normaliseOrderNumber(decodeURIComponent(orderNumber)));
   if (!found) notFound();
 
   const [charges, settings] = await Promise.all([findActiveCharges([found.id]), getSettings()]);

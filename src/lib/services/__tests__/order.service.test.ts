@@ -257,6 +257,20 @@ describe("assertTransition", () => {
     expect(() => assertTransition("READY", "CANCELLED", "ADMIN")).toThrow(InvalidTransitionError);
   });
 
+  it("lets an admin walk every edge the till and the kitchen walk", () => {
+    for (const [from, to] of [
+      ["CONFIRMED", "IN_QUEUE"],
+      ["CONFIRMED", "DONE"],
+      ["IN_QUEUE", "IN_PROGRESS"],
+      ["IN_PROGRESS", "READY"],
+      ["IN_PROGRESS", "IN_QUEUE"],
+      ["READY", "IN_PROGRESS"],
+      ["READY", "DONE"],
+    ] as const) {
+      expect(() => assertTransition(from, to, "ADMIN")).not.toThrow();
+    }
+  });
+
   it("rejects a legal edge walked by the wrong role", () => {
     expect(() => assertTransition("IN_QUEUE", "IN_PROGRESS", "KASIR")).toThrow(ForbiddenError);
     expect(() => assertTransition("CONFIRMED", "IN_QUEUE", "DAPUR")).toThrow(ForbiddenError);

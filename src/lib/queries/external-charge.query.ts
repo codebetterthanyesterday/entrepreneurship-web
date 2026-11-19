@@ -33,3 +33,18 @@ export async function findActiveCharges(
 export function chargesTotal(lines: readonly ExtraChargeLine[]): number {
   return lines.reduce((sum, line) => sum + line.amount, 0);
 }
+
+/**
+ * Whether the photobooth ever put a charge on any order, voided ones included.
+ * Since K-14 (16 Nov 2026) the booth is free and sends none, so this is how the
+ * admin's screens know whether there is old charge data worth offering.
+ */
+export async function hasAnyPhotoboothCharge(): Promise<boolean> {
+  const plan = db.raw
+    .sql`SELECT count(*)::int AS "charges" FROM "public"."externalCharge" WHERE "source" = 'PHOTOBOOTH'`
+    .returnsRow({ charges: "pg/int4@1" })
+    .build();
+  const [row] = await db.runtime().query(plan);
+  return (row?.charges ?? 0) > 0;
+}
+

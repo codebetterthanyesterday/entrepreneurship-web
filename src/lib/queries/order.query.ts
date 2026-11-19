@@ -41,6 +41,20 @@ export async function findOrderById(id: string) {
   return await db.orm.public.Order.where({ id }).first();
 }
 
+/**
+ * Whether an order with this number exists: one indexed lookup, nothing
+ * loaded. The proxy asks it before an order page renders, so a missing order
+ * answers a real 404 instead of a page that has already begun as a 200.
+ */
+export async function orderNumberExists(orderNumber: string): Promise<boolean> {
+  const plan = db.raw
+    .sql`SELECT count(*)::int AS "found" FROM "public"."order" WHERE "orderNumber" = ${orderNumber}`
+    .returnsRow({ found: "pg/int4@1" })
+    .build();
+  const [row] = await db.runtime().query(plan);
+  return (row?.found ?? 0) > 0;
+}
+
 export async function findByNumber(orderNumber: string): Promise<OrderWithItems | null> {
   return await db.orm.public.Order.where({ orderNumber })
     .include("items", (item) => item.include("product"))

@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { findActiveCharges } from "@/lib/queries/external-charge.query";
+import { findActiveCharges, hasAnyPhotoboothCharge } from "@/lib/queries/external-charge.query";
 import { findByNumber, toTrackedOrder } from "@/lib/queries/order.query";
 import {
   getOrdersForExport,
@@ -61,6 +61,18 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await closeDatabase();
+});
+
+describe("hasAnyPhotoboothCharge", () => {
+  it("is false until the photobooth has charged something, and stays true once voided", async () => {
+    expect(await hasAnyPhotoboothCharge()).toBe(false);
+
+    const order = await paidPreorder();
+    await charge(order.orderNumber, A, 8_000, 5);
+    await voidPhotoboothCharge(A, Temporal.Instant.from("2026-12-05T04:00:00Z"));
+
+    expect(await hasAnyPhotoboothCharge()).toBe(true);
+  });
 });
 
 describe("findActiveCharges", () => {
