@@ -99,3 +99,23 @@ export function orderNumberIn(text: string): string | null {
   const found = trimmed.match(IN_TEXT)?.[0];
   return found ? normaliseOrderNumber(found) : null;
 }
+
+/**
+ * The order number an order page's path names (`/pesanan/PO-7KX4QM`), in its
+ * stored form, or `undefined` for any other path. `null` when the path is an
+ * order page but what it names cannot be an order number, so the page is
+ * missing without asking the database.
+ */
+export function orderPageNumber(pathname: string): string | null | undefined {
+  const match = pathname.match(/^\/pesanan\/([^/]+)\/?$/);
+  if (!match) return undefined;
+  let segment: string;
+  try {
+    segment = decodeURIComponent(match[1]!);
+  } catch {
+    return null;
+  }
+  const number = normaliseOrderNumber(segment);
+  return isOrderNumber(number) ? number : null;
+}
+
