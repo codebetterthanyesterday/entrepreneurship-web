@@ -8,6 +8,7 @@ import { DEFAULT_CHAT_CLOSE_MINUTE, DEFAULT_CHAT_OPEN_MINUTE } from "@/lib/whats
 import { MiscSettingsForm } from "@/components/admin/misc-settings-form";
 import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
+import { hasAnyPhotoboothCharge } from "@/lib/queries/external-charge.query";
 import { pageTitle } from "@/lib/brand";
 import { PageHead } from "@/components/staff/page-head";
 
@@ -19,7 +20,11 @@ export default async function AdminSettingsPage() {
   await requireRole("ADMIN");
 
   const today = todayInJakarta();
-  const [settings, days] = await Promise.all([getSettings(), getScheduleForAdmin(today)]);
+  const [settings, days, photoboothCharges] = await Promise.all([
+    getSettings(),
+    getScheduleForAdmin(today),
+    hasAnyPhotoboothCharge(),
+  ]);
 
   return (
     <div>
@@ -53,7 +58,7 @@ export default async function AdminSettingsPage() {
         />
 
         <div className="desktop:col-span-2">
-          <ExportPanel />
+          <ExportPanel photobooth={photoboothCharges} />
         </div>
       </div>
     </div>

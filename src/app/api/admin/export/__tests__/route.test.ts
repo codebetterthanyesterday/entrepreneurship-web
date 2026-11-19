@@ -153,6 +153,22 @@ describe("export contents", () => {
     expect(row).not.toContain("IN_QUEUE");
   });
 
+  it("leaves the photobooth column out when there are no photobooth charges (K-14)", async () => {
+    const product = await makeProduct({ price: 10_000, stock: 20 });
+    await createOrder({
+      channel: "ONSITE",
+      paymentStatus: "PAID",
+      paymentMethod: "CASH",
+      customerName: "Pelanggan booth",
+      items: [{ productId: product.id, quantity: 1 }],
+    });
+
+    const [header] = await records(await GET(request("orders")));
+
+    expect(header).not.toContain("Tagihan Photobooth");
+    expect(header).toContain("Total");
+  });
+
   it("writes money as plain digits a spreadsheet can sum", async () => {
     const product = await makeProduct({ price: 20_500, stock: 20 });
     await createOrder({
