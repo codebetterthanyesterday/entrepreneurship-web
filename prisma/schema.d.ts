@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'e48754ecd891730f8133d637ee75515bf9b6a9017b5c83a22868fc31925a5afc'>;
+  StorageHashBase<'4e5c776254ae065fe1d3dfa8eaccf6be792d93ddd754bb2f92e1a61b30454fc2'>;
 export type ExecutionHash =
   ExecutionHashBase<'2237e05b4e45077ca9d3cde4b5ce91bacce3c0621a9e066f075cdf7bbf1ebed3'>;
 export type ProfileHash =
@@ -342,6 +342,11 @@ export type FieldOutputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly categoryId: CodecTypes['pg/text@1']['output'] | null;
     };
+    readonly RateLimit: {
+      readonly key: CodecTypes['pg/text@1']['output'];
+      readonly windowStart: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly count: CodecTypes['pg/int4@1']['output'];
+    };
     readonly ServiceDay: {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly date: CodecTypes['pg/text@1']['output'];
@@ -518,6 +523,11 @@ export type FieldInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly categoryId: CodecTypes['pg/text@1']['input'] | null;
+    };
+    readonly RateLimit: {
+      readonly key: CodecTypes['pg/text@1']['input'];
+      readonly windowStart: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly count: CodecTypes['pg/int4@1']['input'];
     };
     readonly ServiceDay: {
       readonly id: CodecTypes['pg/text@1']['input'];
@@ -696,6 +706,11 @@ export type StorageColumnTypes = {
       readonly stock: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
+    readonly rateLimit: {
+      readonly count: CodecTypes['pg/int4@1']['output'];
+      readonly key: CodecTypes['pg/text@1']['output'];
+      readonly windowStart: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly serviceDay: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly date: CodecTypes['pg/text@1']['output'];
@@ -872,6 +887,11 @@ export type StorageColumnInputTypes = {
       readonly price: CodecTypes['pg/int4@1']['input'];
       readonly stock: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
+    readonly rateLimit: {
+      readonly count: CodecTypes['pg/int4@1']['input'];
+      readonly key: CodecTypes['pg/text@1']['input'];
+      readonly windowStart: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly serviceDay: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -1122,6 +1142,12 @@ export namespace Models {
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     readonly [RelationKeys]?: never;
   };
+  export type public_RateLimit = {
+    key: CodecTypes['pg/text@1']['output'];
+    windowStart: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    count: CodecTypes['pg/int4@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
   export type public_ServiceDay = {
     id: CodecTypes['pg/text@1']['output'];
     date: CodecTypes['pg/text@1']['output'];
@@ -1186,6 +1212,7 @@ export declare const models: {
     StockMovement: Models.public_StockMovement;
     StoreSetting: Models.public_StoreSetting;
     StoredImage: Models.public_StoredImage;
+    RateLimit: Models.public_RateLimit;
     ServiceDay: Models.public_ServiceDay;
     ServiceWindow: Models.public_ServiceWindow;
     PickupSlot: Models.public_PickupSlot;
@@ -1987,6 +2014,29 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly rateLimit: {
+              columns: {
+                readonly key: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly windowStart: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                };
+                readonly count: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['key'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
             readonly serviceDay: {
               columns: {
                 readonly id: {
@@ -2570,6 +2620,7 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'StoredImage';
     };
+    readonly rateLimit: { readonly namespace: 'public' & NamespaceId; readonly model: 'RateLimit' };
     readonly serviceDay: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'ServiceDay';
@@ -3401,6 +3452,35 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly categoryId: { readonly column: 'categoryId' };
+              };
+            };
+          };
+          readonly RateLimit: {
+            readonly fields: {
+              readonly key: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly windowStart: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+              readonly count: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'rateLimit';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly key: { readonly column: 'key' };
+                readonly windowStart: { readonly column: 'windowStart' };
+                readonly count: { readonly column: 'count' };
               };
             };
           };

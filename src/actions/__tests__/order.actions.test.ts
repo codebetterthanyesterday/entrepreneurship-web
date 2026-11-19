@@ -3,6 +3,11 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 // revalidatePath needs a request scope that does not exist in a test process.
 // The action's caching behaviour is not what these tests are about.
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+// A server action reads the caller's address for its rate limits; the test is
+// one caller, at one address.
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ "x-real-ip": "203.0.113.7" }),
+}));
 
 // There is no request, so no NextAuth session either. The signed-in user is
 // whatever the test puts here; requireRole keeps its real role check.
@@ -229,6 +234,38 @@ describe("submitPreorderAction — validation", () => {
     );
 
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("submitPreorderAction — rate limits", () => {
+  it("refuses a sixth preorder for one WhatsApp number within the hour, before taking any stock", async () => {
+    const product = await makeProduct({ stock: 50 });
+    await openWindow(50);
+    const order = () => submitPreorderAction(payload({ items: [{ productId: product.id, quantity: 1 }] }));
+
+    for (let i = 0; i < 5; i++) expect((await order()).ok).toBe(true);
+    const sixth = await order();
+
+    expect(sixth.ok).toBe(false);
+    if (sixth.ok) return;
+    expect(sixth.field).toBe("customerPhone");
+    expect(sixth.error).toMatch(/kebanyakan pesan/);
+    expect(await countOrders()).toBe(5);
+    expect(await stockOf(product.id)).toBe(45);
+  });
+
+  it("still takes an order for another number from the same place", async () => {
+    const product = await makeProduct({ stock: 50 });
+    await openWindow(50);
+    for (let i = 0; i < 5; i++) {
+      await submitPreorderAction(payload({ items: [{ productId: product.id, quantity: 1 }] }));
+    }
+
+    const other = await submitPreorderAction(
+      payload({ customerPhone: "081298765432", items: [{ productId: product.id, quantity: 1 }] }),
+    );
+
+    expect(other.ok).toBe(true);
   });
 });
 

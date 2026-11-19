@@ -37,6 +37,8 @@ interface TrackingResponse {
   order: TrackedOrder | null;
   photoLink?: string | null;
   qrisImageUrl?: string | null;
+  /** Too many misses lately: nothing was looked up. */
+  retryAfterSeconds?: number;
 }
 
 interface Search {
@@ -109,7 +111,8 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
   });
 
   const order = data?.order ?? null;
-  const missed = search !== null && data !== undefined && order === null;
+  const limited = search !== null && data?.retryAfterSeconds !== undefined;
+  const missed = search !== null && data !== undefined && order === null && !limited;
 
   // Keep what worked, forget what no longer does. Writes to localStorage, not to
   // React state, so these are effects in the proper sense.
@@ -245,6 +248,17 @@ export function TrackView({ initialOrderNumber = "" }: TrackViewProps) {
             <p role="alert" className="mt-10 max-w-[42ch] text-[14px] leading-relaxed text-hot">
               Koneksinya lagi putus, jadi pesanannya belum bisa dicek. Coba sebentar lagi ya.
             </p>
+          )}
+
+          {limited && (
+            <div role="status" className="k-hard-sm stage-enter mt-10 rounded-[10px] bg-white p-4">
+              <p className="eyebrow text-hot">Tunggu sebentar</p>
+              <p className="mt-2 text-[14.5px] leading-relaxed text-ink">
+                Udah kebanyakan percobaan yang nggak cocok, jadi pencarian dijeda dulu. Coba lagi{" "}
+                {Math.max(1, Math.ceil((data?.retryAfterSeconds ?? 60) / 60))} menit lagi, atau buka
+                halaman pesanan dari tautan yang kamu simpan.
+              </p>
+            </div>
           )}
 
           {missed && (

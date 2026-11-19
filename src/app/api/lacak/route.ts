@@ -1,5 +1,7 @@
 import { findActiveCharges } from "@/lib/queries/external-charge.query";
 import { normaliseOrderNumber } from "@/lib/order-number";
+import { clientIp } from "@/lib/client-ip";
+import { LIMITS, checkRateLimit, hitRateLimit } from "@/lib/services/rate-limit.service";
 import { findForTracking, toTrackedOrder } from "@/lib/queries/order.query";
 import type { TrackedOrder } from "@/types/order-view";
 import { photoboothLink } from "@/lib/photobooth-link";
@@ -14,6 +16,11 @@ export interface TrackingResponse {
   photoLink?: string | null;
   /** The booth's QRIS, for an order paid by QRIS; it is public anyway. */
   qrisImageUrl?: string | null;
+  /**
+   * Set when this address or this order number has missed too often lately:
+   * nothing was looked up, and the tracker says when to try again.
+   */
+  retryAfterSeconds?: number;
 }
 
 /**
@@ -36,7 +43,28 @@ export async function GET(request: Request): Promise<Response> {
     return Response.json(empty, { headers });
   }
 
+  // The four digits are the only secret on an older, sequential order number:
+  // 10,000 guesses would find them. So misses are counted, per address and per
+  // number, and once either is over its limit nothing is looked up at all —
+  // a right guess then looks exactly like a wrong one. Polling an order that
+  // was found never counts.
+  const ip = clientIp(request.headers);
+  const [byIp, byNumber] = await Promise.all([
+    checkRateLimit(LIMITS.trackMissPerIp, ip),
+    checkRateLimit(LIMITS.trackMissPerOrder, orderNumber),
+  ]);
+  if (!byIp.allowed || !byNumber.allowed) {
+    const retryAfterSeconds = Math.max(byIp.retryAfterSeconds, byNumber.retryAfterSeconds);
+    return Response.json({ order: null, retryAfterSeconds } satisfies TrackingResponse, { headers });
+  }
+
   const order = await findForTracking(orderNumber, phoneLast4);
+  if (!order) {
+    await Promise.all([
+      hitRateLimit(LIMITS.trackMissPerIp, ip),
+      hitRateLimit(LIMITS.trackMissPerOrder, orderNumber),
+    ]);
+  }
   const charges = order ? await findActiveCharges([order.id]) : null;
   const qrisImageUrl =
     order?.paymentMethod === "QRIS" ? ((await getSettings()).qrisImageUrl ?? null) : null;

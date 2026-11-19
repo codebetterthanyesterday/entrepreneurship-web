@@ -333,6 +333,17 @@ model StoredImage {
   @@check(expression: "octet_length(data) BETWEEN 1 AND 3145728", name: "stored_image_size_limit")
 }
 
+// Penghitung untuk pembatas laju endpoint publik: checkout, unggah bukti bayar,
+// lacak, dan login tim. Satu baris per kunci (misalnya "checkout-ip:<hash>"),
+// jendela tetap: `count` permintaan sejak `windowStart`. Alamat IP hanya
+// disimpan sebagai hash, bukan aslinya. Baris lama dibersihkan sendiri. Lihat
+// `src/lib/services/rate-limit.service.ts`.
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+}
+
 // Tanggal yang dibuka pengurus untuk menangani preorder. Tanggal yang tidak ada
 // di sini (atau `isOpen` mati) berarti tidak ada layanan preorder hari itu.
 // `locations` berisi nilai HandoverLocation yang dilayani tanggal itu.

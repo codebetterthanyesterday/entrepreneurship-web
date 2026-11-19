@@ -8,11 +8,17 @@ const { closeDatabase, makePickupSlot, makeProduct, resetDatabase } =
 
 const SECRET = "rahasia-tautan-klaim-0123456789abcdef";
 
-async function track(no: string, wa: string) {
+async function track(no: string, wa: string, ip = "203.0.113.7") {
   const response = await GET(
-    new Request(`http://localhost/api/lacak?no=${encodeURIComponent(no)}&wa=${wa}`),
+    new Request(`http://localhost/api/lacak?no=${encodeURIComponent(no)}&wa=${wa}`, {
+      headers: { "x-real-ip": ip },
+    }),
   );
-  return (await response.json()) as { order: unknown; photoLink?: string | null };
+  return (await response.json()) as {
+    order: unknown;
+    photoLink?: string | null;
+    retryAfterSeconds?: number;
+  };
 }
 
 beforeAll(() => {
@@ -60,3 +66,29 @@ describe("tracking and the photobooth link", () => {
     expect(body).toEqual({ order: null });
   });
 });
+
+describe("guessing the four digits", () => {
+  it("stops looking after eight misses for one number, so even the right digits then find nothing", async () => {
+    for (let i = 0; i < 8; i++) {
+      // Spread over addresses: the limit per number is what stops a guess
+      // made from many places.
+      expect((await track(orderNumber, String(1000 + i), `198.51.100.${i}`)).order).toBeNull();
+    }
+
+    const right = await track(orderNumber, "0042", "198.51.100.99");
+
+    expect(right.order).toBeNull();
+    expect(right.retryAfterSeconds).toBeGreaterThan(0);
+  });
+
+  it("never counts the polling of an order that was found", async () => {
+    for (let i = 0; i < 30; i++) await track(orderNumber, "0042");
+
+    expect((await track(orderNumber, "0042")).order).not.toBeNull();
+  });
+
+  it("finds the order typed loosely", async () => {
+    expect((await track(orderNumber.toLowerCase().replace("-", " "), "0042")).order).not.toBeNull();
+  });
+});
+
