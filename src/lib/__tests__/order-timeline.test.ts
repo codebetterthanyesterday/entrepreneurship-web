@@ -101,3 +101,24 @@ describe("summariseStage", () => {
     expect(stage.progress).toBe(0);
   });
 });
+
+describe("buildTimeline — a delivered order", () => {
+  it("is told it will be brought, never to come to the booth", () => {
+    const steps = buildTimeline("READY", true, true);
+    const ready = steps.find((step) => step.id === "ready")!;
+    expect(ready.title).toBe("Siap diantar!");
+    expect(steps.map((step) => step.detail).join(" ")).not.toMatch(/booth|jam ambil|Market Day/);
+  });
+
+  it("keeps the same stages, so the ring measures the same journey", () => {
+    expect(buildTimeline("IN_PROGRESS", true, true).map((step) => step.id)).toEqual(
+      buildTimeline("IN_PROGRESS", true).map((step) => step.id),
+    );
+    expect(summariseStage("READY", false, true).progress).toBe(summariseStage("READY", false).progress);
+  });
+
+  it("still sends a Market Day order to the booth", () => {
+    expect(buildTimeline("READY", true).find((step) => step.id === "ready")!.detail).toMatch(/booth/);
+  });
+});
+

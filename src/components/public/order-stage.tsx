@@ -324,6 +324,8 @@ const ART: Record<ArtId, React.ReactNode> = {
 export interface OrderStageProps {
   status: OrderStatus;
   needsPrep: boolean;
+  /** Taken to the customer rather than collected (see `isDelivered`). */
+  delivered?: boolean;
   /** The stage's title is the tracker's <h1>; elsewhere it is a lesser heading. */
   titleAs?: "h1" | "h2";
   /** The order a cancelled stage offers to chat about; without it, no button. */
@@ -336,11 +338,12 @@ export interface OrderStageProps {
 export function OrderStage({
   status,
   needsPrep,
+  delivered = false,
   titleAs: Title = "h2",
   chatOrder,
   children,
 }: OrderStageProps) {
-  const { steps, current } = summariseStage(status, needsPrep);
+  const { steps, current } = summariseStage(status, needsPrep, delivered);
   const position = current ? steps.indexOf(current) + 1 : 0;
 
   return (

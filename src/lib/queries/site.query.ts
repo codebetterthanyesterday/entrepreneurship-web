@@ -24,7 +24,7 @@ export async function getSiteIdentity(): Promise<SiteIdentity> {
 
   return {
     brandName: value("hero.title") || BRAND_NAME,
-    tagline: value("footer.tagline") || "Pesan sekarang, ambil pas Market Day.",
+    tagline: value("footer.tagline") || "Pesan sekarang, ambil di Market Day atau diantar.",
     instagram: (value("contact.instagram") ?? "").replace(/^@/, ""),
   };
 }

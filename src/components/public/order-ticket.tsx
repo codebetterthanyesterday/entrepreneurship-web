@@ -1,6 +1,6 @@
 import * as React from "react";
 import { renderSVG } from "uqr";
-import { describeHandover, formatServiceDate } from "@/lib/schedule";
+import { describeHandover, formatServiceDate, isDelivered } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 import { CopyCodeButton } from "./copy-code-button";
 import { ChatLink } from "./whatsapp-chat";
@@ -8,10 +8,11 @@ import { chatOrderOf } from "@/lib/whatsapp";
 import { OrderReceipt } from "./order-receipt";
 import type { TrackedOrder } from "@/types/order-view";
 
-export const PAYMENT_LABEL = {
-  CASH: "Bayar pas ambil",
-  QRIS: "QRIS",
-} as const;
+/** How the order is paid, in the words of how it is handed over. */
+export function paymentLabel(method: "CASH" | "QRIS", delivered: boolean): string {
+  if (method === "QRIS") return "QRIS";
+  return delivered ? "Tunai pas diantar" : "Bayar pas ambil";
+}
 
 export interface OrderTicketProps {
   order: TrackedOrder;
@@ -44,6 +45,10 @@ export interface OrderTicketProps {
 export function OrderTicket({ order, numberAs = "p", className }: OrderTicketProps) {
   const cancelled = order.status === "CANCELLED";
   const paid = order.paymentStatus === "PAID";
+  // A campus or Lainnya order is brought by the team, so there is no cashier
+  // to show the pass to.
+  const delivered = isDelivered(order);
+  const shownTo = delivered ? "tim kami" : "kasir";
   const Number = numberAs;
   const qr = renderSVG(order.orderNumber, { border: 1, ecc: "M" });
 
@@ -132,7 +137,7 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
           <div>
             <p className="k-mono text-[10px] text-ink-soft">Metode pembayaran</p>
             <p className="text-[15px] font-extrabold text-sky-deep">
-              {PAYMENT_LABEL[order.paymentMethod]}
+              {paymentLabel(order.paymentMethod, delivered)}
             </p>
           </div>
           <div className="tablet:text-right">
@@ -147,13 +152,14 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
       <div className="k-ticket-pass">
         <p className="k-mono text-[13px] text-pink-deep">Order pass ticket</p>
         <p className="text-[13px] text-ink-soft">
-          Tunjukin ke kasir pas ambil pesanan. <b className="text-ink">Bukan QR buat bayar.</b>
+          {delivered ? "Tunjukin ke tim kami pas pesanannya diantar." : "Tunjukin ke kasir pas ambil pesanan."}{" "}
+          <b className="text-ink">Bukan QR buat bayar.</b>
         </p>
 
         <div className="k-ticket-qr">
           <span
             role="img"
-            aria-label={`Kode QR nomor pesanan ${order.orderNumber}, untuk ditunjukkan ke kasir, bukan untuk pembayaran`}
+            aria-label={`Kode QR nomor pesanan ${order.orderNumber}, untuk ditunjukkan ke ${shownTo}, bukan untuk pembayaran`}
             className="block [&>svg]:h-auto [&>svg]:w-full"
             dangerouslySetInnerHTML={{ __html: qr }}
           />
@@ -163,7 +169,7 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
         </div>
 
         <p className="mb-3 text-[13px] leading-relaxed text-ink-soft">
-          Tunjukin kode QR atau sebutin nomor pesanan ini ke kasir.
+          Tunjukin kode QR atau sebutin nomor pesanan ini ke {shownTo}.
         </p>
 
         <CopyCodeButton code={order.orderNumber} />

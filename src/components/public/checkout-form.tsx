@@ -16,13 +16,26 @@ import type { BookableSchedule } from "@/lib/queries/schedule.query";
 import { HandoverSteps, type HandoverChoice } from "./handover-picker";
 import type { PublicProduct } from "@/types/admin";
 import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
+import { isDelivered } from "@/lib/schedule";
 
 type PaymentMethod = "CASH" | "QRIS";
 
-const PAYMENT_NOTE: Record<PaymentMethod, string> = {
-  CASH: "Bayarnya tunai pas ambil di booth. Siapin uang pas ya kalau bisa.",
-  QRIS: "Habis kirim pesanan, QRIS-nya langsung muncul. Scan pakai e-wallet atau m-banking, bayar sesuai total, lalu unggah bukti bayarnya di situ.",
-};
+const QRIS_NOTE =
+  "Habis kirim pesanan, QRIS-nya langsung muncul. Scan pakai e-wallet atau m-banking, bayar sesuai total, lalu unggah bukti bayarnya di situ.";
+
+/**
+ * Paying cash happens wherever the order is handed over: at the booth for
+ * Market Day, to whoever brings it otherwise. Until a place is picked, the
+ * copy does not guess.
+ */
+function cashCopy(location: string | null): { label: string; note: string } {
+  if (location === null) {
+    return { label: "Tunai", note: "Bayarnya tunai pas pesanannya diserahkan. Siapin uang pas ya kalau bisa." };
+  }
+  return isDelivered({ handoverLocation: location })
+    ? { label: "Tunai pas diantar", note: "Bayarnya tunai pas pesanannya kami antar. Siapin uang pas ya kalau bisa." }
+    : { label: "Tunai pas ambil", note: "Bayarnya tunai pas ambil di booth. Siapin uang pas ya kalau bisa." };
+}
 
 export interface CheckoutFormProps {
   products: PublicProduct[];
@@ -64,6 +77,7 @@ export function CheckoutForm({
     date: null,
     windowId: null,
   });
+  const cash = cashCopy(handover.location);
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("CASH");
   const [notes, setNotes] = React.useState("");
 
@@ -124,7 +138,7 @@ export function CheckoutForm({
       step="data"
       eyebrow="Stage 3: final checkpoint"
       title="Mission: complete your order!"
-      lede="Isi datanya biar kami nggak salah panggil pas kamu ambil."
+      lede="Isi datanya biar kami nggak salah orang pas nyerahin pesanannya."
       art={<CheckoutArt />}
     />
   );
@@ -278,14 +292,14 @@ export function CheckoutForm({
                       >
                         <span className="flex items-center justify-center gap-2">
                           <PaymentIcon method={method} />
-                          {method === "CASH" ? "Tunai pas ambil" : "QRIS"}
+                          {method === "CASH" ? cash.label : "QRIS"}
                         </span>
                       </button>
                     ))}
                   </div>
 
                   <p className="mt-3 text-[13.5px] leading-relaxed text-ink-soft">
-                    {PAYMENT_NOTE[paymentMethod]}
+                    {paymentMethod === "CASH" ? cash.note : QRIS_NOTE}
                   </p>
                   {!qrisAvailable && (
                     <p className="mt-2 text-[12.5px] text-ink-soft">

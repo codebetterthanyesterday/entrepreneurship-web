@@ -11,6 +11,7 @@ import { QrisPayment } from "@/components/public/qris-payment";
 import { getSettings } from "@/lib/services/setting.service";
 import { ChatCard } from "@/components/public/whatsapp-chat";
 import { chatOrderOf } from "@/lib/whatsapp";
+import { isDelivered } from "@/lib/schedule";
 
 export const dynamic = "force-dynamic";
 
@@ -35,17 +36,9 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
   // No token here: this page opens with the order number alone.
   const photoLink = photoboothLink(found, { withToken: false });
 
-  const instruction = order.needsPrep
-    ? {
-        tone: "warn" as const,
-        text: "Ada menu yang diracik dadakan, jadi disiapkan pas kamu datang. Tunjukin nomor ke kasir ya.",
-      }
-    : {
-        tone: "info" as const,
-        text: "Semua pesanan kamu siap kemas, jadi tinggal ambil pas mampir.",
-      };
-
   const cancelled = order.status === "CANCELLED";
+  const delivered = isDelivered(order);
+  const instruction = cancelled ? null : handoverInstruction(order, delivered);
 
   return (
     <>
@@ -75,7 +68,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
             <p className="max-w-[34em] text-[14.5px] leading-relaxed text-white/85">
               {cancelled
                 ? "Pesanan ini udah dibatalkan. Kalau menurut kamu ini keliru, chat kami ya."
-                : "Yeay, pesanan kamu berhasil dibuat! Simpen nomornya atau screenshot halaman ini, nanti ditanya pas ambil."}
+                : `Yeay, pesanan kamu berhasil dibuat! Simpen nomornya atau screenshot halaman ini, nanti ditanya ${delivered ? "pas pesanannya kami antar" : "pas ambil"}.`}
             </p>
           </div>
 
@@ -92,6 +85,7 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
               qrisImageUrl={settings.qrisImageUrl ?? null}
               paymentStatus={order.paymentStatus}
               hasPaymentProof={order.hasPaymentProof}
+              delivered={delivered}
               className="mt-5"
             />
           )}
@@ -104,16 +98,18 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
         {/* A narrow measure, left-aligned: the ticket above was for reading across
             a counter, this part is for reading properly. */}
         <div className="band-inner-narrow">
-          <p
-            className={cn(
-              "border-l-2 py-3 pl-4 pr-3 text-[14px] leading-relaxed",
-              instruction.tone === "warn"
-                ? "border-warn bg-warn-soft/70 text-warn"
-                : "border-sky-deep bg-sky-soft/70 text-sky-deep",
-            )}
-          >
-            {instruction.text}
-          </p>
+          {instruction && (
+            <p
+              className={cn(
+                "border-l-2 py-3 pl-4 pr-3 text-[14px] leading-relaxed",
+                instruction.tone === "warn"
+                  ? "border-warn bg-warn-soft/70 text-warn"
+                  : "border-sky-deep bg-sky-soft/70 text-sky-deep",
+              )}
+            >
+              {instruction.text}
+            </p>
+          )}
 
           {order.notes && (
             <p className="mt-6 border-l-2 border-line pl-4 text-[13px] italic leading-relaxed text-ink-soft">
@@ -156,4 +152,42 @@ export default async function OrderConfirmationPage({ params }: PageProps) {
       </section>
     </>
   );
+}
+
+/**
+ * What happens next at the handover, in one line. A Market Day order is
+ * collected at the booth; a campus or Lainnya order is brought to the customer,
+ * so it is never told to drop by or find the cashier. Made-to-order items are
+ * the warning either way: they are made at the last moment, so they take a
+ * little longer.
+ */
+function handoverInstruction(
+  order: { needsPrep: boolean; awaitingLocationCheck: boolean },
+  delivered: boolean,
+): { tone: "warn" | "info"; text: string } {
+  if (!delivered) {
+    return order.needsPrep
+      ? {
+          tone: "warn",
+          text: "Ada menu yang diracik dadakan, jadi disiapkan pas kamu datang. Tunjukin nomor ke kasir ya.",
+        }
+      : { tone: "info", text: "Semua pesanan kamu siap kemas, jadi tinggal ambil pas mampir." };
+  }
+
+  if (order.awaitingLocationCheck) {
+    return {
+      tone: "info",
+      text: "Kalau lokasinya bisa kami jangkau, pesanan kamu kami antar sesuai jadwal di tiket.",
+    };
+  }
+
+  return order.needsPrep
+    ? {
+        tone: "warn",
+        text: "Ada menu yang diracik dadakan, jadi baru dibikin menjelang diantar biar masih fresh. Pas kami sampai, sebutin nomor pesanannya ya.",
+      }
+    : {
+        tone: "info",
+        text: "Pesanan kamu kami antar sesuai jadwal di tiket. Pas kami sampai, sebutin nomor pesanannya ya.",
+      };
 }

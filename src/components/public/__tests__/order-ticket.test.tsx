@@ -80,4 +80,25 @@ describe("OrderTicket", () => {
     const qr = screen.getByRole("img", { name: /^Kode QR nomor pesanan PO-0007, untuk ditunjukkan ke kasir/ });
     expect(qr.querySelector("svg")).toBeTruthy();
   });
+
+  it("sends a delivered order's pass to whoever brings it, not to a cashier", () => {
+    renderTicket({
+      ...ORDER,
+      serviceDate: "2026-11-24",
+      handoverLocation: "CAMPUS_B",
+      paymentMethod: "CASH",
+      paymentStatus: "UNPAID",
+    });
+
+    expect(screen.getByText("Tunai pas diantar")).toBeTruthy();
+    expect(screen.getByText(/Tunjukin ke tim kami pas pesanannya diantar\./)).toBeTruthy();
+    expect(screen.getByRole("img", { name: /untuk ditunjukkan ke tim kami/ })).toBeTruthy();
+    expect(screen.queryByText(/kasir/)).toBeNull();
+  });
+
+  it("keeps the cashier for a Market Day order", () => {
+    renderTicket({ ...ORDER, serviceDate: "2026-11-24", handoverLocation: "MARKET_DAY" });
+
+    expect(screen.getByText(/Tunjukin ke kasir pas ambil pesanan\./)).toBeTruthy();
+  });
 });

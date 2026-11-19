@@ -7,6 +7,8 @@ import type { OrderStatus } from "@/types/order";
 export interface OrderTimelineProps {
   status: OrderStatus;
   needsPrep: boolean;
+  /** Taken to the customer rather than collected (see `isDelivered`). */
+  delivered?: boolean;
 }
 
 /**
@@ -23,8 +25,8 @@ export interface OrderTimelineProps {
  * order has not reached keeps its title but not its detail: telling someone to
  * "come to the booth" two stages early is how they turn up early.
  */
-export function OrderTimeline({ status, needsPrep }: OrderTimelineProps) {
-  const steps = buildTimeline(status, needsPrep);
+export function OrderTimeline({ status, needsPrep, delivered = false }: OrderTimelineProps) {
+  const steps = buildTimeline(status, needsPrep, delivered);
 
   return (
     <ol className="k-tl">

@@ -150,3 +150,15 @@ export function needsLocationReview(order: {
 export function goesToPhotobooth(order: { channel: string; handoverLocation?: string | null }): boolean {
   return order.channel === "PREORDER" && (order.handoverLocation == null || order.handoverLocation === "MARKET_DAY");
 }
+
+/**
+ * Whether the team takes the order to the customer (a campus, or a "Lainnya"
+ * place) rather than the customer collecting it at the booth. A booth sale and
+ * an order from before the schedule were both collected, so neither is.
+ *
+ * Customer-facing copy reads this so a campus order is never told to "drop by
+ * the booth" or "show the cashier".
+ */
+export function isDelivered(order: { handoverLocation?: string | null }): boolean {
+  return order.handoverLocation === "CAMPUS_B" || order.handoverLocation === "CAMPUS_C" || order.handoverLocation === "OTHER";
+}
