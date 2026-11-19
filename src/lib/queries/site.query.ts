@@ -10,21 +10,30 @@ export interface SiteIdentity {
   instagram: string;
 }
 
+/** What the header says when the admin has written nothing. */
+export const DEFAULT_TAGLINE = "Pesan sekarang, ambil di Market Day atau diantar.";
+
+/** The `SiteText` keys that named the business before Admin → Pengaturan did. */
+const LEGACY_KEYS = { brandName: "hero.title", tagline: "footer.tagline", instagram: "contact.instagram" } as const;
+
 /**
  * The business name, its one-line tagline and its Instagram handle, for the
- * header and footer.
+ * header, the footer and the splash screen.
  *
- * The company profile and its in-page editor are gone (the site opens straight
- * on the menu), but the `SiteText` rows an admin saved back then are kept, and
- * these three still name the business. Any other key in the table is ignored.
+ * Written by the admin in Admin → Pengaturan → Identitas toko (`StoreSetting`).
+ * A field left empty there falls back to what the retired company-profile
+ * editor saved in `SiteText`, if anything, and then to the default.
  */
 export async function getSiteIdentity(): Promise<SiteIdentity> {
-  const rows = await db.orm.public.SiteText.all();
-  const value = (key: string) => rows.find((row) => row.key === key)?.value.trim();
+  const [setting, rows] = await Promise.all([
+    db.orm.public.StoreSetting.where({ id: 1 }).first(),
+    db.orm.public.SiteText.where((row) => row.key.in(Object.values(LEGACY_KEYS))).all(),
+  ]);
+  const legacy = (key: string) => rows.find((row) => row.key === key)?.value.trim();
 
   return {
-    brandName: value("hero.title") || BRAND_NAME,
-    tagline: value("footer.tagline") || "Pesan sekarang, ambil di Market Day atau diantar.",
-    instagram: (value("contact.instagram") ?? "").replace(/^@/, ""),
+    brandName: setting?.brandName?.trim() || legacy(LEGACY_KEYS.brandName) || BRAND_NAME,
+    tagline: setting?.tagline?.trim() || legacy(LEGACY_KEYS.tagline) || DEFAULT_TAGLINE,
+    instagram: (setting?.instagram?.trim() || legacy(LEGACY_KEYS.instagram) || "").replace(/^@/, ""),
   };
 }

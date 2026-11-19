@@ -23,7 +23,7 @@ function revalidateStore() {
 /** Empty strings from an optional text input are stored as NULL. */
 function emptyToNull<T extends Record<string, unknown>>(input: T): T {
   const cleaned: Record<string, unknown> = { ...input };
-  for (const key of ["adminWhatsapp"]) {
+  for (const key of ["adminWhatsapp", "brandName", "tagline", "instagram"]) {
     if (cleaned[key] === "") cleaned[key] = null;
   }
   return cleaned as T;

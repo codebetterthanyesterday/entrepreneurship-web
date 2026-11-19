@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.storeSetting.brandName",
+    "label": "Add column \"brandName\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "brandName",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"brandName\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "brandName"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"brandName\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"brandName\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"brandName\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "brandName"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.storeSetting.instagram",
+    "label": "Add column \"instagram\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "instagram",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"instagram\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "instagram"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"instagram\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"instagram\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"instagram\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "instagram"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.storeSetting.tagline",
+    "label": "Add column \"tagline\" to \"storeSetting\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "tagline",
+        "table": "storeSetting"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"tagline\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "tagline"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"tagline\"",
+        "sql": "ALTER TABLE \"public\".\"storeSetting\" ADD COLUMN \"tagline\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"tagline\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "storeSetting",
+          "tagline"
+        ]
+      }
+    ]
+  }
+]
