@@ -1,6 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { BRAND_NAME } from "@/lib/brand";
 import { countUnfinishedPreorders } from "@/lib/queries/order.query";
@@ -15,11 +15,19 @@ import { StaffStrip } from "@/components/staff/staff-strip";
 import "../kingdom.css";
 import "../staff.css";
 
+/** Never in a search engine: the staff side is not meant to be found. */
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
+  // The proxy already answers 404 here for a visitor without a session; this
+  // is the same answer should a request ever reach the layout without one.
+  // Never a redirect to the sign-in page: that would give its address away.
   if (!session?.user) {
-    redirect("/login");
+    notFound();
   }
 
   const { role } = session.user;

@@ -1,29 +1,36 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { mayReach, protectedAreaOf } from "@/lib/routes";
+import { gateStaffRequest, staffLoginPath } from "@/lib/staff-entrance";
+
+/**
+ * An address no route matches. Rewriting to it makes Next answer with the
+ * site's own 404 page and status, byte for byte what any mistyped address
+ * gets, so a hidden staff screen cannot be told apart from a missing one.
+ */
+const NOWHERE = "/__tidak-ada";
 
 export const proxy = auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const userRole = req.auth?.user?.role;
-  const { pathname } = req.nextUrl;
+  // Siapa boleh ke mana, dan apa yang disembunyikan dari pengunjung tanpa sesi,
+  // ada di `@/lib/staff-entrance` (dan tabel peran di `@/lib/routes`), supaya
+  // bisa diuji tanpa server.
+  const decision = gateStaffRequest(req.nextUrl.pathname, {
+    role: req.auth ? (req.auth.user?.role ?? "") : undefined,
+    loginPath: staffLoginPath(),
+  });
 
-  // Cek apakah route ini diproteksi. Tabelnya ada di `@/lib/routes`, dibagi
-  // dengan navigasi, supaya menu tidak pernah menawarkan layar yang justru
-  // dibuang ke /403 oleh proxy ini.
-  if (protectedAreaOf(pathname) !== null) {
-    if (!isLoggedIn) {
-      // Redirect to login if not logged in
-      const callbackUrl = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
-      return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, req.nextUrl));
+  switch (decision.kind) {
+    case "rewrite": {
+      const target = new URL(decision.to, req.nextUrl);
+      target.search = req.nextUrl.search;
+      return NextResponse.rewrite(target);
     }
-
-    if (userRole && !mayReach(userRole, pathname)) {
-      // Redirect to 403 if role doesn't match
-      return NextResponse.redirect(new URL("/403", req.nextUrl));
-    }
+    case "not-found":
+      return NextResponse.rewrite(new URL(NOWHERE, req.nextUrl));
+    case "redirect":
+      return NextResponse.redirect(new URL(decision.to, req.nextUrl));
+    case "next":
+      return NextResponse.next();
   }
-
-  return NextResponse.next();
 });
 
 export const config = {

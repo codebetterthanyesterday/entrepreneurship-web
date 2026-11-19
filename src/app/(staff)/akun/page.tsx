@@ -4,6 +4,7 @@ import { needsPasswordChange } from "@/lib/services/account.service";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { PageHead } from "@/components/staff/page-head";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { staffLoginPath } from "@/lib/staff-entrance";
 
 export const metadata = {
   title: pageTitle("Akun"),
@@ -47,7 +48,7 @@ export default async function AccountPage() {
             phone is the brand and the avatar, and the avatar leads here. */}
         <div className="flex items-center justify-between gap-3 s-slab p-3.5">
           <span className="text-sm text-ink-soft">Selesai jaga? Keluar biar akun nggak dipakai orang lain.</span>
-          <LogoutButton />
+          <LogoutButton loginPath={staffLoginPath()} />
         </div>
       </div>
     </div>
