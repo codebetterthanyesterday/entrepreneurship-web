@@ -66,6 +66,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }
   },
   pages: {
+    // Deliberately the plain /login, which answers 404 once STAFF_LOGIN_PATH is
+    // set (`@/lib/staff-entrance`). Auth.js names this page in every redirect it
+    // makes, to anyone (GET /api/auth/signin, a failed sign-in), so the secret
+    // address must never be here. The real form signs in with
+    // `redirect: false` and handles the answer itself.
     signIn: '/login',
   }
 });

@@ -231,7 +231,10 @@ describe("GET /api/internal/v1/preorders (change feed)", () => {
     await setUpdatedAt(a.orderNumber, "2026-12-05T07:00:00Z");
     await setUpdatedAt(b.orderNumber, "2026-12-05T07:00:00Z");
     await setUpdatedAt(c.orderNumber, "2026-12-05T08:00:00Z");
-    return [a, b, c].map((order) => order.orderNumber);
+    // a and b changed at the same instant, so the feed orders them by number.
+    // Numbers are random, so which of the two comes first is the sort's call.
+    const tied = [a.orderNumber, b.orderNumber].sort();
+    return [...tied, c.orderNumber];
   }
 
   it("lists preorders oldest change first, ties broken by order number", async () => {

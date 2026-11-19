@@ -279,7 +279,7 @@ describe("photobooth charges in the exports (BPB-098)", () => {
   });
 
   it("the photobooth export lists each charge, the voided one marked", async () => {
-    await preorderWithCharges();
+    const { orderNumber } = await preorderWithCharges();
     const response = await GET(request("photobooth"));
     expect(response.headers.get("Content-Disposition")).toContain("tagihan-photobooth");
 
@@ -288,8 +288,8 @@ describe("photobooth charges in the exports (BPB-098)", () => {
       "Nomor Pesanan,Nama Pelanggan,Keterangan,Jumlah,Waktu Lunas,Waktu Dibatalkan",
     );
     expect(rows).toEqual([
-      "PO-0001,Nadia Prameswari,Cetak 4R ×1,8000,2026-12-05 10:00,",
-      "PO-0001,Nadia Prameswari,Cetak 4R ×1,15000,2026-12-05 10:00,2026-12-05 11:00",
+      `${orderNumber},Nadia Prameswari,Cetak 4R ×1,8000,2026-12-05 10:00,`,
+      `${orderNumber},Nadia Prameswari,Cetak 4R ×1,15000,2026-12-05 10:00,2026-12-05 11:00`,
     ]);
   });
 });

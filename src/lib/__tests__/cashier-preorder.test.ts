@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PREORDER_FILTERS,
   matchesPreorderSearch,
+  preorderFromScan,
   resolvePreorderAction,
   type PreorderActionInput,
 } from "@/lib/cashier-preorder";
@@ -126,3 +127,36 @@ describe("matchesPreorderSearch", () => {
     expect(matchesPreorderSearch(preorder, "Rizky")).toBe(false);
   });
 });
+
+describe("preorderFromScan — what the ticket scanner opens", () => {
+  const nadia = { id: "o1", orderNumber: "PO-7KX4QM", customerName: "Nadia" } as CashierPreorder;
+  const salsa = { id: "o2", orderNumber: "PO-0007", customerName: "Salsa" } as CashierPreorder;
+  const list = [nadia, salsa];
+
+  it("opens the preorder whose ticket was scanned, new numbers and old", () => {
+    expect(preorderFromScan("PO-7KX4QM", list)).toEqual({ kind: "found", order: nadia });
+    expect(preorderFromScan("PO-0007", list)).toEqual({ kind: "found", order: salsa });
+  });
+
+  it("also opens it from the photobooth link a customer might show instead", () => {
+    expect(
+      preorderFromScan("https://bunnye-photobooth.vercel.app/foto?kode=PO-7KX4QM&t=EPQFw-wP0i428E1A", list),
+    ).toEqual({ kind: "found", order: nadia });
+  });
+
+  it("says when the QR is not a ticket, naming the payment QR customers mix it up with", () => {
+    const result = preorderFromScan("00020101021126570011ID.DANA.WWW0118936009153", list);
+    expect(result.kind).toBe("message");
+    expect(result.kind === "message" && result.message).toMatch(/bukan QR tiket.*bukan QR bayar/);
+  });
+
+  it("says a booth sale is not a preorder, and an unknown number is not on the list", () => {
+    expect(preorderFromScan("OS-B4N8TZ", list)).toEqual({
+      kind: "message",
+      message: "OS-B4N8TZ itu pesanan di booth, bukan preorder.",
+    });
+    const unknown = preorderFromScan("PO-ZZZZZZ", list);
+    expect(unknown.kind === "message" && unknown.message).toMatch(/^PO-ZZZZZZ nggak ada di daftar preorder/);
+  });
+});
+

@@ -17,6 +17,17 @@ vi.mock("@/actions/kasir.actions", () => ({
   markLocationNotifiedAction: (orderId: unknown) => markLocationNotifiedAction(orderId),
 }));
 
+// The camera is the browser's; the test stands in for it and hands the
+// screen what a scan would have read.
+const scanner = vi.hoisted(() => ({ onScan: null as ((text: string) => string | null) | null, open: false }));
+vi.mock("@/components/kasir/qr-scanner", () => ({
+  QrScanner: (props: { open: boolean; onScan: (text: string) => string | null }) => {
+    scanner.open = props.open;
+    scanner.onScan = props.onScan;
+    return props.open ? <div role="dialog" aria-label="Scan QR tiket" /> : null;
+  },
+}));
+
 const { PreorderScreen } = await import("@/components/kasir/preorder-screen");
 const { ToastProvider } = await import("@/components/ui/use-toast");
 const { formatRupiah } = await import("@/lib/utils");
@@ -141,3 +152,42 @@ describe("PreorderScreen: chatting the customer", () => {
     expect(within(section).getByText(/nggak punya nomor WhatsApp/)).toBeTruthy();
   });
 });
+
+describe("PreorderScreen: scanning the customer's ticket", () => {
+  function screenWith(orders: CashierPreorder[]) {
+    render(
+      <ToastProvider>
+        <PreorderScreen preorders={orders} qrisImageUrl={null} brand="Bunnyè" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Scan QR/ }));
+  }
+
+  it("opens the scanned order's sheet, even when the list is filtered away from it", () => {
+    const nadia = preorder({ id: "o1", orderNumber: "PO-7KX4QM", customerName: "Nadia" });
+    const rani = preorder({ id: "o2", orderNumber: "PO-B4N8TZ", customerName: "Rani" });
+    screenWith([nadia, rani]);
+    fireEvent.change(screen.getByLabelText("Cari nomor pesanan atau nama pelanggan"), {
+      target: { value: "Rani" },
+    });
+
+    let answer: string | null = "unset";
+    React.act(() => {
+      answer = scanner.onScan!("PO-7KX4QM");
+    });
+
+    expect(answer).toBeNull();
+    expect(scanner.open).toBe(false);
+    expect(screen.getByRole("dialog", { name: "Pesanan PO-7KX4QM" })).toBeDefined();
+  });
+
+  it("keeps scanning and says why when the QR is not one of the preorders", () => {
+    screenWith([preorder({ orderNumber: "PO-7KX4QM" })]);
+
+    const answer = scanner.onScan!("https://example.com/qris");
+
+    expect(answer).toMatch(/bukan QR tiket/);
+    expect(scanner.open).toBe(true);
+  });
+});
+

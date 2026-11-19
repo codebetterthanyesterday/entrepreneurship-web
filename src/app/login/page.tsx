@@ -9,6 +9,7 @@ import "../staff.css";
 
 export const metadata = {
   title: pageTitle("Masuk"),
+  robots: { index: false, follow: false },
 };
 
 export default async function LoginPage() {
