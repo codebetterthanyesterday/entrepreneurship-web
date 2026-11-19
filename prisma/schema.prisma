@@ -100,6 +100,11 @@ model User {
   // password anggota lain. Penanda ini yang memunculkan peringatan di panel
   // sampai orangnya menggantinya sendiri.
   mustChangePassword Boolean     @default(false)
+  // sessionVersion naik setiap kali akun dinonaktifkan atau password-nya
+  // direset admin. Sesi login (JWT, 12 jam) membawa angka saat masuk; begitu
+  // tidak sama lagi dengan yang di sini, sesi itu berakhir di perangkat mana
+  // pun. Lihat callback `jwt` di `src/lib/auth.ts`.
+  sessionVersion Int             @default(0)
   createdAt      DateTime        @default(now())
   handledOrders  Order[]         @relation("HandledOrders")
   stockMovements StockMovement[]
