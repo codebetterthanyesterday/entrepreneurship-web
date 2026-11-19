@@ -19,6 +19,26 @@ export const updateSettingsSchema = z.object({
     ])
     .nullable()
     .optional(),
+  /** The store's name, its one-line tagline and its Instagram; "" goes back to the default. */
+  brandName: z.string().trim().max(40, "Nama brand-nya kepanjangan, maksimal 40 huruf").optional(),
+  tagline: z.string().trim().max(90, "Tagline-nya kepanjangan, maksimal 90 huruf").optional(),
+  instagram: z
+    .string()
+    .trim()
+    // Pasted as "@bunnye.id", "instagram.com/bunnye.id/" or the bare handle.
+    .transform((value) =>
+      value
+        .replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, "")
+        .replace(/^@/, "")
+        .replace(/[/?#].*$/, ""),
+    )
+    .pipe(
+      z.union([
+        z.string().regex(/^[A-Za-z0-9._]{1,30}$/, "Akun Instagram-nya belum benar, contoh: @bunnye.id"),
+        z.literal(""),
+      ]),
+    )
+    .optional(),
   /** When the team answers chats, in minutes after 00.00 WIB. */
   chatOpenMinute: z
     .number()

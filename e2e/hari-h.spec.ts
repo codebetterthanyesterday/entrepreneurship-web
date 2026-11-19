@@ -264,3 +264,38 @@ test("a cashier corrects a customer's name and moves their handover, and the tra
 
   await till.context().close();
 });
+
+test("an admin renames the store and adds its Instagram, and the customer pages follow", async ({ page, browser }) => {
+  const brand = `Kedai E2E ${String(Date.now()).slice(-5)}`;
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+
+  await admin.goto("/admin/pengaturan");
+  const form = admin.getByRole("region", { name: "Identitas toko" });
+  await form.getByLabel("Nama brand").fill(brand);
+  await form.getByLabel("Tagline").fill("Kopi hangat tiap Market Day");
+  await form.getByLabel("Akun Instagram").fill("https://www.instagram.com/kedai.e2e/");
+  await form.getByRole("button", { name: "Simpan identitas" }).click();
+  await expect(admin.getByText("Identitas tokonya udah disimpan!")).toBeVisible();
+
+  await skipSplash(page);
+  await page.goto("/");
+  await expect(page.getByText(brand).first()).toBeVisible();
+  await expect(page.getByText("Kopi hangat tiap Market Day").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Instagram: @kedai\.e2e/ })).toHaveAttribute(
+    "href",
+    "https://instagram.com/kedai.e2e",
+  );
+
+  // Emptied, every field goes back to the default, and the link goes. The
+  // first save's toast has to go first, or it would pass for the second's.
+  const saved = admin.getByText("Identitas tokonya udah disimpan!");
+  await expect(saved).toBeHidden({ timeout: 10_000 });
+  for (const label of ["Nama brand", "Tagline", "Akun Instagram"]) await form.getByLabel(label).fill("");
+  await form.getByRole("button", { name: "Simpan identitas" }).click();
+  await expect(saved).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByText(brand)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Instagram:/ })).toHaveCount(0);
+
+  await admin.context().close();
+});

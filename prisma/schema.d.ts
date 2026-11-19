@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'ecca80cd6e4633f781d3e09cb0f555825ed7b69da19c9beafda48db8bfd5f166'>;
+  StorageHashBase<'bc55a22041ca999ebbd127cec65345dcae12fc4223a65e03254c6bca6645131f'>;
 export type ExecutionHash =
   ExecutionHashBase<'1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890'>;
 export type ProfileHash =
@@ -415,6 +415,9 @@ export type FieldOutputTypes = {
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
       readonly chatOpenMinute: CodecTypes['pg/int4@1']['output'];
       readonly chatCloseMinute: CodecTypes['pg/int4@1']['output'];
+      readonly brandName: CodecTypes['pg/text@1']['output'] | null;
+      readonly tagline: CodecTypes['pg/text@1']['output'] | null;
+      readonly instagram: CodecTypes['pg/text@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly User: {
@@ -605,6 +608,9 @@ export type FieldInputTypes = {
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['input'];
       readonly chatOpenMinute: CodecTypes['pg/int4@1']['input'];
       readonly chatCloseMinute: CodecTypes['pg/int4@1']['input'];
+      readonly brandName: CodecTypes['pg/text@1']['input'] | null;
+      readonly tagline: CodecTypes['pg/text@1']['input'] | null;
+      readonly instagram: CodecTypes['pg/text@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly User: {
@@ -788,13 +794,16 @@ export type StorageColumnTypes = {
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['output'];
       readonly adminWhatsapp: CodecTypes['pg/text@1']['output'] | null;
       readonly boothOpen: CodecTypes['pg/bool@1']['output'];
+      readonly brandName: CodecTypes['pg/text@1']['output'] | null;
       readonly chatCloseMinute: CodecTypes['pg/int4@1']['output'];
       readonly chatOpenMinute: CodecTypes['pg/int4@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly instagram: CodecTypes['pg/text@1']['output'] | null;
       readonly lowStockThreshold: CodecTypes['pg/int4@1']['output'];
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
       readonly preorderOpen: CodecTypes['pg/bool@1']['output'];
       readonly qrisImageUrl: CodecTypes['pg/text@1']['output'] | null;
+      readonly tagline: CodecTypes['pg/text@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly user: {
@@ -978,13 +987,16 @@ export type StorageColumnInputTypes = {
       readonly accentChoiceEnabled: CodecTypes['pg/bool@1']['input'];
       readonly adminWhatsapp: CodecTypes['pg/text@1']['input'] | null;
       readonly boothOpen: CodecTypes['pg/bool@1']['input'];
+      readonly brandName: CodecTypes['pg/text@1']['input'] | null;
       readonly chatCloseMinute: CodecTypes['pg/int4@1']['input'];
       readonly chatOpenMinute: CodecTypes['pg/int4@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly instagram: CodecTypes['pg/text@1']['input'] | null;
       readonly lowStockThreshold: CodecTypes['pg/int4@1']['input'];
       readonly orderCutoffMinute: CodecTypes['pg/int4@1']['input'];
       readonly preorderOpen: CodecTypes['pg/bool@1']['input'];
       readonly qrisImageUrl: CodecTypes['pg/text@1']['input'] | null;
+      readonly tagline: CodecTypes['pg/text@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly user: {
@@ -1165,6 +1177,9 @@ export namespace Models {
     orderCutoffMinute: CodecTypes['pg/int4@1']['output'];
     chatOpenMinute: CodecTypes['pg/int4@1']['output'];
     chatCloseMinute: CodecTypes['pg/int4@1']['output'];
+    brandName: CodecTypes['pg/text@1']['output'] | null;
+    tagline: CodecTypes['pg/text@1']['output'] | null;
+    instagram: CodecTypes['pg/text@1']['output'] | null;
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     readonly [RelationKeys]?: never;
   };
@@ -2568,6 +2583,21 @@ type ContractBase = Omit<
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/int4@1', 1260>;
                   };
+                };
+                readonly brandName: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly tagline: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly instagram: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                 };
                 readonly updatedAt: {
                   readonly nativeType: 'timestamptz';
@@ -4077,6 +4107,18 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly brandName: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly tagline: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly instagram: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -4100,6 +4142,9 @@ type ContractBase = Omit<
                 readonly orderCutoffMinute: { readonly column: 'orderCutoffMinute' };
                 readonly chatOpenMinute: { readonly column: 'chatOpenMinute' };
                 readonly chatCloseMinute: { readonly column: 'chatCloseMinute' };
+                readonly brandName: { readonly column: 'brandName' };
+                readonly tagline: { readonly column: 'tagline' };
+                readonly instagram: { readonly column: 'instagram' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };

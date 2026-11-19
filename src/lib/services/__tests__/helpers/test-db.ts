@@ -73,7 +73,8 @@ export async function resetDatabase(): Promise<void> {
 
   await db.orm.public.StoreSetting.where({ id: 1 }).upsert({
     create: { id: 1, preorderOpen: true, boothOpen: true, lowStockThreshold: 3 },
-    update: { preorderOpen: true, boothOpen: true, lowStockThreshold: 3 },
+    // The row outlives the truncate: put back whatever a test may have written.
+    update: { preorderOpen: true, boothOpen: true, lowStockThreshold: 3, brandName: null, tagline: null, instagram: null },
   });
 }
 

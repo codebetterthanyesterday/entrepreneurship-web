@@ -2209,6 +2209,13 @@
                   "kind": "scalar"
                 }
               },
+              "brandName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "chatCloseMinute": {
                 "nullable": false,
                 "type": {
@@ -2227,6 +2234,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "instagram": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -2258,6 +2272,13 @@
                   "kind": "scalar"
                 }
               },
+              "tagline": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -2278,6 +2299,9 @@
                 "boothOpen": {
                   "column": "boothOpen"
                 },
+                "brandName": {
+                  "column": "brandName"
+                },
                 "chatCloseMinute": {
                   "column": "chatCloseMinute"
                 },
@@ -2286,6 +2310,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "instagram": {
+                  "column": "instagram"
                 },
                 "lowStockThreshold": {
                   "column": "lowStockThreshold"
@@ -2298,6 +2325,9 @@
                 },
                 "qrisImageUrl": {
                   "column": "qrisImageUrl"
+                },
+                "tagline": {
+                  "column": "tagline"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -4134,6 +4164,11 @@
                   "nativeType": "bool",
                   "nullable": false
                 },
+                "brandName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "chatCloseMinute": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -4160,6 +4195,11 @@
                   },
                   "nativeType": "int4",
                   "nullable": false
+                },
+                "instagram": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "lowStockThreshold": {
                   "codecId": "pg/int4@1",
@@ -4189,6 +4229,11 @@
                   "nullable": false
                 },
                 "qrisImageUrl": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "tagline": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
@@ -4452,7 +4497,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "ecca80cd6e4633f781d3e09cb0f555825ed7b69da19c9beafda48db8bfd5f166"
+    "storageHash": "bc55a22041ca999ebbd127cec65345dcae12fc4223a65e03254c6bca6645131f"
   },
   "execution": {
     "executionHash": "1411e4d4a15c67fa38fd7454e2c3637df9f26af046173c0359ba1a7860f4c890",

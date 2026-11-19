@@ -6,11 +6,13 @@ import { StoreToggles } from "@/components/admin/store-toggles";
 import { ScheduleManager } from "@/components/admin/schedule-manager";
 import { DEFAULT_CHAT_CLOSE_MINUTE, DEFAULT_CHAT_OPEN_MINUTE } from "@/lib/whatsapp";
 import { MiscSettingsForm } from "@/components/admin/misc-settings-form";
+import { StoreIdentityForm } from "@/components/admin/store-identity-form";
+import { DEFAULT_TAGLINE, getSiteIdentity } from "@/lib/queries/site.query";
 import { QrisUploader } from "@/components/admin/qris-uploader";
 import { ExportPanel } from "@/components/admin/export-panel";
 import { ButtonLink } from "@/components/ui/button";
 import { hasAnyPhotoboothCharge } from "@/lib/queries/external-charge.query";
-import { pageTitle } from "@/lib/brand";
+import { BRAND_NAME, pageTitle } from "@/lib/brand";
 import { PageHead } from "@/components/staff/page-head";
 
 export const metadata = {
@@ -21,10 +23,11 @@ export default async function AdminSettingsPage() {
   await requireRole("ADMIN");
 
   const today = todayInJakarta();
-  const [settings, days, photoboothCharges] = await Promise.all([
+  const [settings, days, photoboothCharges, identity] = await Promise.all([
     getSettings(),
     getScheduleForAdmin(today),
     hasAnyPhotoboothCharge(),
+    getSiteIdentity(),
   ]);
 
   return (
@@ -50,6 +53,13 @@ export default async function AdminSettingsPage() {
         />
 
         <QrisUploader qrisImageUrl={settings.qrisImageUrl ?? null} />
+
+        <StoreIdentityForm
+          brandName={identity.brandName}
+          tagline={identity.tagline}
+          instagram={identity.instagram}
+          defaults={{ brandName: BRAND_NAME, tagline: DEFAULT_TAGLINE }}
+        />
 
         <MiscSettingsForm
           lowStockThreshold={settings.lowStockThreshold}

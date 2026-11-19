@@ -321,6 +321,12 @@ model StoreSetting {
   // tombol chat tetap ada, tapi bilang kapan dibalas. Bawaan 08.00–21.00.
   chatOpenMinute    Int @default(480)
   chatCloseMinute   Int @default(1260)
+  // Identitas toko di header, footer, dan layar pembuka: nama brand, satu
+  // baris tagline, dan akun Instagram (tanpa "@"). Kosong = pakai bawaan
+  // (atau isian lama di SiteText, sampai tabel itu dibuang).
+  brandName         String?
+  tagline           String?
+  instagram         String?
   updatedAt         temporal.updatedAt()
 }
 
