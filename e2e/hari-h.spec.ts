@@ -178,3 +178,45 @@ test("an admin adds a cashier, and switching them off signs them out at once", a
   await till.context().close();
 });
 
+test("an admin's new category becomes a shelf, and deleting it keeps its menu on sale", async ({ page, browser }) => {
+  // Unique per run: the mobile and desktop projects share one database.
+  const shelf = `Rak ${Date.now()}`;
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+
+  // Admin → Menu & stok → Kategori → Tambah kategori.
+  await admin.goto("/admin/menu");
+  await admin.getByRole("link", { name: "Kategori" }).click();
+  await admin.getByRole("button", { name: "Tambah kategori" }).click();
+  await admin.getByLabel("Nama kategori").fill(shelf);
+  await admin.getByRole("button", { name: "Tambah", exact: true }).click();
+  await expect(admin.getByText(`Kategori ${shelf} ditambahkan`)).toBeVisible();
+
+  // The menu goes into it.
+  await admin.goto("/admin/menu");
+  await admin.getByRole("button", { name: `Ubah ${MENU.name}` }).click();
+  await admin.getByLabel("Kategori").selectOption({ label: shelf });
+  await admin.getByRole("button", { name: "Simpan perubahan" }).click();
+  await expect(admin.getByText("Menunya udah diperbarui!")).toBeVisible();
+
+  // A customer finds it on that shelf.
+  await skipSplash(page);
+  await page.goto("/");
+  await expect(
+    page.getByRole("region", { name: new RegExp(`— ${shelf}$`) }).getByRole("button", { name: `Lihat ${MENU.name}` }),
+  ).toBeVisible();
+
+  // The category goes; the menu stays on sale, on the "Lainnya" shelf.
+  await admin.goto("/admin/menu/kategori");
+  await admin.getByRole("button", { name: `Hapus ${shelf}` }).click();
+  await expect(admin.getByText(/1 menu di dalamnya nggak ikut terhapus/)).toBeVisible();
+  await admin.getByRole("button", { name: "Ya, hapus" }).click();
+  await expect(admin.getByText(`Kategori ${shelf} dihapus; 1 menu pindah ke Tanpa kategori`)).toBeVisible();
+
+  await page.goto("/");
+  await expect(page.getByRole("region", { name: new RegExp(`— ${shelf}$`) })).toHaveCount(0);
+  await expect(
+    page.getByRole("region", { name: /— Lainnya$/ }).getByRole("button", { name: `Lihat ${MENU.name}` }),
+  ).toBeVisible();
+
+  await admin.context().close();
+});
