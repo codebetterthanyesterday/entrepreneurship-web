@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { InsufficientStockError } from "@/lib/errors";
 import { toActionError, type ActionResult } from "@/lib/action-result";
 import { requireRole } from "@/lib/session";
@@ -9,6 +10,8 @@ import {
   createPreorderSchema,
 } from "@/lib/validations/order.schema";
 import { createOrder } from "@/lib/services/order.service";
+import { LIMITS, hitRateLimit, waitLabel } from "@/lib/services/rate-limit.service";
+import { clientIp } from "@/lib/client-ip";
 import type { OnsiteOrderReceipt } from "@/types/order-view";
 
 /**
@@ -30,12 +33,34 @@ import type { OnsiteOrderReceipt } from "@/types/order-view";
  * Stock is not handled here either — `createOrder` owns the guarded decrement,
  * and this action only translates its failure into something a customer can
  * read.
+ *
+ * Every preorder holds stock and a slot until staff cancel it, so it is rate
+ * limited per address and per WhatsApp number (`LIMITS`) before anything is
+ * taken: a script cannot empty the menu with made-up orders.
  */
 export async function submitPreorderAction(
   input: unknown,
 ): Promise<ActionResult<{ orderNumber: string }>> {
   try {
     const data = createPreorderSchema.parse(input);
+
+    const [byIp, byPhone] = await Promise.all([
+      hitRateLimit(LIMITS.checkoutPerIp, clientIp(await headers())),
+      hitRateLimit(LIMITS.checkoutPerPhone, data.customerPhone),
+    ]);
+    if (!byPhone.allowed) {
+      return {
+        ok: false,
+        error: `Nomor WhatsApp ini udah kebanyakan pesan dalam sejam terakhir. Coba lagi ${waitLabel(byPhone.retryAfterSeconds)} lagi, atau chat kami kalau memang mau pesan lagi.`,
+        field: "customerPhone",
+      };
+    }
+    if (!byIp.allowed) {
+      return {
+        ok: false,
+        error: `Terlalu banyak pesanan dari jaringan ini. Coba lagi ${waitLabel(byIp.retryAfterSeconds)} lagi ya.`,
+      };
+    }
 
     const order = await createOrder({
       channel: "PREORDER",

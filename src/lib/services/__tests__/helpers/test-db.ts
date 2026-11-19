@@ -35,6 +35,7 @@ const TABLES = [
   // it behind for the next one.
   "siteText",
   "siteListItem",
+  "rateLimit",
 ];
 
 /**

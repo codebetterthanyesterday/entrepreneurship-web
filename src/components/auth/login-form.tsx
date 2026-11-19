@@ -44,7 +44,10 @@ export function LoginForm() {
         password,
       });
 
-      if (res?.error) {
+      if (res?.code === "terlalu_sering") {
+        // Set by the server after too many failed attempts (`TooManySignIns`).
+        setError("Kebanyakan percobaan yang salah. Tunggu 15 menit, lalu coba lagi.");
+      } else if (res?.error) {
         setError("Email atau password-nya salah nih");
       } else {
         // Refresh router agar server component membaca sesi baru 
