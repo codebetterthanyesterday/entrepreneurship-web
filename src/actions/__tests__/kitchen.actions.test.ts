@@ -162,17 +162,15 @@ describe("transitionFromKitchenAction — who may move a ticket", () => {
     );
   });
 
-  it("lets an admin past the role gate but not past the transition table", async () => {
+  it("lets an admin cover the kitchen, start to ready", async () => {
     await signIn("ADMIN");
     const order = await queuedOrder();
 
-    // Chapter 3 gives the kitchen edges to DAPUR alone. The action does not
-    // restate that rule; `assertTransition` applies it. This is why the board
-    // draws an admin's buttons disabled rather than letting them fail on tap.
-    const result = await transitionFromKitchenAction({ orderId: order.id, to: "IN_PROGRESS" });
-
-    expect(result.ok).toBe(false);
-    expect((await reload(order.id)).status).toBe("IN_QUEUE");
+    // An admin running the event steps in at the pass during a break; the
+    // board gives them working buttons because the transition table does.
+    expect((await transitionFromKitchenAction({ orderId: order.id, to: "IN_PROGRESS" })).ok).toBe(true);
+    expect((await transitionFromKitchenAction({ orderId: order.id, to: "READY" })).ok).toBe(true);
+    expect((await reload(order.id)).status).toBe("READY");
   });
 
   it("leaves the transition table to the service", async () => {

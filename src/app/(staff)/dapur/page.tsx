@@ -21,10 +21,10 @@ export default async function DapurPage() {
   // "no orders" to whoever is standing in front of it.
   const orders = await findKitchenQueue();
 
-  // Admins may open this board, but chapter 3 gives every kitchen edge to DAPUR
-  // alone — so for them the buttons are drawn disabled with the reason rather
-  // than left to fail on the first tap. Read from the transition table itself,
-  // so the screen cannot drift away from what the server enforces.
+  // Whether this account may work the tickets, read from the transition table
+  // itself so the screen cannot drift from what the server enforces. DAPUR and
+  // ADMIN may (an admin covers the pass during a break); anyone else would get
+  // the buttons drawn disabled with the reason, rather than failing on a tap.
   const canAct = canTransition("IN_QUEUE", "IN_PROGRESS", toActor(user).role);
 
   return (
