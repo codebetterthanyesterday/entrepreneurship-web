@@ -37,6 +37,8 @@ export interface ProductFormSheetProps {
   error: { message: string; field?: string } | null;
   onClose: () => void;
   onSubmit: (values: ProductFormValues) => void;
+  /** Deletes the product being edited. Not offered for a new one. */
+  onDelete?: () => void;
 }
 
 interface SegmentedOption<T> {
@@ -96,8 +98,14 @@ export function ProductFormSheet({
   error,
   onClose,
   onSubmit,
+  onDelete,
 }: ProductFormSheetProps) {
   const isEditing = product !== null;
+  // Deleting takes two taps, as for a paket: the first arms the button.
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  // Set once the delete is sent, so a refusal shows beside the button the
+  // admin just tapped rather than at the top of a scrolled sheet.
+  const [deleteSent, setDeleteSent] = React.useState(false);
 
   // The parent mounts this sheet only while it is open, so the initial state is
   // the reset: every open starts from the product being edited.
@@ -113,6 +121,7 @@ export function ProductFormSheet({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    setDeleteSent(false);
 
     onSubmit({
       name: name.trim(),
@@ -133,7 +142,7 @@ export function ProductFormSheet({
             : "Tambah jualan baru ke katalog"}
         </p>
 
-        {generalError && (
+        {generalError && !deleteSent && (
           <div className="s-alert text-sm font-semibold">
             {generalError}
           </div>
@@ -255,6 +264,35 @@ export function ProductFormSheet({
           <Button type="button" variant="flat" fullWidth onClick={onClose} disabled={isSaving}>
             Batal
           </Button>
+          {isEditing && onDelete && (
+            <>
+              <Button
+                type="button"
+                variant="flat"
+                fullWidth
+                disabled={isSaving}
+                onClick={() => {
+                  if (!confirmDelete) {
+                    setConfirmDelete(true);
+                    return;
+                  }
+                  setConfirmDelete(false);
+                  setDeleteSent(true);
+                  onDelete();
+                }}
+              >
+                {confirmDelete ? "Yakin? Ketuk sekali lagi buat hapus" : "Hapus menu"}
+              </Button>
+              {deleteSent && generalError && (
+                <div role="alert" className="s-alert text-sm font-semibold">
+                  {generalError}
+                </div>
+              )}
+              <p className="text-[12px] leading-snug text-ink-soft">
+                Menu yang pernah dipesan atau masih jadi isi paket nggak bisa dihapus; sembunyikan saja dari katalog.
+              </p>
+            </>
+          )}
         </div>
       </form>
     </Sheet>
