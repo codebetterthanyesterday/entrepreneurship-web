@@ -6,7 +6,7 @@ import { Chip } from "@/components/ui/chip";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/use-toast";
-import { createProductAction, updateProductAction } from "@/actions/product.actions";
+import { createProductAction, deleteProductAction, updateProductAction } from "@/actions/product.actions";
 import { ProductCard } from "./product-card";
 import { ProductFormSheet, type ProductFormValues } from "./product-form-sheet";
 import type { AdminCategory, AdminProduct } from "@/types/admin";
@@ -72,6 +72,25 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
 
     setSheetOpen(false);
     toast(editing ? "Menunya udah diperbarui!" : "Menu barunya udah masuk katalog!");
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!editing) return;
+    setIsSaving(true);
+    setError(null);
+
+    const result = await deleteProductAction(editing.id);
+
+    setIsSaving(false);
+
+    if (!result.ok) {
+      setError({ message: result.error });
+      return;
+    }
+
+    setSheetOpen(false);
+    toast(`${editing.name} udah dihapus`);
     router.refresh();
   };
 
@@ -149,6 +168,7 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
           error={error}
           onClose={closeSheet}
           onSubmit={handleSubmit}
+          onDelete={() => void handleDelete()}
         />
       )}
     </div>

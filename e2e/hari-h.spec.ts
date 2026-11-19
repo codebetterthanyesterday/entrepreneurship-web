@@ -221,6 +221,42 @@ test("an admin's new category becomes a shelf, and deleting it keeps its menu on
   await admin.context().close();
 });
 
+test("an admin deletes a menu item entered by mistake, and it leaves the catalogue", async ({ page, browser }) => {
+  // Unique per run: the mobile and desktop projects share one database.
+  const typo = `Kopi Salah Ketik ${Date.now()}`;
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+
+  await admin.goto("/admin/menu");
+  await admin.getByRole("button", { name: "+ Menu" }).first().click();
+  await admin.getByLabel("Nama menu").fill(typo);
+  await admin.getByLabel("Harga (Rp)").fill("15000");
+  await admin.getByRole("button", { name: "Tambah menu" }).click();
+  await expect(admin.getByText("Menu barunya udah masuk katalog!")).toBeVisible();
+
+  await skipSplash(page);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: `Lihat ${typo}` })).toBeVisible();
+
+  // Two taps: the first only asks to be sure.
+  await admin.getByRole("button", { name: `Ubah ${typo}` }).click();
+  await admin.getByRole("button", { name: "Hapus menu" }).click();
+  await admin.getByRole("button", { name: "Yakin? Ketuk sekali lagi buat hapus" }).click();
+  await expect(admin.getByText(`${typo} udah dihapus`)).toBeVisible();
+  await expect(admin.getByRole("button", { name: `Ubah ${typo}` })).toHaveCount(0);
+
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: `Lihat ${typo}` })).toHaveCount(0);
+
+  // One that has been sold cannot go; the sheet says to hide it instead.
+  await admin.getByRole("button", { name: `Ubah ${MENU.name}` }).click();
+  await admin.getByRole("button", { name: "Hapus menu" }).click();
+  await admin.getByRole("button", { name: "Yakin? Ketuk sekali lagi buat hapus" }).click();
+  await expect(admin.getByText(/Keluarin dulu dari paketnya|Sembunyiin aja dari katalog/)).toBeVisible();
+  await expect(admin.getByRole("button", { name: "Simpan perubahan" })).toBeVisible();
+
+  await admin.context().close();
+});
+
 test("a cashier corrects a customer's name and moves their handover, and the tracker follows", async ({ page, browser }) => {
   const dateLabel = process.env.E2E_SERVICE_DATE_LABEL!;
   const phone = `0813${String(Date.now()).slice(-8)}`;
