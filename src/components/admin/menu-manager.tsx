@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/use-toast";
 import { createProductAction, deleteProductAction, updateProductAction } from "@/actions/product.actions";
 import { ProductCard } from "./product-card";
+import { uploadAdminPhotos } from "@/lib/admin-photo-upload";
 import { ProductFormSheet, type ProductFormValues } from "./product-form-sheet";
 import type { AdminCategory, AdminProduct } from "@/types/admin";
 import { PageHead } from "@/components/staff/page-head";
@@ -51,7 +52,7 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
     setError(null);
   };
 
-  const handleSubmit = async (values: ProductFormValues) => {
+  const handleSubmit = async (values: ProductFormValues, photos: File[] = []) => {
     setIsSaving(true);
     setError(null);
 
@@ -63,15 +64,27 @@ export function MenuManager({ products, categories, lowStockThreshold }: MenuMan
           categoryId: values.categoryId ?? undefined,
         });
 
-    setIsSaving(false);
-
     if (!result.ok) {
+      setIsSaving(false);
       setError({ message: result.error, field: result.field });
       return;
     }
 
+    // A new item's photos go once it has an id; the item stays saved even if
+    // the signal drops halfway.
+    let photoNote = "";
+    if (!editing && photos.length > 0) {
+      const { sent, error: photoError } = await uploadAdminPhotos(`/api/admin/produk/${result.data.id}/foto`, photos);
+      photoNote = photoError
+        ? `, tapi baru ${sent} dari ${photos.length} foto yang terkirim (${photoError}). Tambah sisanya lewat Ubah menu.`
+        : sent === 1
+          ? ", lengkap dengan fotonya!"
+          : `, lengkap dengan ${sent} fotonya!`;
+    }
+
+    setIsSaving(false);
     setSheetOpen(false);
-    toast(editing ? "Menunya udah diperbarui!" : "Menu barunya udah masuk katalog!");
+    toast(editing ? "Menunya udah diperbarui!" : photoNote ? `Menu barunya udah masuk katalog${photoNote}` : "Menu barunya udah masuk katalog!");
     router.refresh();
   };
 

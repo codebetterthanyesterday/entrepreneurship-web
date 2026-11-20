@@ -18,6 +18,8 @@ import {
 } from "@/actions/bundle.actions";
 import type { AdminProduct } from "@/types/admin";
 import { BundlePhoto } from "./bundle-photo";
+import { PendingPhotos } from "./pending-photos";
+import { uploadAdminPhoto } from "@/lib/admin-photo-upload";
 
 /** A paket as the admin page hands it to the browser: plain values only. */
 export interface AdminBundle {
@@ -214,6 +216,8 @@ function BundleFormSheet({
   const [error, setError] = React.useState<{ message: string; field?: string } | null>(null);
   // Deleting takes two taps: the first arms the button, the second deletes.
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  // A new paket's photo, sent once the save has given it an id.
+  const [pendingPhoto, setPendingPhoto] = React.useState<File[]>([]);
 
   const fieldError = (field: string) => (error?.field === field ? error.message : undefined);
   const generalError = error && (!error.field || error.field.startsWith("items")) ? error.message : null;
@@ -244,13 +248,24 @@ function BundleFormSheet({
       ? await updateBundleAction(bundle.id, payload)
       : await createBundleAction(payload);
 
-    setIsSaving(false);
-
     if (!result.ok) {
+      setIsSaving(false);
       setError({ message: result.error, field: result.field });
       return;
     }
 
+    if (!isEditing && pendingPhoto[0]) {
+      const sent = await uploadAdminPhoto(`/api/admin/paket/${result.data.id}/foto`, pendingPhoto[0], "paket.jpg");
+      setIsSaving(false);
+      onSaved(
+        sent.ok
+          ? "Paket barunya udah masuk katalog, lengkap dengan fotonya!"
+          : `Paketnya udah masuk katalog, tapi fotonya belum: ${sent.error}. Pasang lagi lewat Ubah paket.`,
+      );
+      return;
+    }
+
+    setIsSaving(false);
     onSaved(isEditing ? "Paketnya udah diperbarui!" : "Paket barunya udah masuk katalog!");
   };
 
@@ -362,9 +377,14 @@ function BundleFormSheet({
         {bundle ? (
           <BundlePhoto bundleId={bundle.id} bundleName={bundle.name} imageUrl={photoUrl} />
         ) : (
-          <p className="text-[12.5px] text-ink-soft">
-            Foto paket bisa dipasang setelah paketnya disimpan. Tanpa foto, katalog menggambar paketnya dari isinya.
-          </p>
+          <PendingPhotos
+            title="Foto paket"
+            max={1}
+            files={pendingPhoto}
+            onChange={setPendingPhoto}
+            disabled={isSaving}
+            emptyNote="Opsional. Tanpa foto, katalog menggambar paketnya dari isinya."
+          />
         )}
 
         <div className="flex flex-col gap-2 pt-1">

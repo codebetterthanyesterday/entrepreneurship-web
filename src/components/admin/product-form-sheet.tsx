@@ -9,6 +9,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { cn } from "@/lib/utils";
 import type { AdminCategory, AdminProduct, PrepType } from "@/types/admin";
 import { ProductPhotos } from "./product-photos";
+import { PendingPhotos } from "./pending-photos";
 
 const NEW_PRODUCT_STOCK = 10;
 const QUICK_ADD = [5, 10, 25];
@@ -36,7 +37,8 @@ export interface ProductFormSheetProps {
   isSaving: boolean;
   error: { message: string; field?: string } | null;
   onClose: () => void;
-  onSubmit: (values: ProductFormValues) => void;
+  /** `photos`: picked for a new menu item, uploaded once it is saved. */
+  onSubmit: (values: ProductFormValues, photos: File[]) => void;
   /** Deletes the product being edited. Not offered for a new one. */
   onDelete?: () => void;
 }
@@ -115,6 +117,7 @@ export function ProductFormSheet({
   const [prepType, setPrepType] = React.useState<PrepType>(product?.prepType ?? "NEEDS_PREP");
   const [isActive, setIsActive] = React.useState(product?.isActive ?? true);
   const [categoryId, setCategoryId] = React.useState<string>(product?.categoryId ?? "");
+  const [pendingPhotos, setPendingPhotos] = React.useState<File[]>([]);
 
   const fieldError = (field: string) => (error?.field === field ? error.message : undefined);
   const generalError = error && !error.field ? error.message : null;
@@ -130,7 +133,7 @@ export function ProductFormSheet({
       prepType,
       isActive,
       categoryId: categoryId === "" ? null : categoryId,
-    });
+    }, isEditing ? [] : pendingPhotos);
   };
 
   return (
@@ -252,9 +255,14 @@ export function ProductFormSheet({
         {isEditing ? (
           <ProductPhotos productId={product.id} productName={product.name} images={images ?? product.images} />
         ) : (
-          <p className="text-[12.5px] text-ink-soft">
-            Foto menu bisa ditambahkan setelah menunya disimpan: buka lagi menunya, lalu <b>Tambah foto</b>.
-          </p>
+          <PendingPhotos
+            title="Foto menu"
+            max={6}
+            files={pendingPhotos}
+            onChange={setPendingPhotos}
+            disabled={isSaving}
+            emptyNote="Opsional, sampai 6 foto. Foto pertama jadi sampul di katalog."
+          />
         )}
 
         <div className="flex flex-col gap-2 pt-1">
