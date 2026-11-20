@@ -34,6 +34,15 @@ export function Sheet({ open, onClose, title, ariaLabel, children }: SheetProps)
   const previousFocusRef = React.useRef<HTMLElement | null>(null);
   const mounted = React.useSyncExternalStore(NEVER_CHANGES, onClient, onServer);
 
+  // The latest `onClose`, read when Escape is pressed. The effect below must
+  // run on open and close only: callers often pass a fresh function each
+  // render (`onClose={() => ...}`), and re-running the effect on every
+  // keystroke in a field inside the sheet moved focus off that field.
+  const onCloseRef = React.useRef(onClose);
+  React.useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   React.useEffect(() => {
     if (open) {
       previousFocusRef.current = document.activeElement as HTMLElement;
@@ -41,7 +50,7 @@ export function Sheet({ open, onClose, title, ariaLabel, children }: SheetProps)
       
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
-          onClose();
+          onCloseRef.current();
         } else if (e.key === "Tab") {
           if (sheetRef.current) {
             const focusableElements = sheetRef.current.querySelectorAll(
@@ -82,7 +91,7 @@ export function Sheet({ open, onClose, title, ariaLabel, children }: SheetProps)
         }
       };
     }
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted || !open) return null;
 
