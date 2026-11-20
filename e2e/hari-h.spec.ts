@@ -301,6 +301,33 @@ test("a cashier corrects a customer's name and moves their handover, and the tra
   await till.context().close();
 });
 
+test("an admin types a new paket's details key by key, and every key lands in its field", async ({ browser }) => {
+  // Typed, not filled: a sheet that took focus back on every keystroke kept
+  // only the first letter of each field.
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/admin/menu");
+  await admin.getByRole("button", { name: "+ Paket" }).click();
+  await expect(admin.getByRole("dialog", { name: "Paket baru" })).toBeVisible();
+
+  const name = admin.getByLabel("Nama paket");
+  await name.click();
+  await name.pressSequentially("Little Power Combo");
+  await expect(name).toHaveValue("Little Power Combo");
+  await expect(name).toBeFocused();
+
+  const description = admin.getByLabel("Deskripsi (opsional)");
+  await description.click();
+  await description.pressSequentially("Croffle dan kopi");
+  await expect(description).toHaveValue("Croffle dan kopi");
+
+  const price = admin.getByLabel("Harga paket (Rp)");
+  await price.click();
+  await price.pressSequentially("32000");
+  await expect(price).toHaveValue(/32[.,]?000/);
+
+  await admin.context().close();
+});
+
 test("an admin renames the store and adds its Instagram, and the customer pages follow", async ({ page, browser }) => {
   const brand = `Kedai E2E ${String(Date.now()).slice(-5)}`;
   const admin = await signInStaff(browser, STAFF.ADMIN);
