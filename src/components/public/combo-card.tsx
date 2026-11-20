@@ -15,6 +15,8 @@ export interface ComboCardProps {
   inCart: number;
   preorderOpen: boolean;
   onClaim: (bundle: PublicBundle, origin: DOMRect) => void;
+  /** Opens the paket up close: the whole card is the target, as a menu card is. */
+  onOpen: (bundle: PublicBundle) => void;
 }
 
 /**
@@ -25,7 +27,7 @@ export interface ComboCardProps {
  * The saving and the "-28%" corner are worked out from the products' current
  * prices, never typed in, so they cannot drift from the menu.
  */
-export function ComboCard({ bundle, index, remaining, inCart, preorderOpen, onClaim }: ComboCardProps) {
+export function ComboCard({ bundle, index, remaining, inCart, preorderOpen, onClaim, onOpen }: ComboCardProps) {
   const saving = bundleSaving(bundle);
   const percent = bundle.normalPrice > 0 ? Math.round((saving / bundle.normalPrice) * 100) : 0;
   const portions = bundle.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -49,7 +51,17 @@ export function ComboCard({ bundle, index, remaining, inCart, preorderOpen, onCl
       </p>
 
       <h3 className="mt-2 font-[family-name:var(--font-display)] text-[20px] font-extrabold uppercase leading-tight text-ink">
-        {bundle.name}
+        {/* The name's button stretches over the whole card (its ::after), so a
+            tap on the picture, the text or the price opens the paket up close,
+            as a menu card does. It sits above the picture's own layers
+            (z-index 1 in .k-scene); only the claim button, above it, adds. */}
+        <button
+          type="button"
+          onClick={() => onOpen(bundle)}
+          className="text-left uppercase after:absolute after:inset-0 after:z-[2] after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-[-4px] focus-visible:after:outline-pink-deep"
+        >
+          {bundle.name}
+        </button>
       </h3>
       <p className="mt-1 text-[14.5px] leading-relaxed text-ink-soft">
         {bundle.description ??
@@ -89,13 +101,13 @@ export function ComboCard({ bundle, index, remaining, inCart, preorderOpen, onCl
           </span>
         </div>
 
+        {/* As wide as the card on a phone: the thumb's target, not a tag. */}
         <Button
-          size="sm"
           variant={accent ? "primary" : "go"}
           disabled={!preorderOpen || remaining <= 0}
           onClick={(event) => onClaim(bundle, event.currentTarget.getBoundingClientRect())}
           aria-label={`Masukin ${bundle.name} ke keranjang`}
-          className="gap-1.5"
+          className="relative z-10 w-full gap-1.5 tablet:w-auto"
         >
           Claim this combo
           {inCart > 0 && <span className="tabular-nums">· {inCart}</span>}

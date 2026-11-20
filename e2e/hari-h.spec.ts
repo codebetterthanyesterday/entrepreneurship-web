@@ -92,6 +92,28 @@ test("a preorder goes from the checkout to the customer's hands", async ({ page,
   await kitchen.context().close();
 });
 
+test("a tap anywhere on a paket's card opens it, and two go in the cart from there", async ({ page }) => {
+  await skipSplash(page);
+  await page.goto("/");
+  const card = page.locator("article").filter({ has: page.getByRole("heading", { name: PAKET.name }) });
+  await card.scrollIntoViewIfNeeded();
+
+  // The picture, not the name or the button: the whole card is the target.
+  const visual = card.locator("img, svg").first();
+  const box = (await visual.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+  const sheet = page.getByRole("dialog", { name: PAKET.name });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByText(PAKET.side)).toBeVisible();
+  await sheet.getByRole("button", { name: "Tambah" }).click();
+  await sheet.getByRole("button", { name: /Masukin keranjang/ }).click();
+
+  await expect(page.getByText(`${PAKET.name} masuk keranjang!`)).toBeVisible();
+  await expect(sheet).toBeHidden();
+  await expect(card.getByRole("button", { name: `Masukin ${PAKET.name} ke keranjang` })).toContainText("· 2");
+});
+
 test("a visitor cannot tell the staff side is there", async ({ request }) => {
   for (const path of ["/admin", "/kasir/preorder", "/dapur", "/login"]) {
     expect((await request.get(path)).status(), path).toBe(404);

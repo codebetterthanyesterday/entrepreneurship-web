@@ -14,6 +14,7 @@ import { JourneyEmpty } from "./journey";
 import { ProductCard, ProductVisual } from "./product-card";
 import { ComboCard } from "./combo-card";
 import { ProductDetailSheet } from "./product-detail-sheet";
+import { BundleDetailSheet } from "./bundle-detail-sheet";
 import type { PublicProduct } from "@/types/admin";
 
 /** Products with no category, gathered at the end. */
@@ -49,6 +50,7 @@ export function Catalog({ products, bundles = NO_BUNDLES, categories, preorderOp
   const { toast } = useToast();
   const cart = useCart(products, bundles);
   const [selected, setSelected] = React.useState<PublicProduct | null>(null);
+  const [selectedBundle, setSelectedBundle] = React.useState<PublicBundle | null>(null);
 
   const shelves = React.useMemo(() => shelvesOf(products, categories), [products, categories]);
   const active = useActiveShelf([
@@ -68,6 +70,15 @@ export function Catalog({ products, bundles = NO_BUNDLES, categories, preorderOp
     cart.addItem(bundleKey(bundle.id), 1);
     flyToCart(origin);
     toast(`${bundle.name} masuk keranjang!`);
+  };
+
+  const handleBundleSheetAdd = (bundleId: string, quantity: number, origin?: DOMRect) => {
+    const bundle = bundles.find((candidate) => candidate.id === bundleId);
+    if (!bundle) return;
+    cart.addItem(bundleKey(bundle.id), quantity);
+    flyToCart(origin);
+    toast(`${bundle.name} masuk keranjang!`);
+    setSelectedBundle(null);
   };
 
   const handleSheetAdd = (productId: string, quantity: number, origin?: DOMRect) => {
@@ -183,6 +194,7 @@ export function Catalog({ products, bundles = NO_BUNDLES, categories, preorderOp
                   inCart={cart.quantityOf(bundleKey(bundle.id))}
                   preorderOpen={preorderOpen}
                   onClaim={claim}
+                  onOpen={setSelectedBundle}
                 />
               ))}
             </div>
@@ -208,6 +220,18 @@ export function Catalog({ products, bundles = NO_BUNDLES, categories, preorderOp
           remaining={cart.remainingStock(selected)}
           onClose={() => setSelected(null)}
           onAdd={handleSheetAdd}
+        />
+      )}
+
+      {selectedBundle && (
+        <BundleDetailSheet
+          // Remounting per paket resets the quantity stepper to 1.
+          key={selectedBundle.id}
+          bundle={selectedBundle}
+          remaining={cart.remainingBundles(selectedBundle.id)}
+          preorderOpen={preorderOpen}
+          onClose={() => setSelectedBundle(null)}
+          onAdd={handleBundleSheetAdd}
         />
       )}
     </>

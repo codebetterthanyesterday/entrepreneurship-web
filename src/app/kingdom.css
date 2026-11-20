@@ -1155,7 +1155,8 @@ html[data-theme="kingdom"] body > * {
   width: 100%;
   padding: 12px 14px;
   border-radius: 18px;
-  background: var(--k-red);
+  /* The deep red, not --k-red: white on --k-red is 4.29:1, under AA. */
+  background: var(--k-red-deep);
   color: #fff;
   font-family: var(--k-round);
   font-size: 20px;
@@ -1172,7 +1173,8 @@ html[data-theme="kingdom"] body > * {
 }
 
 .k-add-price {
-  color: var(--k-yellow);
+  /* A paler yellow than --k-yellow, which is 4.10:1 on the deep red. */
+  color: #ffe9a6;
   font-family: var(--k-mono);
   font-size: 14px;
   font-weight: 700;
