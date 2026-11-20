@@ -32,6 +32,12 @@ export interface PaymentSheetProps {
    * be a choice the cashier can get wrong. Left out, the cashier picks.
    */
   fixedMethod?: PaymentMethod;
+  /**
+   * The QRIS receipt the customer uploaded from their own phone, if any. With
+   * one, the customer has already paid: the cashier checks it against the
+   * merchant notification instead of showing the booth's QRIS again.
+   */
+  paymentProofUrl?: string | null;
   title?: string;
   submitLabels?: Readonly<Record<PaymentMethod, string>>;
   onClose: () => void;
@@ -51,6 +57,7 @@ export function PaymentSheet({
   total,
   qrisImageUrl,
   fixedMethod,
+  paymentProofUrl = null,
   title = "Pembayaran",
   submitLabels = DEFAULT_SUBMIT_LABELS,
   onClose,
@@ -61,8 +68,12 @@ export function PaymentSheet({
   const [chosenMethod, setChosenMethod] = React.useState<PaymentMethod>(fixedMethod ?? "CASH");
   const [cashText, setCashText] = React.useState("");
   const [isSaving, setIsSaving] = React.useState(false);
+  // With a receipt in hand the booth's QRIS stays folded away, for the rare
+  // case the receipt turns out not to match and the customer pays again.
+  const [showQris, setShowQris] = React.useState(false);
 
   const method = fixedMethod ?? chosenMethod;
+  const paidFromPhone = method === "QRIS" && paymentProofUrl !== null;
 
   // A ref as well as the state: two quick taps can both fire before React has
   // re-rendered the disabled button, and a double tap here would ring the same
@@ -206,6 +217,36 @@ export function PaymentSheet({
               </div>
             )}
           </div>
+        ) : paidFromPhone ? (
+          <div className="flex flex-col gap-3">
+            <Note variant="info" className="w-full">
+              Pelanggan sudah bayar QRIS dari HP-nya. Cocokkan nominal {formatRupiah(total)} di bukti ini dengan
+              notifikasi QRIS masuk, lalu tandai lunas. Nggak perlu tunjukkan QRIS lagi.
+            </Note>
+            <span className="s-eyebrow">Bukti bayar dari pelanggan</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={paymentProofUrl}
+              alt="Bukti bayar QRIS dari pelanggan"
+              className="w-full max-h-[320px] object-contain border-4 border-ink-deep bg-white"
+            />
+            <button
+              type="button"
+              aria-expanded={showQris}
+              onClick={() => setShowQris((shown) => !shown)}
+              className="min-h-[44px] text-sm font-semibold text-ink-soft underline underline-offset-4"
+            >
+              {showQris ? "Sembunyikan QRIS booth" : "Bukti nggak cocok? Tunjukkan QRIS booth"}
+            </button>
+            {showQris && qrisImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={qrisImageUrl}
+                alt="Kode QRIS booth"
+                className="mx-auto w-full max-w-[260px] aspect-square object-contain border-4 border-ink-deep bg-white shadow-[5px_5px_0_var(--k-navy)]"
+              />
+            )}
+          </div>
         ) : (
           <div className="flex flex-col gap-3 items-center">
             {qrisImageUrl ? (
@@ -221,13 +262,15 @@ export function PaymentSheet({
               </Note>
             )}
             <Note variant="info" className="w-full">
-              Tunjukkan QRIS ke pelanggan, lalu tekan tombol di bawah setelah notifikasi masuk
+              {fixedMethod === "QRIS"
+                ? "Tunjukkan QRIS ke pelanggan, lalu tekan tombol di bawah setelah notifikasi masuk. Kalau pelanggan bilang sudah bayar dari HP, cukup cek notifikasinya."
+                : "Tunjukkan QRIS ke pelanggan, lalu tekan tombol di bawah setelah notifikasi masuk"}
             </Note>
           </div>
         )}
 
         <Button variant="primary" fullWidth isLoading={isSaving} onClick={handleSave}>
-          {isSaving ? "Menyimpan…" : submitLabels[method]}
+          {isSaving ? "Menyimpan…" : paidFromPhone ? "Bukti cocok, tandai lunas" : submitLabels[method]}
         </Button>
       </div>
     </Sheet>
