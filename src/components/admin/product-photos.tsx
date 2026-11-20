@@ -4,14 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { moveProductImageAction, removeProductImageAction } from "@/actions/product.actions";
-import { shrinkImage } from "@/lib/shrink-image";
+import { uploadAdminPhoto } from "@/lib/admin-photo-upload";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 
 /** Mirrors `MAX_PRODUCT_IMAGES` on the server, which has the last word. */
 const MAX_PHOTOS = 6;
-/** Wide enough for the product sheet on a desktop, small enough for the booth's signal. */
-const MAX_EDGE = 1200;
 
 export interface ProductPhotosProps {
   productId: string;
@@ -49,21 +47,16 @@ export function ProductPhotos({ productId, productName, images }: ProductPhotosP
     let added = 0;
     for (const [index, file] of chosen.entries()) {
       setProgress(`Mengunggah ${index + 1} dari ${chosen.length}…`);
-      try {
-        const shrunk = await shrinkImage(file, { maxEdge: MAX_EDGE, type: "image/jpeg", quality: 0.82 });
-        const form = new FormData();
-        form.append("file", shrunk, "foto.jpg");
-        const response = await fetch(`/api/admin/produk/${productId}/foto`, { method: "POST", body: form });
-        const result = (await response.json()) as ActionResult<{ id: string; url: string }>;
-        if (!result.ok) {
-          toast(result.error);
-          break;
-        }
-        added += 1;
-      } catch {
-        toast("Fotonya gagal terkirim. Cek sinyal, lalu coba lagi");
+      const result = await uploadAdminPhoto<{ id: string; url: string }>(
+        `/api/admin/produk/${productId}/foto`,
+        file,
+        "foto.jpg",
+      );
+      if (!result.ok) {
+        toast(result.error);
         break;
       }
+      added += 1;
     }
     if (inputRef.current) inputRef.current.value = "";
     setBusy(null);

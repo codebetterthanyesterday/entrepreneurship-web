@@ -396,6 +396,72 @@ test("an admin's photo becomes the paket's picture in the catalogue", async ({ p
   await admin.context().close();
 });
 
+test("a new menu item and a new paket get their photos in the same save", async ({ page, browser }) => {
+  // Unique per run: the mobile and desktop projects share one database.
+  const stamp = String(Date.now()).slice(-6);
+  const menuName = `Menu Foto ${stamp}`;
+  const paketName = `Paket Foto ${stamp}`;
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/admin/menu");
+  const photos = await admin.evaluate(async () => {
+    const make = async (colour: string) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 480;
+      const context = canvas.getContext("2d")!;
+      context.fillStyle = colour;
+      context.fillRect(0, 0, 640, 480);
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8));
+      return Array.from(new Uint8Array(await blob.arrayBuffer()));
+    };
+    return [await make("#c08552"), await make("#5b8c5a")];
+  });
+  const files = photos.map((bytes, index) => ({
+    name: `foto-${index + 1}.jpg`,
+    mimeType: "image/jpeg",
+    buffer: Buffer.from(bytes),
+  }));
+
+  // A menu item with two photos, picked before it exists.
+  await admin.getByRole("button", { name: "+ Menu" }).first().click();
+  const menuSheet = admin.getByRole("dialog", { name: "Menu baru" });
+  await menuSheet.getByLabel("Nama menu").fill(menuName);
+  await menuSheet.getByLabel("Harga (Rp)").fill("17000");
+  await menuSheet.locator('input[type="file"]').setInputFiles(files);
+  await expect(menuSheet.getByText("2 dari 6")).toBeVisible();
+  await menuSheet.getByRole("button", { name: "Tambah menu" }).click();
+  await expect(admin.getByText("Menu barunya udah masuk katalog, lengkap dengan 2 fotonya!")).toBeVisible();
+
+  await admin.getByRole("button", { name: `Ubah ${menuName}` }).click();
+  await expect(admin.getByRole("dialog", { name: "Ubah menu" }).getByText("2 dari 6")).toBeVisible();
+  await admin.getByRole("button", { name: "Batal" }).click();
+
+  // A paket with its own photo, picked before it exists.
+  await admin.getByRole("button", { name: "+ Paket" }).click();
+  const paketSheet = admin.getByRole("dialog", { name: "Paket baru" });
+  await paketSheet.getByLabel("Nama paket").fill(paketName);
+  await paketSheet.getByLabel("Menu isi ke-1").selectOption({ label: MENU.name });
+  await paketSheet.getByLabel("Menu isi ke-2").selectOption({ label: menuName });
+  await paketSheet.getByLabel("Harga paket (Rp)").fill("30000");
+  await paketSheet.locator('input[type="file"]').setInputFiles(files[0]!);
+  await expect(paketSheet.getByRole("img", { name: "Foto paket 1 yang dipilih" })).toBeVisible();
+  await paketSheet.getByRole("button", { name: "Simpan paket" }).click();
+  await expect(admin.getByText("Paket barunya udah masuk katalog, lengkap dengan fotonya!")).toBeVisible();
+
+  await admin.getByRole("button", { name: `Ubah ${paketName}` }).click();
+  const cover = admin.getByRole("dialog", { name: "Ubah paket" }).getByRole("img", { name: `Foto paket ${paketName}` });
+  await expect(cover).toHaveAttribute("src", /^\/gambar\//);
+  const src = await cover.getAttribute("src");
+
+  // The customer sees both pictures in the catalogue.
+  await skipSplash(page);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: `Lihat ${menuName}` }).locator("img")).toHaveAttribute("src", /^\/gambar\//);
+  await expect(page.locator(`img[src="${src}"]`).first()).toBeAttached();
+
+  await admin.context().close();
+});
+
 test("an admin's stock correction shows in the menu's stock history, with who made it", async ({ browser }) => {
   const admin = await signInStaff(browser, STAFF.ADMIN);
   await admin.goto("/admin/menu");

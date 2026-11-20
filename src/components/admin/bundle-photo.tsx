@@ -3,12 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import { shrinkImage } from "@/lib/shrink-image";
+import { uploadAdminPhoto } from "@/lib/admin-photo-upload";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
-
-/** Wide enough for the paket card on a desktop, small enough for the booth's signal. */
-const MAX_EDGE = 1200;
 
 export interface BundlePhotoProps {
   bundleId: string;
@@ -34,24 +31,15 @@ export function BundlePhoto({ bundleId, bundleName, imageUrl }: BundlePhotoProps
     if (!file) return;
     setBusy("upload");
     setError(null);
-    try {
-      const shrunk = await shrinkImage(file, { maxEdge: MAX_EDGE, type: "image/jpeg", quality: 0.82 });
-      const form = new FormData();
-      form.append("file", shrunk, "paket.jpg");
-      const response = await fetch(`/api/admin/paket/${bundleId}/foto`, { method: "POST", body: form });
-      const result = (await response.json()) as ActionResult<{ url: string }>;
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      toast(imageUrl ? "Foto paketnya udah diganti" : "Foto paketnya udah dipasang");
-      router.refresh();
-    } catch {
-      setError("Fotonya gagal terkirim. Cek sinyal, lalu coba lagi");
-    } finally {
-      setBusy(null);
-      if (input.current) input.current.value = "";
+    const result = await uploadAdminPhoto<{ url: string }>(`/api/admin/paket/${bundleId}/foto`, file, "paket.jpg");
+    setBusy(null);
+    if (input.current) input.current.value = "";
+    if (!result.ok) {
+      setError(result.error);
+      return;
     }
+    toast(imageUrl ? "Foto paketnya udah diganti" : "Foto paketnya udah dipasang");
+    router.refresh();
   };
 
   const remove = async () => {
