@@ -26,6 +26,9 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
         onClick={() => onCheckedChange(!checked)}
         className={cn(
           "ui-switch relative w-[56px] h-[32px] rounded-full flex-none transition-colors duration-200",
+          // Drawn 32 px high, but the thumb gets 48: an invisible margin of
+          // target around it, the floor every other control here keeps.
+          "before:absolute before:-inset-x-1 before:-inset-y-2 before:content-['']",
           checked ? "bg-ok" : "bg-line",
           disabled && "opacity-60 cursor-not-allowed",
           className,
