@@ -500,6 +500,7 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand, schedule }: Pre
           total={selected.totalAmount}
           qrisImageUrl={qrisImageUrl}
           fixedMethod={selected.paymentMethod}
+          paymentProofUrl={selected.paymentMethod === "QRIS" ? selected.paymentProofUrl : null}
           title={`Pembayaran ${selected.orderNumber}`}
           submitLabels={{
             CASH: "Pembayaran diterima",
