@@ -462,6 +462,44 @@ test("a new menu item and a new paket get their photos in the same save", async 
   await admin.context().close();
 });
 
+test("a tap anywhere on a paket's card in the admin opens it, and its switch only switches", async ({ browser }) => {
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/admin/menu");
+  const card = admin.locator("li").filter({ has: admin.getByRole("button", { name: `Ubah ${PAKET.name}` }) });
+  await card.scrollIntoViewIfNeeded();
+
+  // Its stock line, at the bottom of the card, far from the name. Tapped by
+  // position, as a finger does: the card's own button lies over the text.
+  const stockLine = card.getByText(/Bisa dibikin|habis|disembunyiin/);
+  // Mid-screen, clear of the bottom tab bar.
+  await stockLine.evaluate((element) => element.scrollIntoView({ block: "center" }));
+  const line = (await stockLine.boundingBox())!;
+  await admin.mouse.click(line.x + line.width / 2, line.y + line.height / 2);
+  const sheet = admin.getByRole("dialog", { name: "Ubah paket" });
+  await expect(sheet).toBeVisible();
+  await admin.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+
+  // The switch hides the paket and does not open it; switched back for the others.
+  const toggle = card.getByRole("switch", { name: `Tampilkan ${PAKET.name} di katalog` });
+  await toggle.click();
+  await expect(admin.getByText(`${PAKET.name} disembunyiin`)).toBeVisible();
+  await expect(sheet).toBeHidden();
+  await toggle.click();
+  await expect(admin.getByText(`${PAKET.name} tampil lagi di katalog`)).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+
+  // Drawn 32 px high, the switch answers a thumb 6 px above it too.
+  const box = (await toggle.boundingBox())!;
+  const hit = await admin.evaluate(
+    ([x, y]) => document.elementFromPoint(x!, y!)?.getAttribute("role"),
+    [box.x + box.width / 2, box.y - 6],
+  );
+  expect(hit).toBe("switch");
+
+  await admin.context().close();
+});
+
 test("an admin's stock correction shows in the menu's stock history, with who made it", async ({ browser }) => {
   const admin = await signInStaff(browser, STAFF.ADMIN);
   await admin.goto("/admin/menu");

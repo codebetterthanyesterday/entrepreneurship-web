@@ -114,15 +114,18 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
               <li
                 key={bundle.id}
                 className={cn(
-                  "s-slab s-bundle flex flex-col gap-2 p-3.5",
+                  "s-slab s-bundle relative flex flex-col gap-2 p-3.5",
                   !bundle.isActive && "s-bundle-off opacity-70",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
+                  {/* Stretched over the whole card (its ::after), as a menu card is
+                      all one button: a tap anywhere opens the paket. The switch
+                      sits above it and keeps its own job. */}
                   <button
                     type="button"
                     onClick={() => setEditing(bundle)}
-                    className="min-w-0 text-left"
+                    className="min-w-0 flex-1 text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-pink-deep"
                     aria-label={`Ubah ${bundle.name}`}
                   >
                     <span className="block font-extrabold text-[15px] text-ink">{bundle.name}</span>
@@ -138,6 +141,7 @@ export function BundleManager({ bundles, products }: BundleManagerProps) {
                     disabled={busyId === bundle.id}
                     onCheckedChange={() => void toggle(bundle)}
                     aria-label={`Tampilkan ${bundle.name} di katalog`}
+                    className="relative z-10"
                   />
                 </div>
 
