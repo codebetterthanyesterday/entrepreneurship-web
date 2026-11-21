@@ -8,7 +8,14 @@
  * all, and a value imported from a `"use client"` file arrives on the server as
  * a reference to the client module, not as the string.
  */
-export const SPLASH_COOKIE = "bunnye_splash";
+export const SPLASH_COOKIE = "bunnye_skip_splash";
+
+/**
+ * What the splash used to set on every visitor to mean "seen this session".
+ * Phones keep session cookies for days, so it is still on the devices that
+ * opened the shop before; it must not be read as a request to skip.
+ */
+export const RETIRED_SEEN_COOKIE = "bunnye_splash";
 
 /** Crawlers are never shown the splash, or it is what they would index. */
 const CRAWLER = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview/i;

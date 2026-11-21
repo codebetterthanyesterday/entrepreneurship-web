@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { E2E_BASE_URL, E2E_LOGIN_PATH, MENU, PAKET, STAFF } from "./constants";
+import { RETIRED_SEEN_COOKIE, SPLASH_COOKIE } from "../src/lib/splash";
 
 /*
  * The day as it happens, through the screens of a production build: a
@@ -14,7 +15,7 @@ const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch:
 
 /** The splash plays once per session; these tests are not about it. */
 async function skipSplash(page: Page) {
-  await page.context().addCookies([{ name: "bunnye_splash", value: "1", url: E2E_BASE_URL }]);
+  await page.context().addCookies([{ name: SPLASH_COOKIE, value: "1", url: E2E_BASE_URL }]);
 }
 
 async function signInStaff(browser: Browser, account: { email: string; password: string }) {
@@ -115,7 +116,9 @@ test("a tap anywhere on a paket's card opens it, and two go in the cart from the
 });
 
 test("the splash opens every customer page, and covers the wait between pages", async ({ page }) => {
-  // No skip cookie here: this is the one test about the splash.
+  // No skip cookie here: this is the one test about the splash. The cookie the
+  // old once-a-session splash left on phones must not keep it away either.
+  await page.context().addCookies([{ name: RETIRED_SEEN_COOKIE, value: "1", url: E2E_BASE_URL }]);
   const splash = page.locator(".k-splash").first();
 
   for (const path of ["/", "/lacak"]) {
