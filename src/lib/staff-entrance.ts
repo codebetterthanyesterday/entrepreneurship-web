@@ -27,10 +27,10 @@ export const LOGIN_ROUTE = "/login";
 
 /**
  * Every staff address a visitor without a session must not be able to tell
- * apart from a missing page. The three role areas, the account page shared by
- * all roles, and the "wrong door" page.
+ * apart from a missing page. The three role areas, the account page and the
+ * inbox shared by all roles, and the "wrong door" page.
  */
-export const STAFF_PATHS: readonly string[] = ["/admin", "/kasir", "/dapur", "/akun", "/403"];
+export const STAFF_PATHS: readonly string[] = ["/admin", "/kasir", "/dapur", "/akun", "/inbox", "/403"];
 
 /** One path segment of lowercase letters, digits and dashes, long enough not to be guessed. */
 const SECRET_PATH = /^\/[a-z0-9][a-z0-9-]{11,63}$/;

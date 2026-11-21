@@ -16,8 +16,15 @@ export const metadata = {
 // build time.
 export const dynamic = "force-dynamic";
 
-export default async function CashierPreorderPage() {
+export default async function CashierPreorderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   await requireRole("KASIR", "ADMIN");
+  // `?pesanan=PO-…`, from the inbox: that order opens straight away.
+  const { pesanan } = await searchParams;
+  const openOrderNumber = typeof pesanan === "string" ? pesanan : null;
 
   const [orders, settings, identity, schedule] = await Promise.all([
     findPreordersForCashier(),
@@ -44,6 +51,7 @@ export default async function CashierPreorderPage() {
         qrisImageUrl={settings.qrisImageUrl ?? null}
         brand={identity.brandName}
         schedule={schedule}
+        openOrderNumber={openOrderNumber}
       />
     </div>
   );

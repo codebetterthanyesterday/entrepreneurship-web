@@ -9,7 +9,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("a visitor without a session", () => {
   it("cannot tell a staff screen from a page that does not exist", () => {
-    for (const path of ["/admin", "/admin/pengaturan", "/kasir", "/kasir/preorder", "/dapur", "/akun", "/403"]) {
+    for (const path of ["/admin", "/admin/pengaturan", "/kasir", "/kasir/preorder", "/dapur", "/akun", "/inbox", "/403"]) {
       expect(gateStaffRequest(path, visitor)).toEqual({ kind: "not-found" });
     }
   });

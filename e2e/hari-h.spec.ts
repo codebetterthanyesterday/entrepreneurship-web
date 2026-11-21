@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { config as loadEnv } from "dotenv";
 import { E2E_BASE_URL, E2E_LOGIN_PATH, MENU, PAKET, STAFF } from "./constants";
 import { RETIRED_SEEN_COOKIE, SPLASH_COOKIE } from "../src/lib/splash";
 
@@ -143,6 +144,66 @@ test("the splash opens every customer page, and covers the wait between pages", 
   await expect(loading).toBeVisible();
   await expect(page).toHaveURL(/\/keranjang$/);
   await expect(loading).toBeHidden({ timeout: 5_000 });
+});
+
+test("the inbox puts a \u201cLainnya\u201d order in front of the cashier, and lets go once it is dealt with", async ({ browser, request }) => {
+  // A visitor finds nothing there.
+  expect((await request.get("/inbox")).status()).toBe(404);
+  expect((await request.get("/api/staff/inbox")).status()).toBe(401);
+
+  // A preorder to an address outside the usual places, straight into the test database.
+  loadEnv({ path: ".env.local", quiet: true });
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
+  const { prisma: db } = await import("@/lib/prisma");
+  const { createOrder } = await import("@/lib/services/order.service");
+  const { openServiceDay } = await import("@/lib/services/schedule.service");
+  const { Temporal } = await import("@js-temporal/polyfill");
+  const { todayInJakarta } = await import("@/lib/schedule");
+  const product = await db.orm.public.Product.where({ name: MENU.name }).first();
+  // A date that also delivers to "Lainnya", as an admin would open it.
+  const day = await openServiceDay({
+    date: Temporal.PlainDate.from(todayInJakarta()).add({ days: 3 }).toString(),
+    locations: ["MARKET_DAY", "OTHER"],
+    windows: [{ startMinute: 600, endMinute: 660, quota: 50 }],
+  });
+  const window = await db.orm.public.ServiceWindow.where({ dayId: day.id }).first();
+  const order = await createOrder({
+    channel: "PREORDER",
+    paymentStatus: "UNPAID",
+    paymentMethod: "CASH",
+    customerName: "Inbox Uji",
+    customerPhone: "081234567777",
+    schedule: { location: "OTHER", detail: "Kos Melati nomor empat, depan warung", serviceWindowId: window!.id },
+    items: [{ productId: product!.id, quantity: 1 }],
+  });
+
+  const cashier = await signInStaff(browser, STAFF.KASIR);
+  await expect(cashier.getByRole("link", { name: /^Inbox, \d+ perlu ditangani$/ })).toBeVisible({ timeout: 35_000 });
+  await cashier.getByRole("link", { name: /^Inbox,/ }).click();
+  await expect(cashier).toHaveURL(/\/inbox$/);
+
+  const check = cashier.getByRole("link").filter({ hasText: order.orderNumber }).filter({ hasText: "perlu dicek" });
+  await expect(check).toBeVisible();
+  await check.click();
+
+  // Straight onto that order's sheet at the counter.
+  await expect(cashier).toHaveURL(new RegExp(`/kasir/preorder\\?pesanan=${order.orderNumber}$`));
+  await cashier.getByRole("button", { name: "Lokasi bisa, terima" }).click();
+  await expect(cashier.getByRole("button", { name: "Lokasi bisa, terima" })).toBeHidden();
+
+  await cashier.goto("/inbox");
+  await expect(cashier.getByRole("link").filter({ hasText: order.orderNumber }).filter({ hasText: "perlu dicek" })).toHaveCount(0);
+  await expect(
+    cashier.getByRole("link").filter({ hasText: order.orderNumber }).filter({ hasText: "belum dikabari" }),
+  ).toBeVisible();
+
+  // The kitchen's inbox has none of the counter's work.
+  const kitchen = await signInStaff(browser, STAFF.DAPUR);
+  await kitchen.goto("/inbox");
+  await expect(kitchen.getByRole("link").filter({ hasText: order.orderNumber })).toHaveCount(0);
+
+  await cashier.context().close();
+  await kitchen.context().close();
 });
 
 test("a visitor cannot tell the staff side is there", async ({ request }) => {

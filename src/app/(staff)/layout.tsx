@@ -12,6 +12,7 @@ import { KingdomRoot } from "@/components/site/kingdom-root";
 import { StaffNav } from "@/components/nav/staff-nav";
 import { PasswordNotice } from "@/components/staff/password-notice";
 import { StaffStrip } from "@/components/staff/staff-strip";
+import { InboxBell } from "@/components/staff/inbox-bell";
 import "../kingdom.css";
 import "../staff.css";
 
@@ -65,6 +66,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
               <b>{name}</b>
               <span>Lagi jaga · {roleLabel}</span>
             </span>
+            <InboxBell />
             <Link href="/akun" className="s-avatar" aria-label={`Akun ${name}`}>
               {name.charAt(0).toUpperCase()}
             </Link>
