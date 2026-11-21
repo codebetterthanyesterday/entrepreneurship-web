@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 import * as React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { OrderTicket } from "@/components/public/order-ticket";
 import { ToastProvider } from "@/components/ui/use-toast";
 import type { TrackedOrder } from "@/types/order-view";
+
+// The picture is drawn on a canvas, which jsdom does not have; this file is
+// about the ticket on screen.
+vi.mock("@/lib/ticket-render", () => ({ renderTicket: async () => new Blob(["png"], { type: "image/png" }) }));
 
 afterEach(cleanup);
 
@@ -99,5 +103,15 @@ describe("OrderTicket", () => {
     renderTicket({ ...ORDER, serviceDate: "2026-11-24", handoverLocation: "MARKET_DAY" });
 
     expect(screen.getByText(/Tunjukin ke kasir pas ambil pesanan\./)).toBeTruthy();
+  });
+
+  it("offers to save the ticket as a picture, except once it is cancelled", () => {
+    renderTicket(ORDER);
+    expect(screen.getByRole("button", { name: "Simpan tiket (gambar)" })).toBeTruthy();
+
+    cleanup();
+    renderTicket({ ...ORDER, status: "CANCELLED" });
+    expect(screen.queryByRole("button", { name: "Simpan tiket (gambar)" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Salin nomor pesanan" })).toBeTruthy();
   });
 });

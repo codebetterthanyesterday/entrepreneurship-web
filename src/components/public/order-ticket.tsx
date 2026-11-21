@@ -3,6 +3,7 @@ import { renderSVG } from "uqr";
 import { describeHandover, formatServiceDate, isDelivered } from "@/lib/schedule";
 import { cn } from "@/lib/utils";
 import { CopyCodeButton } from "./copy-code-button";
+import { SaveTicketButton } from "./save-ticket-button";
 import { ChatLink } from "./whatsapp-chat";
 import { chatOrderOf } from "@/lib/whatsapp";
 import { OrderReceipt } from "./order-receipt";
@@ -170,7 +171,10 @@ export function OrderTicket({ order, numberAs = "p", className }: OrderTicketPro
           Tunjukin kode QR atau sebutin nomor pesanan ini ke {shownTo}.
         </p>
 
-        <CopyCodeButton code={order.orderNumber} />
+        <div className="flex flex-col gap-2">
+          {!cancelled && <SaveTicketButton order={order} />}
+          <CopyCodeButton code={order.orderNumber} />
+        </div>
       </div>
     </article>
   );

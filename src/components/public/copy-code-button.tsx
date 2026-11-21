@@ -7,10 +7,8 @@ import { useToast } from "@/components/ui/use-toast";
 /**
  * Copies the order number, for pasting into a chat or a note.
  *
- * The design's ticket has "Simpan tiket" here. Saving a picture of the ticket
- * would need the page rendered to an image; what a customer is actually asked
- * for at the booth is the number, so that is what this hands over — and it says
- * so on the label rather than promising a file.
+ * Beside "Simpan tiket" (`SaveTicketButton`), which saves the whole ticket
+ * as a picture; this is for when only the number is wanted.
  *
  * A browser may refuse the clipboard (an insecure origin, a denied
  * permission). The number is right there on the ticket, so the fallback is to
@@ -29,7 +27,7 @@ export function CopyCodeButton({ code }: { code: string }) {
   };
 
   return (
-    <Button type="button" variant="done" size="sm" fullWidth onClick={() => void copy()}>
+    <Button type="button" variant="ghost" size="sm" fullWidth onClick={() => void copy()}>
       Salin nomor pesanan
     </Button>
   );
