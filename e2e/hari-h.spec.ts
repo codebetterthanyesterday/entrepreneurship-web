@@ -1,12 +1,12 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { config as loadEnv } from "dotenv";
-import { E2E_BASE_URL, E2E_LOGIN_PATH, MENU, PAKET, STAFF } from "./constants";
+import { E2E_BASE_URL, E2E_LOGIN_PATH, MENU, PAKET, STAFF, TINY_PNG } from "./constants";
 import { RETIRED_SEEN_COOKIE, SPLASH_COOKIE } from "../src/lib/splash";
 
 /*
  * The day as it happens, through the screens of a production build: a
- * customer preorders for Market Day, the cashier takes the money and sends it
- * to the kitchen, the kitchen makes it, the cashier hands it over, and the
+ * customer preorders for Market Day and pays by QRIS, the cashier checks the
+ * receipt and sends it to the kitchen, the kitchen makes it, the cashier hands it over, and the
  * customer's tracker says it is done. Plus what a visitor must never reach.
  *
  * The customer is the project's device; staff are phones of their own.
@@ -37,7 +37,7 @@ test("a preorder goes from the checkout to the customer's hands", async ({ page,
   const phone = `0812${String(Date.now()).slice(-8)}`;
   await skipSplash(page);
 
-  // The customer orders for Market Day, paying cash.
+  // The customer orders for Market Day. A preorder is paid by QRIS; there is no cash option.
   await page.goto("/");
   await page.getByRole("button", { name: `Tambah 1 ${MENU.name} ke keranjang` }).click();
   await page.goto("/checkout");
@@ -46,7 +46,8 @@ test("a preorder goes from the checkout to the customer's hands", async ({ page,
   await page.getByRole("button", { name: /^Market Day/ }).click();
   await page.getByRole("button", { name: new RegExp(dateLabel.split(", ")[1]!) }).click();
   await page.getByRole("button", { name: /^10\.00 - 11\.00/ }).click();
-  await page.getByRole("button", { name: "Tunai pas ambil" }).click();
+  await expect(page.getByText("Preorder nggak bisa dibayar tunai.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Tunai/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Kirim pesanan" }).first().click();
 
   await page.waitForURL(/\/pesanan\//);
@@ -54,16 +55,30 @@ test("a preorder goes from the checkout to the customer's hands", async ({ page,
   expect(number).toMatch(/^PO-[23456789BCDFGHJKMNPQRSTVWXYZ]{6}$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(number);
 
-  // The cashier takes the money and sends it to the kitchen.
+  // Until the receipt is in, the cashier can neither take payment nor send it on.
   const till = await signInStaff(browser, STAFF.KASIR);
   await till.goto("/kasir/preorder");
   await till.getByLabel("Cari nomor pesanan atau nama pelanggan").fill(number);
   await till.getByRole("button", { name: /Pelanggan E2E/ }).first().click();
   const sheet = till.getByRole("dialog", { name: `Pesanan ${number}` });
+  await expect(sheet.getByRole("button", { name: "Menunggu bukti bayar QRIS" })).toBeDisabled();
+  await expect(sheet.getByRole("button", { name: /kirim ke dapur/ })).toHaveCount(0);
+
+  // The customer pays and sends the receipt from the order page.
+  await expect(page.getByRole("heading", { name: "Bayar pakai QRIS" })).toBeVisible();
+  await page
+    .getByLabel("Pilih gambar bukti bayar QRIS")
+    .setInputFiles({ name: "bukti.png", mimeType: "image/png", buffer: TINY_PNG });
+  await expect(page.getByText("Bukti bayar udah terkirim.")).toBeVisible();
+
+  // The cashier checks it, marks it paid, and sends it to the kitchen.
+  await till.reload();
+  await till.getByLabel("Cari nomor pesanan atau nama pelanggan").fill(number);
+  await till.getByRole("button", { name: /Pelanggan E2E/ }).first().click();
   await sheet.getByRole("button", { name: /^Terima pembayaran/ }).click();
   const payment = till.getByRole("dialog", { name: `Pembayaran ${number}` });
-  await payment.getByRole("button", { name: "Uang pas" }).click();
-  await payment.getByRole("button", { name: "Pembayaran diterima" }).click();
+  await expect(payment.getByRole("img", { name: "Bukti bayar QRIS dari pelanggan" })).toBeVisible();
+  await payment.getByRole("button", { name: "Bukti cocok, tandai lunas" }).click();
   await expect(till.getByText(`Pembayaran ${number} diterima`)).toBeVisible();
   await sheet.getByRole("button", { name: "Pelanggan datang, kirim ke dapur" }).click();
   await expect(till.getByText(`${number} dikirim ke dapur`)).toBeVisible();
@@ -476,7 +491,6 @@ test("a cashier corrects a customer's name and moves their handover, and the tra
   await page.getByRole("button", { name: /^Market Day/ }).click();
   await page.getByRole("button", { name: new RegExp(dateLabel.split(", ")[1]!) }).click();
   await page.getByRole("button", { name: /^10\.00 - 11\.00/ }).click();
-  await page.getByRole("button", { name: "Tunai pas ambil" }).click();
   await page.getByRole("button", { name: "Kirim pesanan" }).first().click();
   await page.waitForURL(/\/pesanan\//);
   const number = decodeURIComponent(page.url().split("/pesanan/")[1]!);

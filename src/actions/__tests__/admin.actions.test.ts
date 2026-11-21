@@ -27,7 +27,7 @@ vi.mock("@/lib/session", async () => {
 });
 
 const { cancelOrderAction } = await import("@/actions/admin.actions");
-const { createOrder, transitionStatus } = await import("@/lib/services/order.service");
+const { createOrder, markAsPaid, transitionStatus } = await import("@/lib/services/order.service");
 const { getAllOrders } = await import("@/lib/queries/report.query");
 const {
   closeDatabase,
@@ -138,6 +138,7 @@ describe("cancelOrderAction", () => {
     const kasir = await makeUser("KASIR");
     const product = await makeProduct({ stock: 20 });
     const order = await placePreorder(product.id);
+    await markAsPaid(order.id, { id: kasir.id, role: "KASIR" });
     await transitionStatus(order.id, "DONE", { id: kasir.id, role: "KASIR" });
 
     await signIn("ADMIN");

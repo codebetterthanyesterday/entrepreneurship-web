@@ -110,9 +110,8 @@ export function QrisPayment({
           </div>
         ) : (
           <p className="rounded-[14px] bg-warn-soft p-3 text-[13.5px] leading-relaxed text-warn">
-            {delivered
-              ? "QRIS-nya lagi nggak bisa ditampilkan. Bayar tunai ke tim kami pas pesanannya diantar ya, sebut nomor pesananmu."
-              : "QRIS-nya lagi nggak bisa ditampilkan. Bayar langsung ke kasir pas ambil ya, sebut nomor pesananmu."}
+            QRIS-nya lagi nggak bisa ditampilkan. Muat ulang halaman ini sebentar lagi, atau chat kami biar
+            dikirimin QRIS-nya. Pesanan diproses setelah bukti bayarnya masuk.
           </p>
         )}
 

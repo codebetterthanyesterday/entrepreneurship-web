@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
 import { submitPreorderAction } from "@/actions/order.actions";
-import { cn } from "@/lib/utils";
 import { ActionBar, OrderReceipt, SummaryPanel, cartLines } from "./order-receipt";
 import { JourneyEmpty, JourneyHero } from "./journey";
 import { CheckoutArt } from "./journey-art";
@@ -17,26 +16,10 @@ import type { BookableSchedule } from "@/lib/queries/schedule.query";
 import { HandoverSteps, type HandoverChoice } from "./handover-picker";
 import type { PublicProduct } from "@/types/admin";
 import { lastFourDigits, rememberOrder } from "@/lib/remembered-order";
-import { isDelivered } from "@/lib/schedule";
 
-type PaymentMethod = "CASH" | "QRIS";
 
 const QRIS_NOTE =
   "Habis kirim pesanan, QRIS-nya langsung muncul. Scan pakai e-wallet atau m-banking, bayar sesuai total, lalu unggah bukti bayarnya di situ.";
-
-/**
- * Paying cash happens wherever the order is handed over: at the booth for
- * Market Day, to whoever brings it otherwise. Until a place is picked, the
- * copy does not guess.
- */
-function cashCopy(location: string | null): { label: string; note: string } {
-  if (location === null) {
-    return { label: "Tunai", note: "Bayarnya tunai pas pesanannya diserahkan. Siapin uang pas ya kalau bisa." };
-  }
-  return isDelivered({ handoverLocation: location })
-    ? { label: "Tunai pas diantar", note: "Bayarnya tunai pas pesanannya kami antar. Siapin uang pas ya kalau bisa." }
-    : { label: "Tunai pas ambil", note: "Bayarnya tunai pas ambil di booth. Siapin uang pas ya kalau bisa." };
-}
 
 export interface CheckoutFormProps {
   products: PublicProduct[];
@@ -78,8 +61,8 @@ export function CheckoutForm({
     date: null,
     windowId: null,
   });
-  const cash = cashCopy(handover.location);
-  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("CASH");
+  // Preorders are paid by QRIS only; there is no choice to make.
+  const paymentMethod = "QRIS" as const;
   const [notes, setNotes] = React.useState("");
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -189,9 +172,9 @@ export function CheckoutForm({
       variant="primary"
       fullWidth
       isLoading={isSubmitting}
-      disabled={isSubmitting || !preorderOpen}
+      disabled={isSubmitting || !preorderOpen || !qrisAvailable}
     >
-      {preorderOpen ? "Kirim pesanan" : "Preorder lagi ditutup"}
+      {!preorderOpen ? "Preorder lagi ditutup" : qrisAvailable ? "Kirim pesanan" : "Pembayaran lagi disiapin"}
     </Button>
   );
 
@@ -272,45 +255,24 @@ export function CheckoutForm({
               />
 
               <Step number="05" title="Bayarnya gimana?">
-                <fieldset disabled={isSubmitting} className="min-w-0">
-                  <legend className="sr-only">Cara pembayaran</legend>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {(["CASH", "QRIS"] as const).map((method) => (
-                      <button
-                        key={method}
-                        type="button"
-                        aria-pressed={paymentMethod === method}
-                        disabled={method === "QRIS" && !qrisAvailable}
-                        onClick={() => setPaymentMethod(method)}
-                        className={cn(
-                          "min-h-[52px] rounded-[8px] border-2 px-3 text-[14.5px] font-semibold transition-colors",
-                          paymentMethod === method
-                            ? "k-choice-on text-white"
-                            : "border-line bg-white text-ink hover:border-pink",
-                          "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-line",
-                        )}
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          <PaymentIcon method={method} />
-                          {method === "CASH" ? cash.label : "QRIS"}
-                        </span>
-                      </button>
-                    ))}
+                <div className="min-w-0">
+                  <div className="flex min-h-[52px] items-center gap-2 rounded-[8px] border-2 border-line bg-white px-3 text-[14.5px] font-semibold text-ink">
+                    <PaymentIcon />
+                    QRIS
                   </div>
-
-                  <p className="mt-3 text-[13.5px] leading-relaxed text-ink-soft">
-                    {paymentMethod === "CASH" ? cash.note : QRIS_NOTE}
+                  <p className="mt-3 text-[13.5px] leading-relaxed text-ink-soft">{QRIS_NOTE}</p>
+                  <p className="mt-2 text-[12.5px] text-ink-soft">
+                    Pesanan diproses setelah bukti bayarnya kami cek. Preorder nggak bisa dibayar tunai.
                   </p>
                   {!qrisAvailable && (
-                    <p className="mt-2 text-[12.5px] text-ink-soft">
-                      QRIS lagi belum tersedia, jadi bayarnya tunai dulu ya.
+                    <p role="alert" className="mt-2 text-[13px] font-semibold text-hot">
+                      Pembayaran QRIS lagi disiapin, jadi preorder belum bisa dikirim. Coba lagi sebentar ya.
                     </p>
                   )}
                   {fieldError("paymentMethod") && (
                     <p className="mt-2 text-sm text-hot">{fieldError("paymentMethod")}</p>
                   )}
-                </fieldset>
+                </div>
               </Step>
 
               <Step number="06" title="Catatan" hint="Opsional">
@@ -408,14 +370,9 @@ function Step({
   );
 }
 
-/** Cash in hand, or a QR code: what the payment choice means at a glance. */
-function PaymentIcon({ method }: { method: "CASH" | "QRIS" }) {
-  return method === "CASH" ? (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 flex-none" aria-hidden="true">
-      <rect x="3" y="6" width="18" height="12" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  ) : (
+/** A QR code: how a preorder is paid. */
+function PaymentIcon() {
+  return (
     <svg viewBox="0 0 24 24" className="h-5 w-5 flex-none" aria-hidden="true">
       <g fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="4" y="4" width="6" height="6" rx="1.2" />

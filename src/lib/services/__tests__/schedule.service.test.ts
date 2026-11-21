@@ -7,6 +7,7 @@ import {
   confirmHandoverLocation,
   createOrder,
   markLocationNotified,
+  markAsPaid,
   transitionStatus,
 } from "@/lib/services/order.service";
 import {
@@ -134,6 +135,7 @@ describe("a Lainnya order waits for staff to accept its location", () => {
     await expect(transitionStatus(order.id, "IN_QUEUE", actor)).rejects.toBeInstanceOf(ValidationError);
 
     await confirmHandoverLocation(order.id, actor);
+    await markAsPaid(order.id, actor);
     await expect(transitionStatus(order.id, "IN_QUEUE", actor)).resolves.toMatchObject({ status: "IN_QUEUE" });
   });
 

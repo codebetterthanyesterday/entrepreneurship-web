@@ -390,7 +390,10 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
     // them. At the booth the cashier has the printed one, so on-site is not held
     // to this.
     if (input.channel === "PREORDER" && input.paymentMethod === "QRIS" && !settings?.qrisImageUrl) {
-      throw new ValidationError("QRIS lagi belum tersedia. Pilih bayar tunai pas ambil ya", "paymentMethod");
+      throw new ValidationError(
+        "Pembayaran QRIS lagi disiapin, jadi preorder belum bisa dikirim. Coba lagi sebentar ya",
+        "paymentMethod",
+      );
     }
     if (input.channel === "ONSITE" && settings?.boothOpen !== true) {
       throw new ValidationError("Booth lagi tutup, belum bisa terima pesanan");
@@ -657,6 +660,17 @@ export async function transitionStatus(
       throw new ValidationError("Cek dan terima lokasi pesanan ini dulu sebelum diproses");
     }
 
+    // A preorder is paid before anything is made or handed over: the cashier
+    // checks the customer's QRIS receipt and marks it paid first.
+    if (
+      order.channel === "PREORDER" &&
+      order.status === "CONFIRMED" &&
+      (to === "IN_QUEUE" || to === "DONE") &&
+      order.paymentStatus !== "PAID"
+    ) {
+      throw new ValidationError("Pesanan ini belum lunas. Cek bukti bayarnya dan tandai lunas dulu");
+    }
+
     if (!(await applyStatus(tx, orderId, order.status, to))) {
       await throwForLostRace(tx, orderId, to, actor.role);
     }
@@ -847,6 +861,11 @@ export async function markAsPaid(
     }
     if (order.paymentStatus === "PAID") {
       throw new ValidationError("Pesanan ini udah lunas kok");
+    }
+    // A QRIS preorder is marked paid against the customer's receipt, checked
+    // with the merchant notification; without one there is nothing to check.
+    if (order.channel === "PREORDER" && order.paymentMethod === "QRIS" && !order.paymentProofUrl) {
+      throw new ValidationError("Belum ada bukti bayar QRIS dari pelanggan. Minta pelanggan mengunggahnya dulu ya");
     }
 
     await tx.orm.public.Order.where({ id: orderId }).update({

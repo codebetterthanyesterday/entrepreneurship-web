@@ -426,7 +426,9 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand, schedule, openO
 
             {selected.paymentStatus === "UNPAID" && (
               <Note variant="hot">
-                Pesanan ini belum dibayar. Terima pembayaran dulu sebelum diserahkan.
+                {selected.paymentMethod === "QRIS" && !selected.paymentProofUrl
+                  ? "Belum ada bukti bayar QRIS. Pesanan baru bisa diproses setelah pelanggan bayar dan unggah buktinya; ingatkan lewat chat di bawah."
+                  : "Pesanan ini belum dibayar. Terima pembayaran dulu sebelum diserahkan."}
               </Note>
             )}
 
