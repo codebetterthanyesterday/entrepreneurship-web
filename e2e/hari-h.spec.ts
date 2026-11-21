@@ -114,6 +114,34 @@ test("a tap anywhere on a paket's card opens it, and two go in the cart from the
   await expect(card.getByRole("button", { name: `Masukin ${PAKET.name} ke keranjang` })).toContainText("· 2");
 });
 
+test("the splash opens every customer page, and covers the wait between pages", async ({ page }) => {
+  // No skip cookie here: this is the one test about the splash.
+  const splash = page.locator(".k-splash").first();
+
+  for (const path of ["/", "/lacak"]) {
+    await page.goto(path);
+    await expect(splash).toBeAttached();
+    // It leaves by itself once the page has loaded, well within 3 s.
+    await expect(splash).toBeHidden({ timeout: 3_500 });
+  }
+
+  // A slow move between pages shows the splash's loading form until the page arrives.
+  await page.goto("/");
+  await expect(splash).toBeHidden({ timeout: 3_500 });
+  await page.route(
+    (url) => url.pathname === "/keranjang",
+    async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+      await route.continue();
+    },
+  );
+  await page.getByRole("link", { name: /Keranjang/ }).first().click();
+  const loading = page.getByRole("status", { name: "Lagi nyiapin halaman..." });
+  await expect(loading).toBeVisible();
+  await expect(page).toHaveURL(/\/keranjang$/);
+  await expect(loading).toBeHidden({ timeout: 5_000 });
+});
+
 test("a visitor cannot tell the staff side is there", async ({ request }) => {
   for (const path of ["/admin", "/kasir/preorder", "/dapur", "/login"]) {
     expect((await request.get(path)).status(), path).toBe(404);

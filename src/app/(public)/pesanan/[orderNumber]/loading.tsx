@@ -1,9 +1,6 @@
-import { LoadingScreen, Skeleton } from "@/components/ui/skeleton";
+import { SplashLoading } from "@/components/site/splash-screen";
 
+/** The splash in its loading form, so the wait between pages looks like the shop opening. */
 export default function Loading() {
-  return (
-    <LoadingScreen label="Lagi nyari pesanan kamu...">
-      <Skeleton className="h-[320px] max-w-[480px] mx-auto w-full" />
-    </LoadingScreen>
-  );
+  return <SplashLoading label="Lagi nyari pesanan kamu..." />;
 }

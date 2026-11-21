@@ -1,5 +1,7 @@
 /**
- * Set once the splash screen has played, so it shows once per browser session.
+ * Present on a request that must not get the splash. The app never sets it:
+ * it is how the end-to-end tests, which open dozens of pages, skip a screen
+ * they are not about.
  *
  * In its own module rather than next to `SplashScreen`: the public layout — a
  * server component — reads this name to decide whether to render the splash at
@@ -12,10 +14,11 @@ export const SPLASH_COOKIE = "bunnye_splash";
 const CRAWLER = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview/i;
 
 /**
- * Whether this request should get the splash: only a visitor who has not seen
- * it this session, and never a crawler.
+ * Whether this request gets the splash: every customer page opened afresh
+ * does, so the shop always opens the same way. Never a crawler, and never a
+ * request carrying the skip cookie.
  */
-export function shouldShowSplash(input: { seen: boolean; userAgent: string | null }): boolean {
-  if (input.seen) return false;
+export function shouldShowSplash(input: { skip: boolean; userAgent: string | null }): boolean {
+  if (input.skip) return false;
   return !CRAWLER.test(input.userAgent ?? "");
 }
