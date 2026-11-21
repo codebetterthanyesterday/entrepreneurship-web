@@ -1,7 +1,10 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePolling } from "@/hooks/use-polling";
+import { toAnnounce, updateInboxDevice } from "@/lib/inbox-device";
+import { buzz, playChime, unlockChime } from "@/lib/inbox-chime";
 import type { InboxResponse } from "@/app/api/staff/inbox/route";
 
 /** Light enough to sit on every staff screen; `/inbox` itself polls faster. */
@@ -11,10 +14,34 @@ const REFRESH_MS = 30_000;
  * The bell in the staff header: how many things need a person (the "Pantau"
  * ones are not counted), one tap from the inbox. Counted in the browser after
  * the page has drawn, so it never slows a staff screen down.
+ *
+ * It is also what chimes (inbox phase 2), being on every staff screen: once
+ * for each new piece of work, only on a phone where the chime was turned on.
+ * Which items were chimed for is kept on the phone, so moving between screens
+ * or tabs does not chime for the same one twice.
  */
 export function InboxBell() {
   const { data } = usePolling<InboxResponse>("/api/staff/inbox", { intervalMs: REFRESH_MS });
   const count = data?.items.filter((item) => item.tone !== "watch").length ?? 0;
+
+  // Sound needs a tap after every page load; any tap on the page will do.
+  React.useEffect(() => {
+    const unlock = () => unlockChime();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, []);
+
+  React.useEffect(() => {
+    if (!data) return;
+    updateInboxDevice((state) => {
+      const { fresh, next } = toAnnounce(state, data.items);
+      if (state.alerts && fresh.length > 0) {
+        playChime();
+        buzz();
+      }
+      return next;
+    });
+  }, [data]);
 
   return (
     <Link

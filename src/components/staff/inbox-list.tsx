@@ -3,8 +3,21 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePolling } from "@/hooks/use-polling";
+import { useInboxDevice } from "@/hooks/use-inbox-device";
 import type { InboxItem, InboxTone } from "@/lib/inbox";
+import {
+  SNOOZE_MINUTES,
+  isNew,
+  isSnoozed,
+  markOpened,
+  pruneSnoozes,
+  snooze,
+  unsnooze,
+  updateInboxDevice,
+} from "@/lib/inbox-device";
+import { buzz, playChime, unlockChime } from "@/lib/inbox-chime";
 import type { InboxResponse } from "@/app/api/staff/inbox/route";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 /** As often as a cashier would glance at it: new work shows within 15 s. */
@@ -29,6 +42,10 @@ export function timeAgo(since: string, now: number): string {
  * eye on after. Each card is one link to the screen where it is dealt with;
  * nothing is acted on from here, so the checks those screens make still hold.
  * An item leaves on its own once its reason is gone.
+ *
+ * Phase 2, all on this phone: "Baru" on what happened since the inbox was
+ * last opened here, "Pantau" items put off for an hour, and a chime for new
+ * work that the person turns on for themselves.
  */
 export function InboxList({ initial }: { initial: InboxItem[] }) {
   const { data, isError } = usePolling<InboxResponse>("/api/staff/inbox", {
@@ -36,19 +53,36 @@ export function InboxList({ initial }: { initial: InboxItem[] }) {
     intervalMs: REFRESH_MS,
   });
   const items = data?.items ?? initial;
-  // The clock "3 menit lalu" counts against, moved on every half minute.
+  const device = useInboxDevice();
+  // The clock "3 menit lalu" and the snoozes count against, moved every half minute.
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(timer);
   }, []);
 
+  // Opening the inbox is what "Baru" counts from next time.
+  React.useEffect(() => {
+    const opened = Date.now();
+    updateInboxDevice((state) => pruneSnoozes(markOpened(state, opened), opened));
+  }, []);
+
   const todo = items.filter((item) => item.tone !== "watch");
-  const watch = items.filter((item) => item.tone === "watch");
+  const watch = items.filter((item) => item.tone === "watch" && !isSnoozed(device, item.key, now));
+  const putOff = items.filter((item) => item.tone === "watch" && isSnoozed(device, item.key, now));
 
   React.useEffect(() => {
     document.title = todo.length > 0 ? `(${todo.length}) Inbox · Bunnyè` : "Inbox · Bunnyè";
   }, [todo.length]);
+
+  const card = (item: InboxItem) => (
+    <InboxCard
+      item={item}
+      now={now}
+      fresh={isNew(item, device)}
+      onSnooze={item.tone === "watch" ? () => updateInboxDevice((state) => snooze(state, item, Date.now())) : undefined}
+    />
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,7 +92,9 @@ export function InboxList({ initial }: { initial: InboxItem[] }) {
         </p>
       )}
 
-      {items.length === 0 ? (
+      <ChimeSetting on={device.alerts} />
+
+      {todo.length === 0 && watch.length === 0 ? (
         <div className="s-slab flex flex-col items-center gap-1 p-8 text-center">
           <span aria-hidden="true" className="text-3xl">
             ✓
@@ -68,30 +104,95 @@ export function InboxList({ initial }: { initial: InboxItem[] }) {
         </div>
       ) : (
         <>
-          <Group title="Perlu tindakan" items={todo} now={now} empty="Nggak ada yang perlu ditangani sekarang." />
-          {watch.length > 0 && <Group title="Pantau" items={watch} now={now} />}
+          <Group title="Perlu tindakan" count={todo.length} empty="Nggak ada yang perlu ditangani sekarang.">
+            {todo.map(card)}
+          </Group>
+          {watch.length > 0 && (
+            <Group title="Pantau" count={watch.length}>
+              {watch.map(card)}
+            </Group>
+          )}
         </>
+      )}
+
+      {putOff.length > 0 && (
+        <details className="s-slab p-3.5">
+          <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-bold text-ink">
+            Ditunda ({putOff.length})
+          </summary>
+          <ul className="mt-2 flex flex-col gap-2">
+            {putOff.map((item) => (
+              <li key={item.key} className="flex items-center justify-between gap-3 border-t border-line pt-2">
+                <span className="min-w-0 text-sm text-ink-soft">
+                  <b className="text-ink">{item.title}</b> · {item.detail}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => updateInboxDevice((state) => unsnooze(state, item.key))}
+                  className="ui-btn min-h-[44px] flex-none bg-white px-3 text-[11px] text-ink"
+                >
+                  Tampilkan lagi
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </div>
   );
 }
 
-function Group({ title, items, now, empty }: { title: string; items: InboxItem[]; now: number; empty?: string }) {
+/** The chime switch: per phone, off until turned on here. */
+function ChimeSetting({ on }: { on: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3 s-slab p-3.5">
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-ink">Bunyi &amp; getar</span>
+        <span className="block text-[12.5px] text-ink-soft">
+          Waktu ada yang baru perlu ditangani. Cuma di HP ini; layarnya harus tetap terbuka.
+        </span>
+      </span>
+      <Switch
+        checked={on}
+        aria-label="Bunyi dan getar waktu ada yang baru"
+        onCheckedChange={(checked) => {
+          if (checked) {
+            // The tap that turns it on is the one the browser needs to allow sound.
+            unlockChime();
+            playChime();
+            buzz();
+          }
+          updateInboxDevice((state) => ({ ...state, alerts: checked }));
+        }}
+      />
+    </div>
+  );
+}
+
+function Group({
+  title,
+  count,
+  empty,
+  children,
+}: {
+  title: string;
+  count: number;
+  empty?: string;
+  children: React.ReactNode[];
+}) {
   const id = React.useId();
   return (
     <section aria-labelledby={id} className="flex flex-col gap-2.5">
       <h2 id={id} className="s-h2 flex items-baseline gap-2">
         {title}
-        <span className="text-sm font-semibold text-ink-soft tabular-nums">{items.length}</span>
+        <span className="text-sm font-semibold text-ink-soft tabular-nums">{count}</span>
       </h2>
-      {items.length === 0 && empty ? (
+      {count === 0 && empty ? (
         <p className="text-sm text-ink-soft">{empty}</p>
       ) : (
         <ul className="flex flex-col gap-2.5">
-          {items.map((item) => (
-            <li key={item.key}>
-              <InboxCard item={item} now={now} />
-            </li>
+          {React.Children.map(children, (child) => (
+            <li>{child}</li>
           ))}
         </ul>
       )}
@@ -99,28 +200,68 @@ function Group({ title, items, now, empty }: { title: string; items: InboxItem[]
   );
 }
 
-function InboxCard({ item, now }: { item: InboxItem; now: number }) {
+function InboxCard({
+  item,
+  now,
+  fresh,
+  onSnooze,
+}: {
+  item: InboxItem;
+  now: number;
+  fresh: boolean;
+  onSnooze?: () => void;
+}) {
   const tone = TONE[item.tone];
   return (
-    <Link
-      href={item.href}
+    // The link stretches over the card (its ::after); the snooze button sits
+    // above it, so it puts the item off without opening it.
+    <div
       className={cn(
-        "s-slab flex min-h-[64px] items-center gap-3 border-l-[6px] p-3.5 transition-transform hover:-translate-y-0.5",
+        "s-slab relative flex min-h-[64px] items-center gap-3 border-l-[6px] p-3.5 transition-transform hover:-translate-y-0.5",
         tone.edge,
       )}
     >
       <span aria-hidden="true" className={cn("h-2.5 w-2.5 flex-none rounded-full", tone.dot)} />
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-extrabold text-[15px] text-ink">{item.title}</span>
+          <Link
+            href={item.href}
+            className="font-extrabold text-[15px] text-ink after:absolute after:inset-0 after:content-['']"
+          >
+            {item.title}
+            <span className="sr-only">
+              {" "}
+              · {item.detail} · {tone.label}
+              {fresh ? " · baru" : ""}
+            </span>
+          </Link>
+          {fresh && (
+            <span aria-hidden="true" className="k-tag k-tag-red k-tag-flat !text-[10px]">
+              Baru
+            </span>
+          )}
           {item.tone !== "watch" && (
             <span className="text-xs font-semibold text-ink-soft">{timeAgo(item.since, now)}</span>
           )}
         </span>
-        <span className="mt-0.5 block text-[13px] leading-snug text-ink-soft">{item.detail}</span>
-        <span className="sr-only">{tone.label}</span>
+        <span aria-hidden="true" className="mt-0.5 block text-[13px] leading-snug text-ink-soft">
+          {item.detail}
+        </span>
       </span>
-      <span className="ui-btn flex-none bg-white px-3 py-1.5 text-[11px] text-ink">{item.actionLabel}</span>
-    </Link>
+      {onSnooze ? (
+        <button
+          type="button"
+          onClick={onSnooze}
+          className="ui-btn relative z-10 min-h-[44px] flex-none bg-white px-3 text-[11px] text-ink"
+          aria-label={`Tunda ${item.title} selama ${SNOOZE_MINUTES / 60} jam`}
+        >
+          Tunda 1 jam
+        </button>
+      ) : (
+        <span aria-hidden="true" className="ui-btn flex-none bg-white px-3 py-1.5 text-[11px] text-ink">
+          {item.actionLabel}
+        </span>
+      )}
+    </div>
   );
 }
