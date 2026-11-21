@@ -1,6 +1,6 @@
-import { StagePlaceholder } from "@/components/public/track-view";
+import { SplashLoading } from "@/components/site/splash-screen";
 
-/** The same empty stage the tracker shows while it looks, so arriving is one motion. */
+/** The splash in its loading form, so the wait between pages looks like the shop opening. */
 export default function Loading() {
-  return <StagePlaceholder />;
+  return <SplashLoading label="Lagi nyiapin pelacak pesanan..." />;
 }

@@ -597,10 +597,11 @@ html[data-theme="kingdom"] body > * {
 /* ------------------------------------------------------------ the splash */
 
 /*
- * Shown once per browser session, over the first page a customer opens. It
- * leaves on its own: the fade below is pure CSS, so a visitor without
- * JavaScript is never stuck behind it. `SplashScreen` only adds the tap to
- * skip and the cookie that stops it coming back.
+ * Shown over every customer page opened afresh, and, in its loading form,
+ * while the next page is on its way. The opening one leaves on its own: the
+ * fade below is pure CSS and caps it at about 2.7 s, so a visitor without
+ * JavaScript is never stuck behind it; `SplashScreen` makes it leave sooner,
+ * once the page has loaded, and adds the tap to skip.
  */
 .k-splash {
   position: fixed;
@@ -622,6 +623,40 @@ html[data-theme="kingdom"] body > * {
   to {
     opacity: 0;
     visibility: hidden;
+  }
+}
+
+/* The loading form: no fade-out of its own (the next page replaces it), and a
+   beat before it fades in, so a quick move between pages shows nothing. */
+.k-splash-loading {
+  animation: k-splash-in 0.25s ease 0.2s both;
+}
+
+@keyframes k-splash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Its bar runs until the page arrives: a segment travelling across. */
+.k-splash-loading .k-splash-bar {
+  overflow: hidden;
+}
+
+.k-splash-loading .k-splash-bar i {
+  width: 38%;
+  animation: k-splash-travel 1.1s ease-in-out infinite;
+}
+
+@keyframes k-splash-travel {
+  from {
+    transform: translateX(-105%);
+  }
+  to {
+    transform: translateX(270%);
   }
 }
 
@@ -900,6 +935,17 @@ html[data-theme="kingdom"] body > * {
   .k-splash-bar i {
     animation: none;
     width: 100%;
+  }
+
+  /* Still, and still a beat late, so it never flashes. */
+  .k-splash-loading {
+    animation: k-splash-in 0.01s linear 0.2s both;
+  }
+
+  .k-splash-loading .k-splash-bar i {
+    animation: none;
+    width: 100%;
+    transform: none;
   }
 }
 

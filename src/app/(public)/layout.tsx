@@ -8,6 +8,7 @@ import { WorldSteps } from "@/components/nav/world-steps";
 import { SiteFooter } from "@/components/site/site-footer";
 import { KingdomRoot } from "@/components/site/kingdom-root";
 import { SplashScreen } from "@/components/site/splash-screen";
+import { SiteIdentityProvider } from "@/components/site/site-identity";
 import { SPLASH_COOKIE, shouldShowSplash } from "@/lib/splash";
 import { HeaderChat, WhatsappProvider, type WhatsappContact } from "@/components/public/whatsapp-chat";
 import { DEFAULT_CHAT_CLOSE_MINUTE, DEFAULT_CHAT_OPEN_MINUTE, toWhatsappNumber } from "@/lib/whatsapp";
@@ -27,11 +28,11 @@ export default async function PublicLayout({
     headers(),
   ]);
 
-  // The splash plays once per browser session. Deciding here, from the cookie,
-  // means a visitor who has seen it gets HTML without it — nothing to flash
-  // before a script could hide it.
+  // The splash plays over every customer page opened afresh. Deciding here
+  // means a request that must not get it (a crawler, the tests) gets HTML
+  // without it — nothing to flash before a script could hide it.
   const showSplash = shouldShowSplash({
-    seen: jar.has(SPLASH_COOKIE),
+    skip: jar.has(SPLASH_COOKIE),
     userAgent: requestHeaders.get("user-agent"),
   });
 
@@ -52,6 +53,7 @@ export default async function PublicLayout({
     // `data-theme="kingdom"`, which `globals.css` and `kingdom.css` answer. The
     // staff layout renders it too, with its own work-mode chrome (`staff.css`).
     <KingdomRoot className="min-h-screen flex flex-col bg-cream">
+      <SiteIdentityProvider value={{ brandName: identity.brandName, tagline: identity.tagline }}>
       <WhatsappProvider contact={contact}>
         {showSplash && <SplashScreen brandName={identity.brandName} tagline={identity.tagline} />}
 
@@ -96,6 +98,7 @@ export default async function PublicLayout({
 
         <SiteFooter identity={identity} whatsapp={settings.adminWhatsapp} />
       </WhatsappProvider>
+      </SiteIdentityProvider>
     </KingdomRoot>
   );
 }
