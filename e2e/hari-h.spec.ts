@@ -206,6 +206,38 @@ test("the inbox puts a \u201cLainnya\u201d order in front of the cashier, and le
   await kitchen.context().close();
 });
 
+test("an admin puts a stock warning off for an hour on their phone, and brings it back", async ({ browser }) => {
+  loadEnv({ path: ".env.local", quiet: true });
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
+  const { prisma: db } = await import("@/lib/prisma");
+  const name = `Stok Tipis ${String(Date.now()).slice(-6)}`;
+  await db.orm.public.Product.create({ name, price: 10_000, stock: 1, prepType: "READY_TO_SERVE", isActive: true });
+
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/inbox");
+  const warning = admin.getByRole("link").filter({ hasText: name });
+  await expect(warning).toBeVisible();
+
+  await admin
+    .locator("li")
+    .filter({ hasText: name })
+    .getByRole("button", { name: "Tunda Stok menipis selama 1 jam" })
+    .click();
+  await expect(warning).toHaveCount(0);
+
+  // Kept on the phone: a reload still has it put off.
+  await admin.reload();
+  await expect(admin.getByText(/^Ditunda \(\d+\)$/)).toBeVisible();
+  await expect(admin.getByRole("link").filter({ hasText: name })).toHaveCount(0);
+
+  await admin.getByText(/^Ditunda \(\d+\)$/).click();
+  await admin.locator("li").filter({ hasText: name }).getByRole("button", { name: "Tampilkan lagi" }).click();
+  await expect(admin.getByRole("link").filter({ hasText: name })).toBeVisible();
+
+  await db.orm.public.Product.where({ name }).delete();
+  await admin.context().close();
+});
+
 test("a visitor cannot tell the staff side is there", async ({ request }) => {
   for (const path of ["/admin", "/kasir/preorder", "/dapur", "/login"]) {
     expect((await request.get(path)).status(), path).toBe(404);
