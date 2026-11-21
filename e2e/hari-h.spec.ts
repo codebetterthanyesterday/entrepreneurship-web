@@ -736,3 +736,66 @@ test("an admin's stock correction shows in the menu's stock history, with who ma
 
   await admin.context().close();
 });
+
+test("a customer saves their ticket as a picture: downloaded on a computer, shared on a phone", async ({ page }) => {
+  loadEnv({ path: ".env.local", quiet: true });
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
+  const { prisma: db } = await import("@/lib/prisma");
+  const { createOrder } = await import("@/lib/services/order.service");
+  const { openServiceDay } = await import("@/lib/services/schedule.service");
+  const { Temporal } = await import("@js-temporal/polyfill");
+  const { todayInJakarta } = await import("@/lib/schedule");
+  const product = await db.orm.public.Product.where({ name: MENU.name }).first();
+  const day = await openServiceDay({
+    date: Temporal.PlainDate.from(todayInJakarta()).add({ days: 4 }).toString(),
+    locations: ["MARKET_DAY"],
+    windows: [{ startMinute: 600, endMinute: 660, quota: 50 }],
+  });
+  const window = await db.orm.public.ServiceWindow.where({ dayId: day.id }).first();
+  const order = await createOrder({
+    channel: "PREORDER",
+    paymentStatus: "UNPAID",
+    paymentMethod: "QRIS",
+    customerName: "Tiket Uji Nama Yang Cukup Panjang Sekali",
+    customerPhone: "081234568888",
+    schedule: { location: "MARKET_DAY", detail: null, serviceWindowId: window!.id },
+    items: [{ productId: product!.id, quantity: 2 }],
+  });
+
+  // No share sheet here, whatever the device: the picture downloads.
+  await page.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, "canShare", { value: undefined, configurable: true });
+  });
+  await skipSplash(page);
+  await page.goto(`/pesanan/${order.orderNumber}`);
+  const save = page.getByRole("button", { name: "Simpan tiket (gambar)" });
+  await save.scrollIntoViewIfNeeded();
+  const [download] = await Promise.all([page.waitForEvent("download"), save.click()]);
+  expect(download.suggestedFilename()).toBe(`Tiket-${order.orderNumber}.png`);
+  const { readFile } = await import("node:fs/promises");
+  const png = await readFile((await download.path())!);
+  expect([...png.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  // A portrait picture, a phone screen's width.
+  expect(png.readUInt32BE(16)).toBe(1080);
+  expect(png.readUInt32BE(20)).toBeGreaterThan(1600);
+  if (process.env.E2E_TICKET_OUT) await download.saveAs(`${process.env.E2E_TICKET_OUT}/${test.info().project.name}.png`);
+
+  // On a phone that can share files, the share sheet gets the same picture.
+  if (test.info().project.name === "mobile") {
+    await page.evaluate(() => {
+      const shared: unknown[] = [];
+      (window as unknown as { shared: unknown[] }).shared = shared;
+      Object.defineProperty(navigator, "canShare", { value: () => true, configurable: true });
+      Object.defineProperty(navigator, "share", {
+        value: async (data: { files: File[] }) => {
+          shared.push(...data.files.map((file) => [file.name, file.type, file.size > 10_000]));
+        },
+        configurable: true,
+      });
+    });
+    await save.click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { shared: unknown[] }).shared))
+      .toEqual([[`Tiket-${order.orderNumber}.png`, "image/png", true]]);
+  }
+});
