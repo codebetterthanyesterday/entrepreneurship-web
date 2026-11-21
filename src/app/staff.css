@@ -191,6 +191,45 @@ html[data-staff-role="DAPUR"] {
   box-shadow: 1px 1px 0 var(--k-navy);
 }
 
+/* The inbox bell beside the avatar: the same pressable square, in white, with
+   the count of what needs a person pinned to its corner. */
+.s-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--k-navy);
+  box-shadow: 3px 3px 0 var(--k-navy);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+
+.s-bell:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--k-navy);
+}
+
+.s-bell-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--color-hot);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+
 /* -------------------------------------------- the strip under the header */
 
 .s-strip {

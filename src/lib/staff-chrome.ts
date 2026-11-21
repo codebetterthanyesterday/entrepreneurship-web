@@ -40,6 +40,7 @@ const SCREEN_NAME: Readonly<Record<string, string>> = {
   "/kasir/preorder": "Preorder",
   "/dapur": "Papan dapur",
   "/akun": "Akun",
+  "/inbox": "Inbox",
 };
 
 function isRole(role: string): role is Role {

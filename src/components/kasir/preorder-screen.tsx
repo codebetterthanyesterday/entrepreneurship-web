@@ -60,12 +60,14 @@ export interface PreorderScreenProps {
   brand: string;
   /** Every open date from today on, for moving a preorder (`OrderEditSheet`). */
   schedule: BookableSchedule;
+  /** An order to open on arrival, by number: a link from the inbox. */
+  openOrderNumber?: string | null;
 }
 
 /** A preorder as the chat templates read it. */
 const chatView = (order: CashierPreorder) => ({ ...order, hasPaymentProof: order.paymentProofUrl !== null });
 
-export function PreorderScreen({ preorders, qrisImageUrl, brand, schedule }: PreorderScreenProps) {
+export function PreorderScreen({ preorders, qrisImageUrl, brand, schedule, openOrderNumber }: PreorderScreenProps) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -77,7 +79,9 @@ export function PreorderScreen({ preorders, qrisImageUrl, brand, schedule }: Pre
    */
   const [dateKey, setDateKey] = React.useState<string>("ALL");
   const [rejectReason, setRejectReason] = React.useState("");
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string | null>(
+    () => preorders.find((order) => order.orderNumber === openOrderNumber)?.id ?? null,
+  );
   const [payOpen, setPayOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [scanOpen, setScanOpen] = React.useState(false);
