@@ -58,7 +58,8 @@ export const createPreorderSchema = orderBaseSchema
     serviceWindowId: z
       .string({ message: "Pilih tanggal dan jamnya dulu ya" })
       .min(1, "Pilih tanggal dan jamnya dulu ya"),
-    paymentMethod: z.enum(["CASH", "QRIS"], { message: "Pilih cara bayarnya ya" }),
+    // Preorders are paid by QRIS only: no cash on pickup or delivery.
+    paymentMethod: z.literal("QRIS", { message: "Preorder dibayar lewat QRIS ya" }),
   })
   .superRefine(basketNotEmpty)
   .superRefine((data, ctx) => {

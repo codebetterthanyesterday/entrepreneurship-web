@@ -28,6 +28,18 @@ describe("resolvePreorderAction — one action per condition", () => {
     expect(action.label).toContain("20.000");
   });
 
+  it("waits for the receipt on an unpaid QRIS preorder, and checks it once it is in", () => {
+    const waiting = resolvePreorderAction(
+      order({ paymentStatus: "UNPAID", paymentMethod: "QRIS", paymentProofUrl: null }),
+    );
+    expect(waiting).toMatchObject({ kind: "BLOCKED", label: "Menunggu bukti bayar QRIS" });
+
+    const sent = resolvePreorderAction(
+      order({ paymentStatus: "UNPAID", paymentMethod: "QRIS", paymentProofUrl: "/gambar/bukti" }),
+    );
+    expect(sent.kind).toBe("PAY");
+  });
+
   it("sends a paid, confirmed order with something to make to the kitchen", () => {
     const action = resolvePreorderAction(order({ status: "CONFIRMED", needsPrep: true }));
 

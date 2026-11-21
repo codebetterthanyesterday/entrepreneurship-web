@@ -264,6 +264,10 @@ describe("findPreordersForCashier", () => {
     const { salsa, rizky } = await makeCounterOrders();
     const kasir = await makeUser("KASIR");
 
+    // Her QRIS receipt is in and checked; only then does it go to the kitchen.
+    await db.orm.public.Order.where({ id: salsa.id }).update({
+      paymentProofUrl: "/gambar/00000000-0000-4000-8000-000000000001",
+    });
     await markAsPaid(salsa.id, { id: kasir.id, role: "KASIR" });
     await transitionStatus(salsa.id, "IN_QUEUE", { id: kasir.id, role: "KASIR" });
 
@@ -384,6 +388,7 @@ describe("findKitchenQueue", () => {
 
     // The booth sale was queued on creation; the preorder is queued only now.
     const kasir = await makeUser("KASIR");
+    await markAsPaid(preorder.id, { id: kasir.id, role: "KASIR" });
     await transitionStatus(preorder.id, "IN_QUEUE", { id: kasir.id, role: "KASIR" });
 
     const board = await findKitchenQueue();

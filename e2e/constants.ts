@@ -17,3 +17,9 @@ export const MENU = { name: "Kopi Gladi E2E", price: 18_000 };
 
 /** A paket of the menu item and a second, ready-to-serve one, for the paket's photo. */
 export const PAKET = { name: "Paket Gladi E2E", price: 25_000, side: "Roti Gladi E2E" };
+
+/** A 1×1 PNG: the store's QRIS in the global setup, and a customer's receipt in the specs. */
+export const TINY_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64",
+);

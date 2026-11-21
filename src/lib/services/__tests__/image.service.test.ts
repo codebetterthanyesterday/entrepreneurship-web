@@ -132,6 +132,8 @@ describe("a QRIS payment proof", () => {
 
     const qris = await preorder("QRIS");
     const cashier = await makeUser("KASIR");
+    // Paid against the receipt the customer sent; after that it is settled.
+    await attachPaymentProof({ orderNumber: qris.orderNumber, phoneLast4: "1234", bytes: jpeg() });
     await markAsPaid(qris.id, { id: cashier.id, role: "KASIR" });
     await expect(
       attachPaymentProof({ orderNumber: qris.orderNumber, phoneLast4: "1234", bytes: jpeg() }),

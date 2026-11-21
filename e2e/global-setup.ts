@@ -1,11 +1,12 @@
 import { config as loadEnv } from "dotenv";
 import bcrypt from "bcryptjs";
-import { MENU, PAKET, STAFF } from "./constants";
+import { MENU, PAKET, STAFF, TINY_PNG } from "./constants";
 
 /**
  * A known starting point for every e2e run, in DATABASE_URL_TEST: one menu
  * item that needs the kitchen, a paket of it and a second item, one date open for preorders two days ahead at
- * Market Day and Kampus B, and a cashier, a kitchen and an admin account.
+ * Market Day and Kampus B, a QRIS to pay preorders with, and a cashier, a
+ * kitchen and an admin account.
  *
  * The date is passed to the tests in E2E_SERVICE_DATE_LABEL, written the way
  * the checkout labels it.
@@ -21,6 +22,7 @@ export default async function globalSetup() {
   const { prisma: db } = await import("@/lib/prisma");
   const { resetDatabase, makeBundle, makeProduct } = await import("@/lib/services/__tests__/helpers/test-db");
   const { openServiceDay } = await import("@/lib/services/schedule.service");
+  const { setQrisImage } = await import("@/lib/services/image.service");
   const { formatServiceDate, todayInJakarta } = await import("@/lib/schedule");
 
   await resetDatabase();
@@ -41,6 +43,8 @@ export default async function globalSetup() {
     locations: ["MARKET_DAY", "CAMPUS_B"],
     windows: [{ startMinute: 600, endMinute: 660, quota: 10 }],
   });
+  // Preorders are paid by QRIS only; without one the checkout does not send.
+  await setQrisImage(new Uint8Array(TINY_PNG));
 
   for (const [role, account] of Object.entries(STAFF)) {
     await db.orm.public.User.create({

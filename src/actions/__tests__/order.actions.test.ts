@@ -69,7 +69,7 @@ function payload(overrides: Record<string, unknown> = {}) {
     customerPhone: "081234567890",
     handoverLocation: "CAMPUS_B",
     serviceWindowId: windowId,
-    paymentMethod: "CASH",
+    paymentMethod: "QRIS",
     ...overrides,
   };
 }
@@ -84,6 +84,10 @@ async function orderByNumber(orderNumber: string) {
 
 beforeEach(async () => {
   await resetDatabase();
+  // Preorders are paid by QRIS only, so checkout needs a QRIS to show.
+  await db.orm.public.StoreSetting.where({ id: 1 }).update({
+    qrisImageUrl: "/gambar/00000000-0000-4000-8000-000000000000",
+  });
   session.user = null;
 });
 
@@ -183,7 +187,8 @@ describe("submitPreorderAction — validation", () => {
     ["a missing time range", { serviceWindowId: "" }, "serviceWindowId", "Pilih tanggal dan jamnya dulu ya"],
     ["a missing location", { handoverLocation: undefined }, "handoverLocation", "Pilih lokasi serah terimanya dulu ya"],
     ["a Lainnya without its detail", { handoverLocation: "OTHER", handoverDetail: "kos" }, "handoverDetail", "Tulis lokasinya lengkap ya, biar kami bisa cek jangkauannya"],
-    ["an unknown payment method", { paymentMethod: "GRATIS" }, "paymentMethod", "Pilih cara bayarnya ya"],
+    ["an unknown payment method", { paymentMethod: "GRATIS" }, "paymentMethod", "Preorder dibayar lewat QRIS ya"],
+    ["cash, which a preorder no longer takes", { paymentMethod: "CASH" }, "paymentMethod", "Preorder dibayar lewat QRIS ya"],
   ];
 
   it.each(cases)("rejects %s", async (_label, overrides, field, message) => {
@@ -300,6 +305,23 @@ describe("submitPreorderAction — failures the customer can act on", () => {
     if (result.ok) return;
 
     expect(result.error).toMatch(/Preorder lagi ditutup/);
+    expect(await countOrders()).toBe(0);
+    expect(await stockOf(product.id)).toBe(10);
+  });
+
+  it("refuses while there is no QRIS to pay with, and leaves stock alone", async () => {
+    const product = await makeProduct({ stock: 10 });
+    await openWindow(20);
+    await db.orm.public.StoreSetting.where({ id: 1 }).update({ qrisImageUrl: null });
+
+    const result = await submitPreorderAction(
+      payload({ items: [{ productId: product.id, quantity: 1 }] }),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.error).toMatch(/Pembayaran QRIS lagi disiapin/);
     expect(await countOrders()).toBe(0);
     expect(await stockOf(product.id)).toBe(10);
   });

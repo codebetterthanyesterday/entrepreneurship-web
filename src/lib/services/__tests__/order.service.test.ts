@@ -26,6 +26,7 @@ import {
   setStoreOpen,
   stockOf,
 } from "./helpers/test-db";
+import { getSettings } from "@/lib/services/setting.service";
 
 function onsiteOrder(overrides: Partial<CreateOrderInput> = {}): CreateOrderInput {
   return {
@@ -462,6 +463,86 @@ describe("markAsPaid", () => {
       /udah dibatalin/,
     );
   });
+
+  it("refuses a QRIS preorder until the customer's receipt is in, then takes it", async () => {
+    const kasir = await makeUser("KASIR");
+    const product = await makeProduct({ stock: 5 });
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
+    await getSettings();
+    await db.orm.public.StoreSetting.where({ id: 1 }).update({
+      qrisImageUrl: "/gambar/00000000-0000-4000-8000-000000000000",
+    });
+    const order = await createOrder(
+      onsiteOrder({
+        channel: "PREORDER",
+        paymentStatus: "UNPAID",
+        paymentMethod: "QRIS",
+        customerPhone: "081234561234",
+        schedule,
+        items: [{ productId: product.id, quantity: 1 }],
+      }),
+    );
+
+    await expect(markAsPaid(order.id, { id: kasir.id, role: "KASIR" })).rejects.toThrow(
+      /Belum ada bukti bayar QRIS/,
+    );
+
+    await db.orm.public.Order.where({ id: order.id }).update({
+      paymentProofUrl: "/gambar/00000000-0000-4000-8000-000000000001",
+    });
+    const paid = await markAsPaid(order.id, { id: kasir.id, role: "KASIR" });
+    expect(paid.paymentStatus).toBe("PAID");
+  });
+});
+
+describe("transitionStatus — a preorder is paid before it is made or handed over", () => {
+  it("refuses to queue or hand over an unpaid preorder, and allows both once paid", async () => {
+    const kasir = await makeUser("KASIR");
+    const actor = { id: kasir.id, role: "KASIR" as const };
+    const racik = await makeProduct({ prepType: "NEEDS_PREP", stock: 5 });
+    const ready = await makeProduct({ prepType: "READY_TO_SERVE", stock: 5 });
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
+    const preorder = (productId: string) =>
+      createOrder(
+        onsiteOrder({
+          channel: "PREORDER",
+          paymentStatus: "UNPAID",
+          customerPhone: "081234561234",
+          schedule,
+          items: [{ productId, quantity: 1 }],
+        }),
+      );
+
+    const withPrep = await preorder(racik.id);
+    const readyOnly = await preorder(ready.id);
+
+    await expect(transitionStatus(withPrep.id, "IN_QUEUE", actor)).rejects.toThrow(/belum lunas/);
+    await expect(transitionStatus(readyOnly.id, "DONE", actor)).rejects.toThrow(/belum lunas/);
+    expect((await db.orm.public.Order.where({ id: withPrep.id }).first())!.status).toBe("CONFIRMED");
+
+    await markAsPaid(withPrep.id, actor);
+    await markAsPaid(readyOnly.id, actor);
+    expect((await transitionStatus(withPrep.id, "IN_QUEUE", actor)).status).toBe("IN_QUEUE");
+    expect((await transitionStatus(readyOnly.id, "DONE", actor)).status).toBe("DONE");
+  });
+
+  it("still lets an unpaid preorder be cancelled", async () => {
+    const kasir = await makeUser("KASIR");
+    const product = await makeProduct({ stock: 5 });
+    const schedule = await openPreorderWindow("09.00 - 10.00", 10);
+    const order = await createOrder(
+      onsiteOrder({
+        channel: "PREORDER",
+        paymentStatus: "UNPAID",
+        customerPhone: "081234561234",
+        schedule,
+        items: [{ productId: product.id, quantity: 1 }],
+      }),
+    );
+
+    const cancelled = await cancelOrder(order.id, { id: kasir.id, role: "KASIR" }, "nggak jadi bayar");
+    expect(cancelled.status).toBe("CANCELLED");
+  });
 });
 
 describe("createOrder — inactive and missing products", () => {
@@ -535,6 +616,7 @@ describe("createOrder — preorder lifecycle", () => {
       );
 
     const withPrep = await preorder(racik.id);
+    await markAsPaid(withPrep.id, { id: kasir.id, role: "KASIR" });
     const queued = await transitionStatus(withPrep.id, "IN_QUEUE", {
       id: kasir.id,
       role: "KASIR",
@@ -543,6 +625,7 @@ describe("createOrder — preorder lifecycle", () => {
     expect(queued.queuedAt).not.toBeNull();
 
     const readyOnly = await preorder(ready.id);
+    await markAsPaid(readyOnly.id, { id: kasir.id, role: "KASIR" });
     const handed = await transitionStatus(readyOnly.id, "DONE", { id: kasir.id, role: "KASIR" });
     expect(handed.status).toBe("DONE");
     expect(handed.completedAt).not.toBeNull();
@@ -763,6 +846,7 @@ describe("transitionStatus — two screens acting at the same instant", () => {
     const kasir = await makeUser("KASIR");
     const { order } = await preorderWithPrep();
     const actor = { id: kasir.id, role: "KASIR" as const };
+    await markAsPaid(order.id, actor);
 
     const results = await Promise.allSettled([
       transitionStatus(order.id, "IN_QUEUE", actor),

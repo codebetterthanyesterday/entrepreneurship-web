@@ -120,7 +120,8 @@ export type PreorderAction =
 export type PreorderActionInput = Pick<
   CashierPreorder,
   "status" | "paymentStatus" | "totalAmount" | "needsPrep"
->;
+> &
+  Partial<Pick<CashierPreorder, "paymentMethod" | "paymentProofUrl">>;
 
 /**
  * The single correct action for an order, from the chapter 3 transition table.
@@ -142,6 +143,13 @@ export function resolvePreorderAction(order: PreorderActionInput): PreorderActio
 
   if (order.status === "DONE") {
     return { kind: "BLOCKED", label: "Pesanan ini sudah selesai", variant: "flat" };
+  }
+
+  // A QRIS preorder is paid from the customer's phone, and marked paid
+  // against their receipt: with no receipt yet there is nothing to take, only
+  // a customer to remind (the chat below the button).
+  if (order.paymentStatus === "UNPAID" && order.paymentMethod === "QRIS" && !order.paymentProofUrl) {
+    return { kind: "BLOCKED", label: "Menunggu bukti bayar QRIS", variant: "flat" };
   }
 
   // Nothing leaves the counter unpaid, whatever the kitchen has done with it.

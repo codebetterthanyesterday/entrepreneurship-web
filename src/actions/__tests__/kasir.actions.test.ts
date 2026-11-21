@@ -27,7 +27,7 @@ vi.mock("@/lib/session", async () => {
 });
 
 const { markAsPaidAction, transitionOrderAction } = await import("@/actions/kasir.actions");
-const { createOrder, transitionStatus } = await import("@/lib/services/order.service");
+const { createOrder, markAsPaid, transitionStatus } = await import("@/lib/services/order.service");
 const { findPreordersForCashier, toCashierPreorder } = await import("@/lib/queries/order.query");
 const { resolvePreorderAction } = await import("@/lib/cashier-preorder");
 type CashierPreorder = import("@/types/order-view").CashierPreorder;
@@ -140,9 +140,20 @@ describe("markAsPaidAction", () => {
 });
 
 describe("transitionOrderAction", () => {
-  it("sends a confirmed order to the kitchen", async () => {
+  it("refuses to send a preorder to the kitchen before it is paid", async () => {
     await signIn("KASIR");
     const preorder = await placePreorder();
+
+    const result = await transitionOrderAction({ orderId: preorder.id, to: "IN_QUEUE" });
+
+    expect(result).toMatchObject({ ok: false, error: expect.stringMatching(/belum lunas/) });
+    expect((await reload(preorder.id)).status).toBe("CONFIRMED");
+  });
+
+  it("sends a confirmed order to the kitchen", async () => {
+    const cashier = await signIn("KASIR");
+    const preorder = await placePreorder();
+    await markAsPaid(preorder.id, { id: cashier.id, role: "KASIR" });
 
     const result = await transitionOrderAction({ orderId: preorder.id, to: "IN_QUEUE" });
 
@@ -157,8 +168,9 @@ describe("transitionOrderAction", () => {
   });
 
   it("hands over an order with nothing to make", async () => {
-    await signIn("KASIR");
+    const cashier = await signIn("KASIR");
     const preorder = await placePreorder({ prep: false });
+    await markAsPaid(preorder.id, { id: cashier.id, role: "KASIR" });
 
     expect((await transitionOrderAction({ orderId: preorder.id, to: "DONE" })).ok).toBe(true);
 
@@ -180,8 +192,9 @@ describe("transitionOrderAction", () => {
   });
 
   it("refuses an edge that exists but belongs to another role", async () => {
-    await signIn("KASIR");
+    const cashier = await signIn("KASIR");
     const preorder = await placePreorder();
+    await markAsPaid(preorder.id, { id: cashier.id, role: "KASIR" });
 
     await transitionOrderAction({ orderId: preorder.id, to: "IN_QUEUE" });
 
