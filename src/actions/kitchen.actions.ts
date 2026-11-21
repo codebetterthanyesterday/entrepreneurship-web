@@ -1,5 +1,6 @@
 "use server";
 
+import { afterResponse, notifyStaff } from "@/lib/push";
 import { revalidatePath } from "next/cache";
 import { toActionError, type ActionResult } from "@/lib/action-result";
 import { requireRole, toActor } from "@/lib/session";
@@ -28,6 +29,11 @@ export async function transitionFromKitchenAction(
     const data = transitionStatusSchema.parse(input);
 
     const order = await transitionStatus(data.orderId, data.to, toActor(user));
+
+    // A preorder ready to hand over: the counter's phones hear of it.
+    if (order.status === "READY" && order.channel === "PREORDER") {
+      afterResponse(() => notifyStaff({ kind: "ready", orderNumber: order.orderNumber, customerName: order.customerName }));
+    }
 
     // The board is the obvious one; the counter's preorder list shows the same
     // statuses and would otherwise sit stale until its own refresh came round.

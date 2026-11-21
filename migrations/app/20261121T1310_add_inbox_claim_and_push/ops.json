@@ -1,0 +1,284 @@
+[
+  {
+    "id": "table.inboxClaim",
+    "label": "Create table \"inboxClaim\"",
+    "summary": "Creates table \"inboxClaim\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "inboxClaim"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"inboxClaim\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inboxClaim\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"inboxClaim\"",
+        "sql": "CREATE TABLE \"public\".\"inboxClaim\" (\n  \"claimedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"itemKey\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"itemKey\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"inboxClaim\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inboxClaim\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.pushSubscription",
+    "label": "Create table \"pushSubscription\"",
+    "summary": "Creates table \"pushSubscription\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "pushSubscription"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"pushSubscription\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pushSubscription\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"pushSubscription\"",
+        "sql": "CREATE TABLE \"public\".\"pushSubscription\" (\n  \"auth\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"endpoint\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"p256dh\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"pushSubscription\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pushSubscription\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.pushSubscription.pushSubscription_endpoint_key",
+    "label": "Add unique constraint on \"pushSubscription\" (endpoint)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "pushSubscription_endpoint_key",
+        "table": "pushSubscription"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"pushSubscription_endpoint_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pushSubscription_endpoint_key",
+          "public",
+          "\"public\".\"pushSubscription\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"pushSubscription_endpoint_key\"",
+        "sql": "ALTER TABLE \"public\".\"pushSubscription\" ADD CONSTRAINT \"pushSubscription_endpoint_key\" UNIQUE (\"endpoint\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"pushSubscription_endpoint_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pushSubscription_endpoint_key",
+          "public",
+          "\"public\".\"pushSubscription\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.inboxClaim.inboxClaim_userId_idx_a489d58a",
+    "label": "Create index \"inboxClaim_userId_idx_a489d58a\" on \"inboxClaim\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "inboxClaim_userId_idx_a489d58a",
+        "table": "inboxClaim"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"inboxClaim_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inboxClaim_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"inboxClaim_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"inboxClaim_userId_idx_a489d58a\" ON \"public\".\"inboxClaim\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"inboxClaim_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"inboxClaim_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.pushSubscription.pushSubscription_userId_idx_a489d58a",
+    "label": "Create index \"pushSubscription_userId_idx_a489d58a\" on \"pushSubscription\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "pushSubscription_userId_idx_a489d58a",
+        "table": "pushSubscription"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"pushSubscription_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pushSubscription_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"pushSubscription_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"pushSubscription_userId_idx_a489d58a\" ON \"public\".\"pushSubscription\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"pushSubscription_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"pushSubscription_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.inboxClaim.inboxClaim_userId_fkey",
+    "label": "Add foreign key \"inboxClaim_userId_fkey\" on \"inboxClaim\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "inboxClaim_userId_fkey",
+        "table": "inboxClaim"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"inboxClaim_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inboxClaim_userId_fkey",
+          "public",
+          "\"public\".\"inboxClaim\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"inboxClaim_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"inboxClaim\"\nADD CONSTRAINT \"inboxClaim_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"inboxClaim_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "inboxClaim_userId_fkey",
+          "public",
+          "\"public\".\"inboxClaim\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.pushSubscription.pushSubscription_userId_fkey",
+    "label": "Add foreign key \"pushSubscription_userId_fkey\" on \"pushSubscription\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "pushSubscription_userId_fkey",
+        "table": "pushSubscription"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"pushSubscription_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pushSubscription_userId_fkey",
+          "public",
+          "\"public\".\"pushSubscription\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"pushSubscription_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"pushSubscription\"\nADD CONSTRAINT \"pushSubscription_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"pushSubscription_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "pushSubscription_userId_fkey",
+          "public",
+          "\"public\".\"pushSubscription\""
+        ]
+      }
+    ]
+  }
+]

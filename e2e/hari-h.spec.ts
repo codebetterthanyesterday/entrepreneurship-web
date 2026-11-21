@@ -238,6 +238,63 @@ test("an admin puts a stock warning off for an hour on their phone, and brings i
   await admin.context().close();
 });
 
+test("a cashier takes an item, a colleague sees who has it, and the staff app files stay hidden", async ({ browser, request }) => {
+  // The service worker and the manifest are staff addresses too.
+  expect((await request.get("/inbox/sw.js")).status()).toBe(404);
+  expect((await request.get("/inbox/manifest.webmanifest")).status()).toBe(404);
+  expect((await request.get("/api/staff/push")).status()).toBe(401);
+
+  loadEnv({ path: ".env.local", quiet: true });
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
+  const { prisma: db } = await import("@/lib/prisma");
+  const { createOrder } = await import("@/lib/services/order.service");
+  const { openServiceDay } = await import("@/lib/services/schedule.service");
+  const { Temporal } = await import("@js-temporal/polyfill");
+  const { todayInJakarta } = await import("@/lib/schedule");
+  const product = await db.orm.public.Product.where({ name: MENU.name }).first();
+  const day = await openServiceDay({
+    date: Temporal.PlainDate.from(todayInJakarta()).add({ days: 3 }).toString(),
+    locations: ["MARKET_DAY", "OTHER"],
+    windows: [{ startMinute: 600, endMinute: 660, quota: 50 }],
+  });
+  const window = await db.orm.public.ServiceWindow.where({ dayId: day.id }).first();
+  const order = await createOrder({
+    channel: "PREORDER",
+    paymentStatus: "UNPAID",
+    paymentMethod: "CASH",
+    customerName: "Klaim Uji",
+    customerPhone: "081234568888",
+    schedule: { location: "OTHER", detail: "Kos Mawar nomor tujuh, pagar biru", serviceWindowId: window!.id },
+    items: [{ productId: product!.id, quantity: 1 }],
+  });
+
+  const cashier = await signInStaff(browser, STAFF.KASIR);
+  // Signed in, the service worker is served, allowed to look after every staff screen.
+  const sw = await cashier.request.get("/inbox/sw.js");
+  expect(sw.status()).toBe(200);
+  expect(sw.headers()["service-worker-allowed"]).toBe("/");
+
+  await cashier.goto("/inbox");
+  const card = cashier.locator("li").filter({ hasText: order.orderNumber }).filter({ hasText: "perlu dicek" });
+  await card.getByRole("button", { name: /^Saya yang tangani/ }).click();
+  await expect(card.getByText("Kamu yang tangani")).toBeVisible();
+
+  const admin = await signInStaff(browser, STAFF.ADMIN);
+  await admin.goto("/inbox");
+  const seen = admin.locator("li").filter({ hasText: order.orderNumber }).filter({ hasText: "perlu dicek" });
+  await expect(seen.getByText(/^Ditangani /)).toBeVisible();
+  await expect(seen.getByRole("button", { name: /^Saya yang tangani/ })).toHaveCount(0);
+
+  // Let go, and it is anyone's again.
+  await card.getByRole("button", { name: /^Lepas/ }).click();
+  await expect(card.getByRole("button", { name: /^Saya yang tangani/ })).toBeVisible();
+  await admin.reload();
+  await expect(seen.getByRole("button", { name: /^Saya yang tangani/ })).toBeVisible();
+
+  await cashier.context().close();
+  await admin.context().close();
+});
+
 test("a visitor cannot tell the staff side is there", async ({ request }) => {
   for (const path of ["/admin", "/kasir/preorder", "/dapur", "/login"]) {
     expect((await request.get(path)).status(), path).toBe(404);

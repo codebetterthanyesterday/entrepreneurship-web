@@ -47,6 +47,8 @@ export interface InboxItem {
   since: string;
   href: string;
   actionLabel: string;
+  /** Who said "Saya yang tangani", while their claim lasts (inbox phase 3). */
+  claim?: { by: string; mine: boolean; at: string };
 }
 
 export interface InboxOrder {
@@ -90,7 +92,7 @@ export interface InboxSnapshot {
 }
 
 /** Which roles see which kind. Admin covers every role, so sees everything. */
-const AUDIENCE: Readonly<Record<InboxKind, readonly UserRole[]>> = {
+export const AUDIENCE: Readonly<Record<InboxKind, readonly UserRole[]>> = {
   "qris-proof": ["KASIR", "ADMIN"],
   "location-check": ["KASIR", "ADMIN"],
   "location-notice": ["KASIR", "ADMIN"],

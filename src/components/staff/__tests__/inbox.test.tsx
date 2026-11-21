@@ -7,7 +7,7 @@ import { INBOX_DEVICE_KEY, parseDeviceState } from "@/lib/inbox-device";
 
 const polled = vi.hoisted(() => ({ items: [] as InboxItem[] }));
 vi.mock("@/hooks/use-polling", () => ({
-  usePolling: () => ({ data: { items: polled.items }, isError: false, isLoading: false }),
+  usePolling: () => ({ data: { items: polled.items }, isError: false, isLoading: false, refresh: () => {} }),
 }));
 const chime = vi.hoisted(() => ({ play: vi.fn(), buzz: vi.fn(), unlock: vi.fn() }));
 vi.mock("@/lib/inbox-chime", () => ({
@@ -23,7 +23,14 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-const { InboxList } = await import("@/components/staff/inbox-list");
+const { InboxList: BareInboxList } = await import("@/components/staff/inbox-list");
+const { ToastProvider } = await import("@/components/ui/use-toast");
+/** As the app has it: the root layout provides the toasts. */
+const InboxList = (props: { initial: InboxItem[] }) => (
+  <ToastProvider>
+    <BareInboxList {...props} />
+  </ToastProvider>
+);
 const { InboxBell } = await import("@/components/staff/inbox-bell");
 
 const HOUR = 3_600_000;
@@ -128,5 +135,43 @@ describe("InboxBell", () => {
     render(<InboxBell />);
     expect(chime.play).not.toHaveBeenCalled();
     expect(within(screen.getByRole("link", { name: /^Inbox/ })).getByText("1")).toBeTruthy();
+  });
+});
+
+describe("Saya yang tangani", () => {
+  it("lets a person take an item, and tells them when a colleague has it", async () => {
+    const calls: { method: string; body: string }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      calls.push({ method: String(init.method), body: String(init.body) });
+      return new Response(JSON.stringify({ ok: true, data: null }));
+    }));
+    polled.items = [
+      item(),
+      item({ key: "ready:PO-B", kind: "ready", tone: "action", title: "Siap diserahkan", detail: "PO-B · Dimas", claim: { by: "Farel", mine: false, at: new Date().toISOString() } }),
+      item({ key: "ready:PO-C", kind: "ready", tone: "action", title: "Siap diserahkan", detail: "PO-C · Sari", claim: { by: "Kamu", mine: true, at: new Date().toISOString() } }),
+    ];
+    render(<InboxList initial={polled.items} />);
+
+    expect(screen.getByText(/Ditangani Farel/)).toBeTruthy();
+    expect(screen.getByText("Kamu yang tangani")).toBeTruthy();
+    // Only the free one can be taken.
+    expect(screen.getAllByRole("button", { name: /^Saya yang tangani/ })).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Saya yang tangani: Bukti QRIS masuk/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Lepas Siap diserahkan" }));
+    await act(async () => {});
+    expect(calls).toEqual([
+      { method: "POST", body: JSON.stringify({ key: "qris-proof:PO-NEW" }) },
+      { method: "DELETE", body: JSON.stringify({ key: "ready:PO-C" }) },
+    ]);
+    vi.unstubAllGlobals();
+  });
+
+  it("does not count or chime for work a colleague has taken", () => {
+    window.localStorage.setItem(INBOX_DEVICE_KEY, JSON.stringify({ alerts: true }));
+    polled.items = [item({ claim: { by: "Farel", mine: false, at: new Date().toISOString() } })];
+    render(<InboxBell />);
+    expect(chime.play).not.toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Inbox, semua beres" })).toBeTruthy();
   });
 });

@@ -16,6 +16,10 @@
       "model": "Category",
       "namespace": "public"
     },
+    "inboxClaim": {
+      "model": "InboxClaim",
+      "namespace": "public"
+    },
     "order": {
       "model": "Order",
       "namespace": "public"
@@ -34,6 +38,10 @@
     },
     "productImage": {
       "model": "ProductImage",
+      "namespace": "public"
+    },
+    "pushSubscription": {
+      "model": "PushSubscription",
       "namespace": "public"
     },
     "rateLimit": {
@@ -507,6 +515,64 @@
               },
               "namespaceId": "public",
               "table": "category"
+            }
+          },
+          "InboxClaim": {
+            "fields": {
+              "claimedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "itemKey": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "claimedAt": {
+                  "column": "claimedAt"
+                },
+                "itemKey": {
+                  "column": "itemKey"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "inboxClaim"
             }
           },
           "Order": {
@@ -1445,6 +1511,94 @@
               "table": "productImage"
             }
           },
+          "PushSubscription": {
+            "fields": {
+              "auth": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "endpoint": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "p256dh": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "auth": {
+                  "column": "auth"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "endpoint": {
+                  "column": "endpoint"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "p256dh": {
+                  "column": "p256dh"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "pushSubscription"
+            }
+          },
           "RateLimit": {
             "fields": {
               "count": {
@@ -2136,6 +2290,36 @@
                   "namespace": "public"
                 }
               },
+              "inboxClaims": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "InboxClaim",
+                  "namespace": "public"
+                }
+              },
+              "pushSubscriptions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "PushSubscription",
+                  "namespace": "public"
+                }
+              },
               "stockMovements": {
                 "cardinality": "1:N",
                 "on": {
@@ -2413,6 +2597,64 @@
                   ]
                 }
               ]
+            },
+            "inboxClaim": {
+              "columns": {
+                "claimedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "itemKey": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "inboxClaim"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "inboxClaim_userId_idx_a489d58a",
+                  "prefix": "inboxClaim_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "itemKey"
+                ]
+              },
+              "uniques": []
             },
             "order": {
               "checks": [
@@ -3165,6 +3407,85 @@
                 }
               ]
             },
+            "pushSubscription": {
+              "columns": {
+                "auth": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "endpoint": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "p256dh": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "pushSubscription"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "pushSubscription_userId_idx_a489d58a",
+                  "prefix": "pushSubscription_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "endpoint"
+                  ]
+                }
+              ]
+            },
             "rateLimit": {
               "columns": {
                 "count": {
@@ -3834,10 +4155,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4841e92899260c39310a5a7bae6aca5bfacbeeabdcba56dde70ba74391d76a19"
+    "storageHash": "ebafa8a09a06d3e08d2061d70f167c6f5126577514854834f3dd197a4fd7ec4f"
   },
   "execution": {
-    "executionHash": "e4ab7a8bab3057ab0b7745bedb484df99fbce887df2f37fecad04b627b152aac",
+    "executionHash": "510a1fa0fa2671e1c8c6f70e5a5b6aa6f42a9a1da35d45a8d1cc41ec1865a3be",
     "mutations": {
       "defaults": [
         {
@@ -3971,6 +4292,17 @@
             "column": "id",
             "namespace": "public",
             "table": "productImage"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "pushSubscription"
           }
         },
         {

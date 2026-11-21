@@ -18,6 +18,8 @@ import {
 import { buzz, playChime, unlockChime } from "@/lib/inbox-chime";
 import type { InboxResponse } from "@/app/api/staff/inbox/route";
 import { Switch } from "@/components/ui/switch";
+import { PushSetting } from "./push-setting";
+import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
 /** As often as a cashier would glance at it: new work shows within 15 s. */
@@ -48,7 +50,7 @@ export function timeAgo(since: string, now: number): string {
  * work that the person turns on for themselves.
  */
 export function InboxList({ initial }: { initial: InboxItem[] }) {
-  const { data, isError } = usePolling<InboxResponse>("/api/staff/inbox", {
+  const { data, isError, refresh } = usePolling<InboxResponse>("/api/staff/inbox", {
     fallbackData: { items: initial },
     intervalMs: REFRESH_MS,
   });
@@ -75,12 +77,27 @@ export function InboxList({ initial }: { initial: InboxItem[] }) {
     document.title = todo.length > 0 ? `(${todo.length}) Inbox · Bunnyè` : "Inbox · Bunnyè";
   }, [todo.length]);
 
+  const { toast } = useToast();
+  // "Saya yang tangani" and letting go: the server has the last word (a
+  // colleague may have taken it a second earlier), then the list catches up.
+  const setClaim = async (item: InboxItem, take: boolean) => {
+    const response = await fetch("/api/staff/inbox/claim", {
+      method: take ? "POST" : "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: item.key }),
+    }).catch(() => null);
+    const result = (await response?.json().catch(() => null)) as { ok: boolean; error?: string } | null;
+    if (!result?.ok) toast(result?.error ?? "Gagal, cek sinyal lalu coba lagi");
+    refresh();
+  };
+
   const card = (item: InboxItem) => (
     <InboxCard
       item={item}
       now={now}
       fresh={isNew(item, device)}
       onSnooze={item.tone === "watch" ? () => updateInboxDevice((state) => snooze(state, item, Date.now())) : undefined}
+      onClaim={item.tone === "watch" ? undefined : (take) => void setClaim(item, take)}
     />
   );
 
@@ -93,6 +110,7 @@ export function InboxList({ initial }: { initial: InboxItem[] }) {
       )}
 
       <ChimeSetting on={device.alerts} />
+      <PushSetting />
 
       {todo.length === 0 && watch.length === 0 ? (
         <div className="s-slab flex flex-col items-center gap-1 p-8 text-center">
@@ -205,20 +223,25 @@ function InboxCard({
   now,
   fresh,
   onSnooze,
+  onClaim,
 }: {
   item: InboxItem;
   now: number;
   fresh: boolean;
   onSnooze?: () => void;
+  /** `true` to say "Saya yang tangani", `false` to let go. */
+  onClaim?: (take: boolean) => void;
 }) {
   const tone = TONE[item.tone];
+  const takenByOther = item.claim && !item.claim.mine;
   return (
-    // The link stretches over the card (its ::after); the snooze button sits
-    // above it, so it puts the item off without opening it.
+    // The link stretches over the card (its ::after); the buttons sit above
+    // it, so they act without opening it.
     <div
       className={cn(
         "s-slab relative flex min-h-[64px] items-center gap-3 border-l-[6px] p-3.5 transition-transform hover:-translate-y-0.5",
         tone.edge,
+        takenByOther && "opacity-70",
       )}
     >
       <span aria-hidden="true" className={cn("h-2.5 w-2.5 flex-none rounded-full", tone.dot)} />
@@ -247,6 +270,36 @@ function InboxCard({
         <span aria-hidden="true" className="mt-0.5 block text-[13px] leading-snug text-ink-soft">
           {item.detail}
         </span>
+        {onClaim && (
+          <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px]">
+            {item.claim?.mine ? (
+              <>
+                <span className="font-bold text-ok">Kamu yang tangani</span>
+                <button
+                  type="button"
+                  onClick={() => onClaim(false)}
+                  className="relative z-10 min-h-[44px] px-1 font-semibold text-ink-soft underline underline-offset-4"
+                  aria-label={`Lepas ${item.title}`}
+                >
+                  Lepas
+                </button>
+              </>
+            ) : item.claim ? (
+              <span className="font-semibold text-ink-soft">
+                Ditangani {item.claim.by} · {timeAgo(item.claim.at, now)}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onClaim(true)}
+                className="ui-btn relative z-10 min-h-[44px] bg-white px-3 text-[11px] text-ink"
+                aria-label={`Saya yang tangani: ${item.title}, ${item.detail}`}
+              >
+                Saya yang tangani
+              </button>
+            )}
+          </span>
+        )}
       </span>
       {onSnooze ? (
         <button
