@@ -1,6 +1,4 @@
-import { Temporal } from "@js-temporal/polyfill";
-import { buildInbox } from "@/lib/inbox";
-import { loadInboxSnapshot } from "@/lib/queries/inbox.query";
+import { inboxFor } from "@/lib/services/inbox.service";
 import { requireRole } from "@/lib/session";
 import { pageTitle } from "@/lib/brand";
 import { PageHead } from "@/components/staff/page-head";
@@ -16,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InboxPage() {
   const user = await requireRole("KASIR", "DAPUR", "ADMIN");
-  const items = buildInbox(await loadInboxSnapshot(), user.role as UserRole, Temporal.Now.instant());
+  const items = await inboxFor({ id: user.id, role: user.role as UserRole });
 
   return (
     <div className="flex flex-col gap-4">

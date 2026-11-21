@@ -104,6 +104,8 @@ model User {
   createdAt      DateTime        @default(now())
   handledOrders  Order[]         @relation("HandledOrders")
   stockMovements StockMovement[]
+  inboxClaims    InboxClaim[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Category {
@@ -376,4 +378,32 @@ model ServiceWindow {
   @@index([dayId])
   @@check(expression: "booked >= 0", name: "service_window_booked_non_negative")
   @@check(expression: "booked <= quota", name: "service_window_booked_within_quota")
+}
+
+// Siapa yang sedang menangani satu item Inbox ("Saya yang tangani"), supaya dua
+// kasir tidak mengerjakan hal yang sama. `itemKey` adalah kunci item Inbox,
+// misalnya "qris-proof:PO-7KX4QM". Klaim kedaluwarsa sendiri (lihat
+// `src/lib/inbox-claims.ts`) dan dibersihkan begitu itemnya tidak ada lagi.
+model InboxClaim {
+  itemKey   String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  claimedAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Langganan notifikasi (Web Push) satu HP staf. Satu orang bisa punya beberapa
+// HP; `endpoint` unik per browser. Langganan yang ditolak layanan push (404/410)
+// dihapus saat pengiriman berikutnya.
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

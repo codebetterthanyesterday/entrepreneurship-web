@@ -1,7 +1,6 @@
-import { Temporal } from "@js-temporal/polyfill";
 import { ForbiddenError, UnauthorizedError } from "@/lib/errors";
-import { buildInbox, type InboxItem } from "@/lib/inbox";
-import { loadInboxSnapshot } from "@/lib/queries/inbox.query";
+import type { InboxItem } from "@/lib/inbox";
+import { inboxFor } from "@/lib/services/inbox.service";
 import { requireRole } from "@/lib/session";
 import type { UserRole } from "@/types/order";
 
@@ -19,10 +18,7 @@ export async function GET(): Promise<Response> {
 
   try {
     const user = await requireRole("KASIR", "DAPUR", "ADMIN");
-    const snapshot = await loadInboxSnapshot();
-    const body: InboxResponse = {
-      items: buildInbox(snapshot, user.role as UserRole, Temporal.Now.instant()),
-    };
+    const body: InboxResponse = { items: await inboxFor({ id: user.id, role: user.role as UserRole }) };
     return Response.json(body, { headers });
   } catch (error) {
     if (error instanceof UnauthorizedError) {

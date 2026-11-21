@@ -19,6 +19,9 @@ import "../staff.css";
 /** Never in a search engine: the staff side is not meant to be found. */
 export const metadata = {
   robots: { index: false, follow: false },
+  // Addable to an iPhone's home screen as its own app: the only way iOS lets
+  // a web app receive push (inbox phase 3).
+  appleWebApp: { capable: true, title: "Bunnyè Staf", statusBarStyle: "default" as const },
 };
 
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
@@ -51,6 +54,9 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     // clouds, no tilted snapshots — staff screens are read fast and used all
     // day. `staffRole` is what gives each role its colour (`staff.css`).
     <KingdomRoot staffRole={role} className="s-shell min-h-screen flex flex-col">
+      {/* The manifest is signed-in only, like every staff address, so it is
+          fetched with the session's cookie. React puts the link in <head>. */}
+      <link rel="manifest" href="/inbox/manifest.webmanifest" crossOrigin="use-credentials" />
       <header className="s-top">
         <div className="s-wrap">
           <Link href={homeFor(role)} className="s-brand">

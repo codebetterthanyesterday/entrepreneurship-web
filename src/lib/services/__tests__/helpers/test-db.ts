@@ -32,6 +32,8 @@ const TABLES = [
   "order",
   "product",
   "category",
+  "inboxClaim",
+  "pushSubscription",
   "user",
   "rateLimit",
 ];

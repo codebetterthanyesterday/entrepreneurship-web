@@ -1,5 +1,6 @@
 "use server";
 
+import { afterResponse, notifyStaff } from "@/lib/push";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { InsufficientStockError } from "@/lib/errors";
@@ -81,6 +82,19 @@ export async function submitPreorderAction(
     // The catalogue shows live stock, so it has to reflect what was just taken.
     revalidatePath("/");
     revalidatePath("/checkout");
+
+    // A "Lainnya" order waits on staff to check the place: tell their phones,
+    // after the customer has their answer.
+    if (order.handoverLocation === "OTHER") {
+      afterResponse(() =>
+        notifyStaff({
+          kind: "location-check",
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          detail: order.handoverDetail ?? null,
+        }),
+      );
+    }
 
     return { ok: true, data: { orderNumber: order.orderNumber } };
   } catch (error) {

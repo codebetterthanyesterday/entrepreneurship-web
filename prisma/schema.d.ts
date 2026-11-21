@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'4841e92899260c39310a5a7bae6aca5bfacbeeabdcba56dde70ba74391d76a19'>;
+  StorageHashBase<'ebafa8a09a06d3e08d2061d70f167c6f5126577514854834f3dd197a4fd7ec4f'>;
 export type ExecutionHash =
-  ExecutionHashBase<'e4ab7a8bab3057ab0b7745bedb484df99fbce887df2f37fecad04b627b152aac'>;
+  ExecutionHashBase<'510a1fa0fa2671e1c8c6f70e5a5b6aa6f42a9a1da35d45a8d1cc41ec1865a3be'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -264,6 +264,11 @@ export type FieldOutputTypes = {
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly sortOrder: CodecTypes['pg/int4@1']['output'];
     };
+    readonly InboxClaim: {
+      readonly itemKey: CodecTypes['pg/text@1']['output'];
+      readonly userId: CodecTypes['pg/text@1']['output'];
+      readonly claimedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly Order: {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly orderNumber: CodecTypes['pg/text@1']['output'];
@@ -328,6 +333,14 @@ export type FieldOutputTypes = {
       readonly productId: CodecTypes['pg/text@1']['output'];
       readonly imageId: CodecTypes['pg/text@1']['output'];
       readonly sortOrder: CodecTypes['pg/int4@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
+    readonly PushSubscription: {
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly userId: CodecTypes['pg/text@1']['output'];
+      readonly endpoint: CodecTypes['pg/text@1']['output'];
+      readonly p256dh: CodecTypes['pg/text@1']['output'];
+      readonly auth: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly RateLimit: {
@@ -421,6 +434,11 @@ export type FieldInputTypes = {
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly sortOrder: CodecTypes['pg/int4@1']['input'];
     };
+    readonly InboxClaim: {
+      readonly itemKey: CodecTypes['pg/text@1']['input'];
+      readonly userId: CodecTypes['pg/text@1']['input'];
+      readonly claimedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly Order: {
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly orderNumber: CodecTypes['pg/text@1']['input'];
@@ -485,6 +503,14 @@ export type FieldInputTypes = {
       readonly productId: CodecTypes['pg/text@1']['input'];
       readonly imageId: CodecTypes['pg/text@1']['input'];
       readonly sortOrder: CodecTypes['pg/int4@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
+    readonly PushSubscription: {
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly userId: CodecTypes['pg/text@1']['input'];
+      readonly endpoint: CodecTypes['pg/text@1']['input'];
+      readonly p256dh: CodecTypes['pg/text@1']['input'];
+      readonly auth: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly RateLimit: {
@@ -578,6 +604,11 @@ export type StorageColumnTypes = {
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly sortOrder: CodecTypes['pg/int4@1']['output'];
     };
+    readonly inboxClaim: {
+      readonly claimedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly itemKey: CodecTypes['pg/text@1']['output'];
+      readonly userId: CodecTypes['pg/text@1']['output'];
+    };
     readonly order: {
       readonly cashReceived: CodecTypes['pg/int4@1']['output'] | null;
       readonly channel: 'PREORDER' | 'ONSITE';
@@ -643,6 +674,14 @@ export type StorageColumnTypes = {
       readonly imageId: CodecTypes['pg/text@1']['output'];
       readonly productId: CodecTypes['pg/text@1']['output'];
       readonly sortOrder: CodecTypes['pg/int4@1']['output'];
+    };
+    readonly pushSubscription: {
+      readonly auth: CodecTypes['pg/text@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly endpoint: CodecTypes['pg/text@1']['output'];
+      readonly id: CodecTypes['pg/text@1']['output'];
+      readonly p256dh: CodecTypes['pg/text@1']['output'];
+      readonly userId: CodecTypes['pg/text@1']['output'];
     };
     readonly rateLimit: {
       readonly count: CodecTypes['pg/int4@1']['output'];
@@ -735,6 +774,11 @@ export type StorageColumnInputTypes = {
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly sortOrder: CodecTypes['pg/int4@1']['input'];
     };
+    readonly inboxClaim: {
+      readonly claimedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly itemKey: CodecTypes['pg/text@1']['input'];
+      readonly userId: CodecTypes['pg/text@1']['input'];
+    };
     readonly order: {
       readonly cashReceived: CodecTypes['pg/int4@1']['input'] | null;
       readonly channel: 'PREORDER' | 'ONSITE';
@@ -800,6 +844,14 @@ export type StorageColumnInputTypes = {
       readonly imageId: CodecTypes['pg/text@1']['input'];
       readonly productId: CodecTypes['pg/text@1']['input'];
       readonly sortOrder: CodecTypes['pg/int4@1']['input'];
+    };
+    readonly pushSubscription: {
+      readonly auth: CodecTypes['pg/text@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly endpoint: CodecTypes['pg/text@1']['input'];
+      readonly id: CodecTypes['pg/text@1']['input'];
+      readonly p256dh: CodecTypes['pg/text@1']['input'];
+      readonly userId: CodecTypes['pg/text@1']['input'];
     };
     readonly rateLimit: {
       readonly count: CodecTypes['pg/int4@1']['input'];
@@ -881,8 +933,11 @@ export namespace Models {
     sessionVersion: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     handledOrders: public_Order[];
+    inboxClaims: public_InboxClaim[];
+    pushSubscriptions: public_PushSubscription[];
     stockMovements: public_StockMovement[];
-    readonly [RelationKeys]?: 'handledOrders' | 'stockMovements';
+    readonly [RelationKeys]?:
+      'handledOrders' | 'inboxClaims' | 'pushSubscriptions' | 'stockMovements';
   };
   export type public_Category = {
     id: CodecTypes['pg/text@1']['output'];
@@ -1071,6 +1126,23 @@ export namespace Models {
     orders: public_Order[];
     readonly [RelationKeys]?: 'day' | 'orders';
   };
+  export type public_InboxClaim = {
+    itemKey: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    claimedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    user: public_User;
+    readonly [RelationKeys]?: 'user';
+  };
+  export type public_PushSubscription = {
+    id: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    endpoint: CodecTypes['pg/text@1']['output'];
+    p256dh: CodecTypes['pg/text@1']['output'];
+    auth: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    user: public_User;
+    readonly [RelationKeys]?: 'user';
+  };
 }
 
 export declare const models: {
@@ -1090,6 +1162,8 @@ export declare const models: {
     RateLimit: Models.public_RateLimit;
     ServiceDay: Models.public_ServiceDay;
     ServiceWindow: Models.public_ServiceWindow;
+    InboxClaim: Models.public_InboxClaim;
+    PushSubscription: Models.public_PushSubscription;
   };
 };
 
@@ -1272,6 +1346,50 @@ type ContractBase = Omit<
               uniques: readonly [{ readonly columns: readonly ['name'] }];
               indexes: readonly [];
               foreignKeys: readonly [];
+            };
+            readonly inboxClaim: {
+              columns: {
+                readonly itemKey: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly userId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly claimedAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['itemKey'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'inboxClaim_userId_idx_a489d58a';
+                  readonly prefix: 'inboxClaim_userId_idx';
+                  readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'inboxClaim';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'user';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly order: {
               columns: {
@@ -1832,6 +1950,65 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly pushSubscription: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly userId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly endpoint: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly p256dh: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly auth: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['endpoint'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'pushSubscription_userId_idx_a489d58a';
+                  readonly prefix: 'pushSubscription_userId_idx';
+                  readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'pushSubscription';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'user';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly rateLimit: {
               columns: {
                 readonly key: {
@@ -2371,6 +2548,14 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'ServiceWindow';
     };
+    readonly inboxClaim: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'InboxClaim';
+    };
+    readonly pushSubscription: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'PushSubscription';
+    };
   };
   readonly domain: {
     readonly namespaces: {
@@ -2552,6 +2737,45 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly name: { readonly column: 'name' };
                 readonly sortOrder: { readonly column: 'sortOrder' };
+              };
+            };
+          };
+          readonly InboxClaim: {
+            readonly fields: {
+              readonly itemKey: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly claimedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'inboxClaim';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly itemKey: { readonly column: 'itemKey' };
+                readonly userId: { readonly column: 'userId' };
+                readonly claimedAt: { readonly column: 'claimedAt' };
               };
             };
           };
@@ -3133,6 +3357,60 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly PushSubscription: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly endpoint: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly p256dh: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly auth: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'pushSubscription';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly userId: { readonly column: 'userId' };
+                readonly endpoint: { readonly column: 'endpoint' };
+                readonly p256dh: { readonly column: 'p256dh' };
+                readonly auth: { readonly column: 'auth' };
+                readonly createdAt: { readonly column: 'createdAt' };
+              };
+            };
+          };
           readonly RateLimit: {
             readonly fields: {
               readonly key: {
@@ -3557,6 +3835,28 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['handledById'];
                 };
               };
+              readonly inboxClaims: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InboxClaim';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly pushSubscriptions: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'PushSubscription';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
               readonly stockMovements: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3776,6 +4076,14 @@ type ContractBase = Omit<
           readonly ref: {
             readonly namespace: 'public';
             readonly table: 'productImage';
+            readonly column: 'id';
+          };
+          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
+        },
+        {
+          readonly ref: {
+            readonly namespace: 'public';
+            readonly table: 'pushSubscription';
             readonly column: 'id';
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };

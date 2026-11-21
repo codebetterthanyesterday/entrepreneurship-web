@@ -1,3 +1,5 @@
+import { afterResponse, notifyStaff } from "@/lib/push";
+import { findByNumber } from "@/lib/queries/order.query";
 import { toActionError, type ActionResult } from "@/lib/action-result";
 import { normaliseOrderNumber } from "@/lib/order-number";
 import { attachPaymentProof } from "@/lib/services/image.service";
@@ -54,12 +56,18 @@ export async function POST(request: Request): Promise<Response> {
     if (!(file instanceof File)) {
       result = { ok: false, error: "Pilih gambar bukti bayarnya dulu ya", field: "file" };
     } else {
+      const orderNumber = normaliseOrderNumber(String(form.get("no") ?? ""));
       const data = await attachPaymentProof({
-        orderNumber: normaliseOrderNumber(String(form.get("no") ?? "")),
+        orderNumber,
         phoneLast4: String(form.get("wa") ?? "").trim(),
         bytes: new Uint8Array(await file.arrayBuffer()),
       });
       result = { ok: true, data };
+      // The cashier's phones hear of it once the customer has their answer.
+      afterResponse(async () => {
+        const order = await findByNumber(orderNumber);
+        if (order) await notifyStaff({ kind: "qris-proof", orderNumber, customerName: order.customerName });
+      });
     }
   } catch (error) {
     result = toActionError(error, "POST /api/bukti-bayar");

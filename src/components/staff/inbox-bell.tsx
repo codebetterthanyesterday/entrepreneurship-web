@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePolling } from "@/hooks/use-polling";
 import { toAnnounce, updateInboxDevice } from "@/lib/inbox-device";
 import { buzz, playChime, unlockChime } from "@/lib/inbox-chime";
+import { isOpenForMe } from "@/lib/inbox-claims";
 import type { InboxResponse } from "@/app/api/staff/inbox/route";
 
 /** Light enough to sit on every staff screen; `/inbox` itself polls faster. */
@@ -22,7 +23,8 @@ const REFRESH_MS = 30_000;
  */
 export function InboxBell() {
   const { data } = usePolling<InboxResponse>("/api/staff/inbox", { intervalMs: REFRESH_MS });
-  const count = data?.items.filter((item) => item.tone !== "watch").length ?? 0;
+  // Work somebody else has taken is not this person's to count or hear about.
+  const count = data?.items.filter(isOpenForMe).length ?? 0;
 
   // Sound needs a tap after every page load; any tap on the page will do.
   React.useEffect(() => {
@@ -34,7 +36,7 @@ export function InboxBell() {
   React.useEffect(() => {
     if (!data) return;
     updateInboxDevice((state) => {
-      const { fresh, next } = toAnnounce(state, data.items);
+      const { fresh, next } = toAnnounce(state, data.items.filter(isOpenForMe));
       if (state.alerts && fresh.length > 0) {
         playChime();
         buzz();
